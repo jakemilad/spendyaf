@@ -83,7 +83,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
 
     return (
         <>
-            <Card className="w-full max-w-md mx-auto">
+            <Card className="w-full max-w-md mx-auto mt-10">
                 <CardHeader className="text-center">
                     <CardTitle>Upload your transactions</CardTitle>
                     <CardDescription>

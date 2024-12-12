@@ -10,6 +10,7 @@ import {
   } from "@/components/ui/table"
 import { DbStatement } from "@/app/types/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface SummaryTableProps {
     statement: DbStatement;
@@ -19,8 +20,10 @@ export function SummaryTable({ statement }: SummaryTableProps) {
 
     return (
         <div className="w-full max-w-md mx-auto">
-            <Table>
-                <TableCaption className="text-center font-bold text-xl mb-5 caption-top">
+            <Card>
+                <CardContent>
+                    <Table>
+                        <TableCaption className="text-center font-bold text-xl mb-5 caption-top text-white">
                     Summary of your {statement.data.fileName} statement
                 </TableCaption>
                 <TableHeader>
@@ -48,7 +51,7 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                                     <ul className="list-disc pl-6 space-y-2">
                                         {Object.entries(row.Transactions).map(([transaction, count]) => (
                                             <li key={transaction}>
-                                                {transaction}: ${count}
+                                                {transaction.charAt(0).toUpperCase() + transaction.slice(1).toLowerCase()}: ${count}
                                               </li>
                                         ))}
                                     </ul>
@@ -61,9 +64,11 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                     <TableRow>
                         <TableCell>Total</TableCell>
                         <TableCell className="text-right">${statement.data.totalSpend}</TableCell>
-                    </TableRow>
-                </TableFooter>
-            </Table>
+                        </TableRow>
+                    </TableFooter>
+                </Table>
+            </CardContent>
+        </Card>
         </div>
     )
 }

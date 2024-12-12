@@ -32,17 +32,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
         <SessionProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <div className="relative flex min-h-screen flex-col">
               <Nav />
-            <div className="flex-1 px-4 sm:px-6 lg:px-8 py-5">
+              <main className="flex-1">
                 {children}
                 <Toaster />
-              </div>  
+              </main>
             </div>
           </ThemeProvider>
         </SessionProvider>

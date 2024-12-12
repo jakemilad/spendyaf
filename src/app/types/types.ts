@@ -45,4 +45,5 @@ export interface DbStatement {
     file_name: string;
     created_at: string;
     data: Statement;
+    totalSpend?: number;
 }

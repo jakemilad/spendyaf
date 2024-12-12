@@ -3,7 +3,6 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { StatementSummary } from "@/components/statement-summary"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {format} from "date-fns"
 import { FileInput, Plus } from "lucide-react"
@@ -18,6 +17,13 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { SummaryTable } from "@/components/summary-table"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarProvider
+} from '@/components/ui/sidebar'
 
 interface DashboardContentProps {
   initialStatements: DbStatement[]

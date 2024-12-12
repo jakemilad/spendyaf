@@ -8,7 +8,7 @@ import { Transaction } from "./types/types";
 import { UploadResult } from "./types/types";
 import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
-
+import { DbStatement } from "./types/types";
 const sql = neon(process.env.DATABASE_URL!);
 
 async function getSession(): Promise<Session | null> {
@@ -17,18 +17,26 @@ async function getSession(): Promise<Session | null> {
     return session;
 }
 
-export async function getUserStatements() {
+export async function getUserStatements(): Promise<DbStatement[] | null> {
     try {
         const session = await getSession();
         if (!session) return null;
 
-        const statements = await sql`
+        const rawStatements = await sql`
             SELECT id, file_name, data, created_at 
             FROM transaction_records 
             WHERE user_id = ${session?.user?.email}
             ORDER BY created_at DESC
         `;
-        console.group(statements);
+        console.group(rawStatements);
+
+        const statements: DbStatement[] = rawStatements.map(row => ({
+            id: row.id.toString(),
+            file_name: row.file_name,
+            created_at: row.created_at,
+            data: row.data
+        }));
+
         return statements;
     } catch (error) {
         console.error('Error fetching statements:', error);
