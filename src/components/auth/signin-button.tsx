@@ -6,18 +6,30 @@ import {signIn, signOut, useSession} from 'next-auth/react'
 export function SignInButton() {
     const {data: session} = useSession();
 
-    if(session && session.user) {
+    if (!session) {
         return (
             <div className="flex gap-4 ml-auto">
-                <Button onClick={() => signOut()} variant="outline">Sign Out</Button>
-                <p className="text-bold mt-1">{session.user.name}</p>
+                <Button 
+                    onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                    variant="outline"
+                    className="hover:bg-primary hover:text-primary-foreground"
+                >
+                    Sign In
+                </Button>
             </div>
         );
     }
 
     return (
-        <Button onClick={() => signIn(undefined, { callbackUrl: '/dashboard' })} variant="ghost">
-          Sign In
-        </Button>
+        <div className="flex items-center gap-4 ml-auto">
+            <Button 
+                onClick={() => signOut({ callbackUrl: "/" })} 
+                variant="outline"
+                className="hover:bg-destructive hover:text-destructive-foreground"
+            >
+                Sign Out
+            </Button>
+            <span className="text-sm font-medium">{session?.user?.name}</span>
+        </div>
     );
 }

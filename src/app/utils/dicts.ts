@@ -20,7 +20,6 @@ export const CITY_NAMES = [
 export const CATEGORIES = [
   "Evo",
   "DoorDash",
-  "Amazon",
   "Restaurants",    
   "Bills",
   "Groceries",
@@ -28,8 +27,7 @@ export const CATEGORIES = [
   "Rogers",
   "Clothes",
   "Personal",
-  "Movies",
+  "Entertainment",
   "Online Shopping",
-  "Gym",
   "Transport",
 ];

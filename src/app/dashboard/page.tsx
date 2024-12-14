@@ -1,8 +1,9 @@
 import { getUserStatements } from "@/app/actions"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../api/auth/[...nextauth]/route"
-import { DashboardClient } from "@/components/dashboard-client";
-import { DbStatement } from "../types/types";
+import { DashboardClient } from "@/components/dashboard-client"
+import { DbStatement } from "../types/types"
+import { redirect } from "next/navigation"
 
 // export const pieData: {
 //   summary: CategorySummary[];

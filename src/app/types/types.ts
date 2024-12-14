@@ -1,4 +1,5 @@
 export interface Transaction {
+    Date: number; // Unix timestamp in milliseconds
     Merchant: string;
     Amount: number;
 }
@@ -8,11 +9,13 @@ export interface CategorySummary {
     Total: number;
     Transactions: {[merchant: string]: number};
     totalSpend?: number;
+    BiggestTransaction: {merchant: string, amount: number};
 }
 
 export interface CategoryData {
     total: number;
     transactions: {[merchant: string]: number};
+    biggestTransaction: {merchant: string, amount: number};
 }
 
 export interface SummaryMap {

@@ -1,10 +1,22 @@
-import Image from "next/image";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { siteConfig } from "@/config/site";
-import { buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button"
+import Link from "next/link"
+import { getUserStatements } from "@/app/actions"
+import { getServerSession } from "next-auth"
+import { authOptions } from "./api/auth/[...nextauth]/route"
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions)
+  let targetPath = '/dashboard'
+
+  if (session?.user) {
+    const statements = await getUserStatements() || []
+    if (statements.length > 0) {
+      targetPath = '/dashboard'
+    } else {
+      targetPath = '/upload-statement'
+    }
+  }
+
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <section className="grid items-center gap-6 pb-8 pt-6 md:py-10">
@@ -20,7 +32,7 @@ export default function Home() {
         </div>
         <div className="flex gap-4">
           <Link
-            href="/dashboard"
+            href={targetPath}
             className={buttonVariants()}
           >
             Get Started
@@ -28,5 +40,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-  );
+  )
 }

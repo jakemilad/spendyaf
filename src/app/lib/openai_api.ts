@@ -17,8 +17,9 @@ export async function openAICategories(merchants: string[]) {
 ${CATEGORIES.join(', ')}.
 
 Here are examples of correct categorizations:
-'Amazon Purchase' -> 'Amazon'
-'Gold's Gym Membership' -> 'Gym'
+'Amazon Purchase' -> 'Online Shopping'
+'Prime Video' -> 'Online Subscriptions'
+'CRAVE' -> 'Online Subscriptions'
 'DOORDASH' -> 'DoorDash'
 'Disney Subscription' -> 'Online Subscriptions'
 'EVO Car Share' -> 'Evo'

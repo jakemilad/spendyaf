@@ -9,6 +9,7 @@ import { UploadResult } from "./types/types";
 import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
 import { DbStatement } from "./types/types";
+import { revalidatePath } from 'next/cache';
 const sql = neon(process.env.DATABASE_URL!);
 
 async function getSession(): Promise<Session | null> {
@@ -121,11 +122,8 @@ export async function deleteStatement(id: string) {
         const session = await getSession();
         if (!session) return null;
 
-        await sql`
-            DELETE FROM transaction_records
-            WHERE id = ${id}
-            AND user_id = ${session?.user?.email}
-        `;
+        await pool.query('DELETE FROM transaction_records WHERE id = $1', [id]);
+        revalidatePath('/dashboard');
         return true;
     } catch (error) {
         console.error('Error deleting statement:', error);
@@ -133,16 +131,15 @@ export async function deleteStatement(id: string) {
     }
 }
 
-export async function updateStatement(id: string, newData: any) {
+export async function updateStatement(id: string, data: any) {
     try {
         const session = await getSession();
 
-        await sql`
-            UPDATE transaction_records 
-            SET data = ${JSON.stringify(newData)}
-            WHERE id = ${id} 
-            AND user_id = ${session?.user?.email}
-        `;
+        await pool.query(
+            'UPDATE transaction_records SET data = $1, file_name = $2 WHERE id = $3',
+            [JSON.stringify(data), data.file_name, id]
+        );
+        revalidatePath('/dashboard');
         return true;
     } catch (error) {
         console.error('Error updating statement:', error);

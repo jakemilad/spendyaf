@@ -19,56 +19,56 @@ interface SummaryTableProps {
 export function SummaryTable({ statement }: SummaryTableProps) {
 
     return (
-        <div className="w-full max-w-md mx-auto">
-            <Card>
+        <div className="h-full w-full">
+            <Card className="h-full">
                 <CardContent>
                     <Table>
-                        <TableCaption className="text-center font-bold text-xl mb-5 caption-top text-white">
-                    Summary of your {statement.data.fileName} statement
-                </TableCaption>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead style={{ width: '120px' }} className="text-left">Category</TableHead>
-                        <TableHead style={{ width: '100px' }} className="text-right">Total</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {statement.data.summary.map((row) => (
-                        <Dialog key={row.Category}>
-                            <DialogTrigger asChild>
-                                <TableRow className="cursor-pointer hover:text-gray-200">
-                                    <TableCell className="font-medium">{row.Category}</TableCell>
-                                    <TableCell className="text-right">${row.Total}</TableCell>
-                                </TableRow>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle className="text-center font-bold text-xl mb-5">
-                                        {row.Category} Transactions
-                                    </DialogTitle>
-                                </DialogHeader>
-                                <div className="max-h-[60vh] overflow-y-auto">
-                                    <ul className="list-disc pl-6 space-y-2">
-                                        {Object.entries(row.Transactions).map(([transaction, count]) => (
-                                            <li key={transaction}>
-                                                {transaction.charAt(0).toUpperCase() + transaction.slice(1).toLowerCase()}: ${count}
-                                              </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    ))}
-                </TableBody>
-                <TableFooter>
-                    <TableRow>
-                        <TableCell>Total</TableCell>
-                        <TableCell className="text-right">${statement.data.totalSpend}</TableCell>
-                        </TableRow>
-                    </TableFooter>
-                </Table>
-            </CardContent>
-        </Card>
+                        <TableCaption className="text-center font-medium text-sm text-muted-foreground mb-4 caption-top">
+                            {statement.data.fileName} Statement Summary
+                        </TableCaption>
+                        <TableHeader>
+                            <TableRow className="border-b border-border/50 hover:bg-transparent">
+                                <TableHead className="w-[55%] py-3 pl-2">Category</TableHead>
+                                <TableHead className="w-[45%] text-right pr-2">Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {statement.data.summary.map((row) => (
+                                <Dialog key={row.Category}>
+                                    <DialogTrigger asChild>
+                                        <TableRow className="cursor-pointer hover:bg-accent/50">
+                                            <TableCell className="font-medium pl-4">{row.Category}</TableCell>
+                                            <TableCell className="text-right pr-4">${row.Total}</TableCell>
+                                        </TableRow>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle className="text-center font-bold text-xl mb-5">
+                                                {row.Category} Transactions
+                                            </DialogTitle>
+                                        </DialogHeader>
+                                        <div className="max-h-[60vh] overflow-y-auto">
+                                            <ul className="list-disc pl-6 space-y-2">
+                                                {Object.entries(row.Transactions).map(([transaction, count]) => (
+                                                    <li key={transaction}>
+                                                        {transaction.charAt(0).toUpperCase() + transaction.slice(1).toLowerCase()}: ${count}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            ))}
+                        </TableBody>
+                        <TableFooter>
+                            <TableRow>
+                                <TableCell>Total</TableCell>
+                                <TableCell className="text-right">${statement.data.totalSpend}</TableCell>
+                            </TableRow>
+                        </TableFooter>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     )
 }

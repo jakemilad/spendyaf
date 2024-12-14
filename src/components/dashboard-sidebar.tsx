@@ -41,9 +41,9 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
             setIsDeleting(true)
             const success = await deleteStatement(id)
             if(success) {
-                // If the deleted statement was selected, clear the selection
                 if(selectedStatement?.id === id) {
-                    onStatementSelect(statements[0] || null)
+                    const nextStatement = statements.find(s => s.id !== id) || null;
+                    onStatementSelect(nextStatement)
                 }
                 toast.success('Statement deleted')
             } else {
@@ -65,7 +65,6 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
             const success = await updateStatement(id, updatedData)
 
             if(success) {
-                // Update the selected statement if it was the one that was edited
                 if(selectedStatement?.id === id) {
                     onStatementSelect({...selectedStatement, file_name: newFileName})
                 }
@@ -80,105 +79,104 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
         }
     }
 
-    if (statements.length === 0) {
-        return (
-            <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <h1 className="text-2xl font-bold mb-8">Hi, {firstName}</h1>
-                <div className="text-center py-12">
-                    <h2 className="text-lg font-medium mb-2">No statements yet</h2>
-                    <p className="text-gray-500 mb-4">Upload your first bank statement to get started</p>
-                    <Button asChild variant="outline">
-                        <Link href="/upload-statement">
-                            <span className="flex items-center gap-2">
-                                <Plus className="h-4 w-4" /> Upload Statement
-                            </span>
-                        </Link>
-                    </Button>
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <aside className="fixed left-0 min-h-[calc(100vh-3.5rem)] w-72 border-r bg-gray-150 dark:bg-[hsl(225,50%,2%)]">
-            <div className="flex h-full flex-col">
-                <div className="border-b p-4">
-                    <h1 className="font-semibold flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {firstName}'s Statements
-                    </h1>
+        <div className="h-full flex flex-col overflow-y-auto bg-background/50">
+            <div className="space-y-4 py-4">
+                <div className="px-3 py-2">
+                    <h2 className="mb-4 px-4 text-lg font-semibold tracking-tight">
+                        Hi, {firstName}
+                    </h2>
+                    <div className="space-y-1">
+                        {navigation.map((item) => (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={cn(
+                                    "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                                    pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                                )}
+                            >
+                                <item.icon className="mr-2 h-4 w-4" />
+                                {item.name}
+                            </Link>
+                        ))}
+                    </div>
                 </div>
-
-                <div className="flex-1 overflow-y-auto p-2">
-                    {statements.map((statement) => (
-                        <Card 
-                            key={statement.id} 
-                            className={cn(
-                                "cursor-pointer mb-2 transition-colors hover:bg-accent",
-                                selectedStatement?.id === statement.id && "bg-accent"
-                            )}
-                            onClick={() => onStatementSelect(statement)}
-                        >
-                            <CardHeader>
-                                <div className="flex justify-between items-center">
-                                    <CardTitle className="text-base">{statement.file_name}</CardTitle>
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <Sheet>
-                                            <SheetTrigger>
-                                                <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
-                                            </SheetTrigger>
-                                            <SheetContent side="left">
-                                                <SheetHeader>
-                                                    <SheetTitle>Edit Statement</SheetTitle>
-                                                    <SheetDescription>
-                                                        Update your statement details or delete it.
-                                                    </SheetDescription>
-                                                </SheetHeader>
-                                                <div className="grid gap-4 py-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="fileName">Statement Name</Label>
-                                                        <Input
-                                                            id="fileName"
-                                                            defaultValue={statement.file_name}
-                                                            onChange={(e) => setEditingFileName(e.target.value)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-4 mt-4">
-                                                    <SheetClose asChild>
-                                                        <Button 
-                                                            variant="outline" 
-                                                            onClick={() => handleUpdate(
-                                                                statement.id, 
-                                                                editingFileName || statement.file_name
-                                                            )}
-                                                        >
-                                                            Save Changes
-                                                        </Button>
-                                                    </SheetClose>
-                                                    <Separator orientation="horizontal" />
-                                                    <Button
-                                                        variant="destructive"
-                                                        onClick={() => {
-                                                            if(window.confirm('Are you sure you want to delete this statement?')) {
-                                                                handleDelete(statement.id)
-                                                            }
-                                                        }}
-                                                        disabled={isDeleting}
-                                                    >
-                                                        {isDeleting ? 'Deleting...' : 'Delete Statement'}
-                                                    </Button>
-                                                </div>
-                                            </SheetContent>
-                                        </Sheet>
-                                    </div>
-                                </div>
-                                <CardDescription>
-                                    {format(new Date(statement.created_at), 'MMM d, yyyy')}
-                                </CardDescription>
-                            </CardHeader>
-                        </Card>
-                    ))}
+                <div className="px-3">
+                    <div className="space-y-1">
+                        <h2 className="px-4 text-lg font-semibold tracking-tight">Statements</h2>
+                        <div className="mt-4 space-y-2">
+                            {statements.map((statement) => (
+                                <Card 
+                                    key={statement.id}
+                                    className={cn(
+                                        "transition-colors hover:bg-accent cursor-pointer border-border/40",
+                                        selectedStatement?.id === statement.id ? "bg-accent" : "bg-background"
+                                    )}
+                                    onClick={() => onStatementSelect(statement)}
+                                >
+                                    <CardHeader>
+                                        <div className="flex justify-between items-center">
+                                            <CardTitle className="text-base">{statement.file_name}</CardTitle>
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <Sheet>
+                                                    <SheetTrigger>
+                                                        <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                                    </SheetTrigger>
+                                                    <SheetContent side="left">
+                                                        <SheetHeader>
+                                                            <SheetTitle>Edit Statement</SheetTitle>
+                                                            <SheetDescription>
+                                                                Update your statement details or delete it.
+                                                            </SheetDescription>
+                                                        </SheetHeader>
+                                                        <div className="grid gap-4 py-4">
+                                                            <div className="grid gap-2">
+                                                                <Label htmlFor="fileName">Statement Name</Label>
+                                                                <Input
+                                                                    id="fileName"
+                                                                    defaultValue={statement.file_name}
+                                                                    onChange={(e) => setEditingFileName(e.target.value)}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col gap-4 mt-4">
+                                                            <SheetClose asChild>
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    onClick={() => handleUpdate(
+                                                                        statement.id, 
+                                                                        editingFileName || statement.file_name
+                                                                    )}
+                                                                >
+                                                                    Save Changes
+                                                                </Button>
+                                                            </SheetClose>
+                                                            <Separator orientation="horizontal" />
+                                                            <Button
+                                                                variant="destructive"
+                                                                onClick={() => {
+                                                                    if(window.confirm('Are you sure you want to delete this statement?')) {
+                                                                        handleDelete(statement.id)
+                                                                    }
+                                                                }}
+                                                                disabled={isDeleting}
+                                                            >
+                                                                {isDeleting ? 'Deleting...' : 'Delete Statement'}
+                                                            </Button>
+                                                        </div>
+                                                    </SheetContent>
+                                                </Sheet>
+                                            </div>
+                                        </div>
+                                        <CardDescription>
+                                            {format(new Date(statement.created_at), 'MMM d, yyyy')}
+                                        </CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="border-t p-2">
@@ -190,6 +188,6 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                     </Button>
                 </div>
             </div>
-        </aside>
+        </div>
     )
 }
