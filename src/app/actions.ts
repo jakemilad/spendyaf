@@ -134,10 +134,19 @@ export async function deleteStatement(id: string) {
 export async function updateStatement(id: string, data: any) {
     try {
         const session = await getSession();
+        if (!session) return null;
 
+        const transformedData = {
+            summary: data.data.summary,
+            fileName: data.data.fileName,
+            categories: data.data.categories,
+            totalSpend: data.data.totalSpend,
+            transactions: data.data.transactions
+        };
+        
         await pool.query(
             'UPDATE transaction_records SET data = $1, file_name = $2 WHERE id = $3',
-            [JSON.stringify(data), data.file_name, id]
+            [JSON.stringify(transformedData), data.file_name, id]
         );
         revalidatePath('/dashboard');
         return true;

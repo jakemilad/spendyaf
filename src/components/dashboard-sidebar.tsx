@@ -61,12 +61,26 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
             const statement = statements.find((s) => s.id === id)
             if(!statement) return
 
-            const updatedData = {...statement, file_name: newFileName}
+            const updatedData = {
+                ...statement,
+                file_name: newFileName,
+                data: {
+                    ...statement.data,
+                    fileName: newFileName
+                }
+            }
             const success = await updateStatement(id, updatedData)
 
             if(success) {
                 if(selectedStatement?.id === id) {
-                    onStatementSelect({...selectedStatement, file_name: newFileName})
+                    onStatementSelect({
+                        ...selectedStatement,
+                        file_name: newFileName,
+                        data: {
+                            ...selectedStatement.data,
+                            fileName: newFileName
+                        }
+                    })
                 }
                 toast.success('Statement updated')
             } else {

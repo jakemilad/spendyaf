@@ -23,13 +23,14 @@ export function SummaryTable({ statement }: SummaryTableProps) {
             <Card className="h-full">
                 <CardContent>
                     <Table>
-                        <TableCaption className="text-center font-medium text-sm text-muted-foreground mb-4 caption-top">
+                        <TableCaption className="text-center font-medium text-xl text-muted-foreground mb-4 caption-top">
                             {statement.data.fileName} Statement Summary
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[55%] py-3 pl-2">Category</TableHead>
-                                <TableHead className="w-[45%] text-right pr-2">Total</TableHead>
+                                <TableHead className="w-[40%] py-3 pl-2">Category</TableHead>
+                                <TableHead className="w-[30%] text-left pr-2">Largest Transaction</TableHead>
+                                <TableHead className="w-[30%] text-right">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -37,8 +38,14 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                                 <Dialog key={row.Category}>
                                     <DialogTrigger asChild>
                                         <TableRow className="cursor-pointer hover:bg-accent/50">
-                                            <TableCell className="font-medium pl-4">{row.Category}</TableCell>
-                                            <TableCell className="text-right pr-4">${row.Total}</TableCell>
+                                            <TableCell className="text-left font-medium">{row.Category}</TableCell>
+                                            <TableCell className="text-left">
+                                                {row.BiggestTransaction.merchant.split(' ').slice(0, 2).join(' ')}
+                                                <span className="text-xs text-muted-foreground block">
+                                                    ${row.BiggestTransaction.amount}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">${row.Total}</TableCell>
                                         </TableRow>
                                     </DialogTrigger>
                                     <DialogContent>
@@ -63,6 +70,7 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                         <TableFooter>
                             <TableRow>
                                 <TableCell>Total</TableCell>
+                                <TableCell></TableCell>
                                 <TableCell className="text-right">${statement.data.totalSpend}</TableCell>
                             </TableRow>
                         </TableFooter>

@@ -53,14 +53,14 @@ export function DashboardClient({
               <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                    <div className="bg-card rounded-lg shadow-sm min-h-[350px] max-h-[600px] overflow-y-auto">
+                    <div className="bg-card rounded-lg shadow-sm min-h-[400px] max-h-[800px] overflow-y-auto">
                       {selectedStatement && (
                         <SummaryTable statement={selectedStatement} />
                       )}
                     </div>
                   </div>
                   <div className="col-span-1">
-                    <div className="bg-card rounded-lg shadow-sm min-h-[350px] max-h-[600px] overflow-y-auto">
+                    <div className="bg-card rounded-lg shadow-sm min-h-[400px] max-h-[800px] overflow-y-auto">
                       {selectedStatement && (
                         <PieChartComponent statement={selectedStatement} />
                       )}
