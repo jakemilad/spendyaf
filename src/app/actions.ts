@@ -1,7 +1,7 @@
 "use server"
 import { neon } from "@neondatabase/serverless";
 import { getServerSession, Session } from "next-auth";
-import { authOptions } from "./api/auth/[...nextauth]/route";
+import { authOptions } from "./api/auth/auth.config";
 import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
 import { openAICategories } from "./lib/openai_api";
 import { Transaction } from "./types/types";
