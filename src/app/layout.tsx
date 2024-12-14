@@ -6,7 +6,6 @@ import { Nav } from "@/components/nav";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "sonner"
 
-
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -21,6 +20,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Spendy.af",
   description: "so spendy",
+  icons: {
+    icon: '/icon',
+    shortcut: '/icon',
+    apple: '/icon',
+  },
 };
 
 export default function RootLayout({

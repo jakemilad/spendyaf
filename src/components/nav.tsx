@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { SignInButton } from "@/components/auth/signin-button";
 import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
+import { PiggyBank } from "lucide-react";
 
 export function Nav() {
     const pathname = usePathname();
@@ -17,6 +18,7 @@ export function Nav() {
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center gap-6 md:gap-10">
                         <Link href="/" className="flex items-center space-x-2 transition-colors hover:text-foreground/80">
+                            <PiggyBank className="h-5 w-5" />
                             <span className="inline-block text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                                 {siteConfig.name}
                             </span>
