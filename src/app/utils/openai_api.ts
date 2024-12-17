@@ -24,6 +24,7 @@ Here are examples of correct categorizations:
 'Disney Subscription' -> 'Online Subscriptions'
 'EVO Car Share' -> 'Evo'
 'Whole Foods Market' -> 'Groceries'
+'KITS' -> 'Personal'
 
 Categorize each of the following merchants into one of these categories.
 ${merchants.join(', ')}

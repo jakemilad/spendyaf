@@ -8,7 +8,8 @@ import { SummaryTable } from "@/components/summary-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
-
+import { cn } from "@/lib/utils"
+import TransactionsChart from "@/components/timeseries"
 export function DashboardClient({
     initialStatements, 
     userName
@@ -20,6 +21,7 @@ export function DashboardClient({
     const [selectedStatement, setSelectedStatement] = useState<DbStatement | null>(
       initialStatements.length > 0 ? initialStatements[0] : null
     )
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   
     return (
       <div className="flex min-h-screen">
@@ -41,12 +43,17 @@ export function DashboardClient({
           </div>
         ) : (
           <>
-            <aside className="w-64 flex-shrink-0 border-r border-border/40">
+            <aside className={cn(
+              "border-r border-border/40 transition-all duration-300",
+              isSidebarCollapsed ? "w-12" : "w-64"
+            )}>
               <DashboardSidebar 
                 statements={initialStatements}
                 selectedStatement={selectedStatement}
                 onStatementSelect={setSelectedStatement}
                 userName={userName}
+                isCollapsed={isSidebarCollapsed}
+                onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               />
             </aside>
             <main className="flex-1 overflow-y-auto bg-background/50">
@@ -67,6 +74,11 @@ export function DashboardClient({
                     </div>
                   </div>
                 </div>
+                <div className="mt-2">
+                    {selectedStatement && (
+                      <TransactionsChart statement={selectedStatement} />
+                    )}
+                  </div>
               </div>
             </main>
           </>

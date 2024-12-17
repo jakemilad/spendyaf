@@ -18,6 +18,10 @@ interface SummaryTableProps {
 
 export function SummaryTable({ statement }: SummaryTableProps) {
 
+    const descendingTransactions = () => {
+        return statement.data.summary.sort((a, b) => b.Total - a.Total)
+    }
+
     return (
         <div className="h-full w-full">
             <Card className="h-full">
@@ -34,7 +38,7 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {statement.data.summary.map((row) => (
+                            {descendingTransactions().map((row) => (
                                 <Dialog key={row.Category}>
                                     <DialogTrigger asChild>
                                         <TableRow className="cursor-pointer hover:bg-accent/50">
@@ -50,18 +54,23 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle className="text-center font-bold text-xl mb-5">
+                                            <DialogTitle className="text-center font-bold text-xl pb-4">
                                                 {row.Category} Transactions
                                             </DialogTitle>
                                         </DialogHeader>
-                                        <div className="max-h-[60vh] overflow-y-auto">
-                                            <ul className="list-disc pl-6 space-y-2">
-                                                {Object.entries(row.Transactions).map(([transaction, count]) => (
-                                                    <li key={transaction}>
-                                                        {transaction.charAt(0).toUpperCase() + transaction.slice(1).toLowerCase()}: ${count}
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                        <div className="space-y-4">
+                                            {Object.entries(row.Transactions).map(([transaction, count]) => (
+                                                <div key={transaction} className="flex justify-between items-center border-b pb-2">
+                                                    <span className="font-medium">{transaction}</span>
+                                                    <span className="text-muted-foreground">${count}</span>
+                                                </div>
+                                            ))}
+                                            <div className="flex justify-end">
+                                                <span className="text-muted-foreground">Total:</span>
+                                                <span className="ml-3 font-medium">
+                                                    ${Object.values(row.Transactions).reduce((sum, count) => sum + count, 0).toFixed(2)}
+                                                </span>
+                                            </div>
                                         </div>
                                     </DialogContent>
                                 </Dialog>

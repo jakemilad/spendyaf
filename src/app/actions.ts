@@ -3,7 +3,7 @@ import { neon } from "@neondatabase/serverless";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "./api/auth/auth.config";
 import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
-import { openAICategories } from "./lib/openai_api";
+import { openAICategories } from "./utils/openai_api";
 import { Transaction } from "./types/types";
 import { UploadResult } from "./types/types";
 import { CategorySummary } from "./types/types";

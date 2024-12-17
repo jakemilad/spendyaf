@@ -14,17 +14,15 @@ export async function processCSV(file: Buffer): Promise<Transaction[]> {
         })
         .on('data', (data: any) => {
             try {
-                // Parse date in format "DD MMM YYYY"
                 const parsedDate = parseDate(data.Date, 'dd MMM yyyy', new Date());
                 
                 records.push({
-                    Date: parsedDate.getTime(), // Store as timestamp
+                    Date: parsedDate.getTime(),
                     Merchant: cleanNames(data.Description),
                     Amount: parseFloat(data.Amount),
                 });
             } catch (error) {
                 console.error(`Error parsing date for record: ${data.Date}`, error);
-                // Use current date as fallback
                 records.push({
                     Date: Date.now(),
                     Merchant: cleanNames(data.Description),
@@ -32,17 +30,37 @@ export async function processCSV(file: Buffer): Promise<Transaction[]> {
                 });
             }
         })
-        .on('end', () => resolve(records))
+        .on('end', () => {
+            const sortedRecords = records.sort((a, b) => a.Date - b.Date);
+            resolve(sortedRecords);
+        })
         .on('error', (error) => reject(error));
     });
 }
 
 export function cleanNames(name: string): string {
-    const pattern = new RegExp(`\\b(${CITY_NAMES.join('|')})\\b`, 'gi');
-    let cleaned = name.replace(pattern, '');
-    cleaned = cleaned.replace(/\d+/g, '');
+    // Step 1: Remove URLs and email-like patterns
+    let cleaned = name.replace(/\b(?:WWW|HTTP|HTTPS|COM|CA)\b|[.@]/gi, '');
+    
+    // Step 2: Remove store/reference numbers and special characters
+    cleaned = cleaned.replace(/[#*=]\d+|\(\d+\)|\d+/g, '');
+    
+    // Step 3: Remove cities from the predefined list
+    const cityPattern = new RegExp(`\\b(${CITY_NAMES.join('|')})\\b`, 'gi');
+    cleaned = cleaned.replace(cityPattern, '');
+    
+    // Step 4: Remove excessive whitespace and trim
+    cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
+    
+    // Step 5: Take only the first 3-4 significant words (adjustable)
+    cleaned = cleaned.split(' ').slice(0, 4).join(' ');
+    
+    // Step 6: Final cleanup of any remaining special characters
     cleaned = cleaned.replace(/[^a-zA-Z\s]/g, '');
+    
+    // Step 7: Final trim and standardize spaces
     cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    
     return cleaned;
 }
 
@@ -77,31 +95,32 @@ export function summarizeSpendByCategory(transactions: Transaction[], categories
         summary[category].transactions[transaction.Merchant] = baseAmount + (Number(transaction.Amount) || 0);
     }
 
-    return Object.entries(summary).map(([category, data]) => {
-        const formattedTransactions: { [key: string]: number } = {};
-        
-        Object.entries(data.transactions).forEach(([merchant, amount]) => {
-            const count = transactionCounts[category][merchant];
-            if(count > 1){
-                const merchantWithCount = `${merchant} (${count})`;
-                formattedTransactions[merchantWithCount] = Number(amount.toFixed(2));
-            } else {
-                formattedTransactions[merchant] = Number(amount.toFixed(2));
-            }
-        });
+    return Object.entries(summary)
+        .map(([category, data]) => {
+            const formattedTransactions: { [key: string]: number } = {};
+            
+            Object.entries(data.transactions).forEach(([merchant, amount]) => {
+                const count = transactionCounts[category][merchant];
+                if(count > 1){
+                    const merchantWithCount = `${merchant} (${count})`;
+                    formattedTransactions[merchantWithCount] = Number(amount.toFixed(2));
+                } else {
+                    formattedTransactions[merchant] = Number(amount.toFixed(2));
+                }
+            });
 
-        return {
-            Category: category,
-            Total: Number(data.total.toFixed(2)),
-            Transactions: formattedTransactions,
-            BiggestTransaction: {
-                merchant: data.biggestTransaction.merchant,
-                amount: Number(data.biggestTransaction.amount.toFixed(2))
-            }
-        };
-    });
+            return {
+                Category: category,
+                Total: Number(data.total.toFixed(2)),
+                Transactions: formattedTransactions,
+                BiggestTransaction: {
+                    merchant: data.biggestTransaction.merchant,
+                    amount: Number(data.biggestTransaction.amount.toFixed(2))
+                }
+            };
+        })
+        .sort((a, b) => b.Total - a.Total);
 }
-
 
 // export function summarizeSpendByCategory(transactions: Transaction[], categoriesMap: Record<string, string>): CategorySummary[] {
 //     let summary: SummaryMap = {};
@@ -145,3 +164,4 @@ export function summarizeSpendByCategory(transactions: Transaction[], categories
 //         };
 //     });
 // }
+

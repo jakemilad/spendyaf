@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils"
 import { DbStatement } from "@/app/types/types"
 import { Button } from "@/components/ui/button"
-import { Plus, FileText, Settings, User, Pencil } from "lucide-react"
+import { Plus, FileText, Settings, User, Pencil, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -21,9 +21,11 @@ interface DashboardSidebarProps {
     selectedStatement: DbStatement | null
     onStatementSelect: (statement: DbStatement | null) => void
     userName: string
+    isCollapsed: boolean
+    onToggleCollapse: () => void
 }
 
-export function DashboardSidebar({ statements, selectedStatement, onStatementSelect, userName }: DashboardSidebarProps) {
+export function DashboardSidebar({ statements, selectedStatement, onStatementSelect, userName, isCollapsed, onToggleCollapse }: DashboardSidebarProps) {
     const [isDeleting, setIsDeleting] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [editingFileName, setEditingFileName] = useState("")
@@ -95,11 +97,21 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
 
     return (
         <div className="h-full flex flex-col overflow-y-auto bg-background/50">
-            <div className="space-y-4 py-4">
+            <div className={cn("space-y-4 py-2", isCollapsed && "hidden")}>
                 <div className="px-3 py-2">
-                    <h2 className="mb-4 px-4 text-lg font-semibold tracking-tight">
-                        Hi, {firstName}
-                    </h2>
+                    <div className="flex justify-between items-center mb-4 px-4">
+                        <h2 className="text-lg font-semibold tracking-tight">
+                            Hi, {firstName}
+                        </h2>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={onToggleCollapse}
+                            className="h-8 w-8"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                    </div>
                     <div className="space-y-1">
                         {navigation.map((item) => (
                             <Link
@@ -159,7 +171,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                                                 <Button 
                                                                     variant="outline" 
                                                                     onClick={() => handleUpdate(
-                                                                        statement.id, 
+                                                                        statement.id.toString(), 
                                                                         editingFileName || statement.file_name
                                                                     )}
                                                                 >
@@ -171,7 +183,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                                                 variant="destructive"
                                                                 onClick={() => {
                                                                     if(window.confirm('Are you sure you want to delete this statement?')) {
-                                                                        handleDelete(statement.id)
+                                                                        handleDelete(statement.id.toString())
                                                                     }
                                                                 }}
                                                                 disabled={isDeleting}
@@ -202,6 +214,16 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                     </Button>
                 </div>
             </div>
+            {isCollapsed && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={onToggleCollapse}
+                    className="h-8 w-8 mx-auto mt-4"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            )}
         </div>
     )
 }
