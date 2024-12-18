@@ -117,7 +117,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
                                 {chartConfig[chart].label}
                             </span>
                             <span className="text-lg font-bold leading-none sm:text-3xl">
-                                ${total}
+                                ${statement.data.totalSpend}
                             </span>
                         </button>
                     )
@@ -193,7 +193,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
               <div className="flex justify-end">
                 <span className="text-muted-foreground">Total:</span>
                 <span className="ml-3 font-medium">
-                  ${total}
+                  ${selectedTransactions.reduce((acc, curr) => acc + curr.Amount, 0).toFixed(2)}
                 </span>
               </div>
             </div>

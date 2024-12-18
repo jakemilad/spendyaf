@@ -27,7 +27,7 @@ export function SummaryTable({ statement }: SummaryTableProps) {
             <Card className="h-full">
                 <CardContent>
                     <Table>
-                        <TableCaption className="text-center font-medium text-xl text-muted-foreground mb-4 caption-top">
+                        <TableCaption className="text-center font-medium text-xl mb-4 caption-top text-white">
                             {statement.data.fileName} Statement Summary
                         </TableCaption>
                         <TableHeader>

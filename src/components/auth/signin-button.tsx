@@ -29,7 +29,7 @@ export function SignInButton() {
             >
                 Sign Out
             </Button>
-            <span className="text-sm font-medium">{session?.user?.name}</span>
+            <span className="text-md font-medium">{session?.user?.name}</span>
         </div>
     );
 }

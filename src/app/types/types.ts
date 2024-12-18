@@ -1,5 +1,5 @@
 export interface Transaction {
-    Date: number; // Unix timestamp in milliseconds
+    Date: number;
     Merchant: string;
     Amount: number;
 }
@@ -8,7 +8,6 @@ export interface CategorySummary {
     Category: string;
     Total: number;
     Transactions: {[merchant: string]: number};
-    totalSpend?: number;
     BiggestTransaction: {merchant: string, amount: number};
 }
 
@@ -41,13 +40,13 @@ export interface Statement {
     transactions: Transaction[];
     fileName: string;
     totalSpend?: number;
+    insights?: any;
 }
 
 export interface DbStatement {
     id: string | number;
-    user_id?: string;
     file_name: string;
     created_at: string;
     data: Statement;
-    totalSpend?: number;
+    user_id?: string;
 }

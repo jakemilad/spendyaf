@@ -1,498 +1,616 @@
-export const tempData = {
-  "summary": [
+const tempData = {
+    "summary": [
       {
-          "Category": "Amazon",
-          "Total": 102.34,
-          "Transactions": {
-              "AMZN MKTP CAZNL WWWAMAZONCA": 10.46,
-              "AMZN MKTP CAZSEV WWWAMAZONCA": 17.01,
-              "AMZN MKTP CAZMR WWWAMAZONCA": 56.7,
-              "AMAZONCA WWWAMAZONCA": 6.99,
-              "PRIMEVIDEOCEPKPL WWWAMAZONCA": 5.59,
-              "AMAZONCA PRIME MEMBER AMAZONCAPRI": 5.59
-          }
+        "Total": 389.14,
+        "Category": "Groceries",
+        "Transactions": {
+          "SAFEWAY (2)": 24.69,
+          "E FOOD INC (3)": 57.38,
+          "WHOLE FOODS MARKET": 49.59,
+          "TOP TEN PRODUCE (9)": 257.48
+        },
+        "BiggestTransaction": {
+          "amount": 60.17,
+          "merchant": "TOP TEN PRODUCE"
+        }
       },
       {
-          "Category": "Personal",
-          "Total": 46.83,
-          "Transactions": {
-              "MEMBERSHIP FEE INSTALLMENT": 12.99,
-              "UNIVERSITY GOLF CLUB": 16,
-              "BC LIQUOR VANCOUVE": 17.84
-          }
+        "Total": 365.85,
+        "Category": "Clothes",
+        "Transactions": {
+          "LULULEMONCOM": 155.9,
+          "WINNERSHOMESENSE": 92.35,
+          "LS THE ONLY VINTAGE": 117.6
+        },
+        "BiggestTransaction": {
+          "amount": 155.9,
+          "merchant": "LULULEMONCOM"
+        }
       },
       {
-          "Category": "Transport",
-          "Total": 1118.81,
-          "Transactions": {
-              "UBER TRIP HTTPSHELPUB (9)": 125.52,
-              "COMPASS ACCOUNT BURN (14)": 44.8,
-              "UBER LIME SAN FRANCISCO": 21.26,
-              "AIRCANADA WINNIPEG": 612.42,
-              "AMTRAK INT WASHINGTON": 314.81
-          }
+        "Total": 325.45,
+        "Category": "Restaurants",
+        "Transactions": {
+          "ANHANDCHI": 40.32,
+          "MCDONALDS Q": 12.76,
+          "OSAKA SUSHI": 24.15,
+          "GRETA BAR YVR": 15,
+          "SIEGELS BAGELS": 16.12,
+          "THE CIDER HOUSE": 45.11,
+          "BREKA BAKERY CAFE": 8.45,
+          "BEANAROUNDTHEWORLD": 27.72,
+          "PIZZA PIZZA VANCOU": 15.08,
+          "RAMENDANBOKERRISDALE": 35.87,
+          "BLARNEY STONE IRISH T": 32.67,
+          "THIERRY CHOCOLATES MT": 14.43,
+          "HARAMBE RESTAURANTETHI": 33.15,
+          "RAIN OR SHINE HOMEMADE": 4.62
+        },
+        "BiggestTransaction": {
+          "amount": 45.11,
+          "merchant": "THE CIDER HOUSE"
+        }
       },
       {
-          "Category": "Groceries",
-          "Total": 477.76,
-          "Transactions": {
-              "TOP TEN PRODUCE (4)": 98.38,
-              "SAFEWAY (3)": 336.96,
-              "E FOOD INC (2)": 42.42
-          }
+        "Total": 279.16,
+        "Category": "Personal",
+        "Transactions": {
+          "KITS (2)": 58,
+          "LONDON DRUGS": 21.25,
+          "THE ARTONA GROUP INC": 93.62,
+          "PURE INTEGRATIVE PHARMA": 47.22,
+          "PINTOR BARBER BRITISH COLUMBI": 59.07
+        },
+        "BiggestTransaction": {
+          "amount": 93.62,
+          "merchant": "THE ARTONA GROUP INC"
+        }
       },
       {
-          "Category": "DoorDash",
-          "Total": 37.57,
-          "Transactions": {
-              "DOORDASHLEPETITSAIG DOWNTOWN TORONT": 27.08,
-              "DOORDASHDASHPASS DOWNTOWN TORONT": 10.49
-          }
+        "Total": 276.67,
+        "Category": "Evo",
+        "Transactions": {
+          "EVO CAR SHARE (18)": 276.67
+        },
+        "BiggestTransaction": {
+          "amount": 84,
+          "merchant": "EVO CAR SHARE"
+        }
       },
       {
-          "Category": "Evo",
-          "Total": 147.54,
-          "Transactions": {
-              "EVO CAR SHARE (13)": 147.54
-          }
+        "Total": 232.09,
+        "Category": "Online Shopping",
+        "Transactions": {
+          "AMAZON AMAZON": 7,
+          "AMZN MKTP BSJ AMAZON": 147.73,
+          "AMZN MKTP HOBUI AMAZON": 43.77,
+          "AMZN MKTP HOCWI AMAZON": 33.59
+        },
+        "BiggestTransaction": {
+          "amount": 147.73,
+          "merchant": "AMZN MKTP BSJ AMAZON"
+        }
       },
       {
-          "Category": "Clothes",
-          "Total": 502.51,
-          "Transactions": {
-              "LULULEMON": 12.54,
-              "LULULEMON ATHLETICA BC": -10,
-              "LULULEMONCOM (2)": 499.97
-          }
+        "Total": 196.11,
+        "Category": "DoorDash",
+        "Transactions": {
+          "DOORDA DOORDASHKI": 71.18,
+          "DOORDASHDASHPASS DOWNTOWN TORONT": 10.49,
+          "DOORDASHPAPPAROTI DOWNTOWN TORONT": 22.76,
+          "DOORDASHNOFRILLS DOWNTOWN TORONT (2)": 91.68
+        },
+        "BiggestTransaction": {
+          "amount": 87.96,
+          "merchant": "DOORDASHNOFRILLS DOWNTOWN TORONT"
+        }
       },
       {
-          "Category": "Restaurants",
-          "Total": 291.27,
-          "Transactions": {
-              "RAMENDANBOROBSON": 39.09,
-              "BREKA BAKERY CAFE": 15.4,
-              "KELLY CARLOS OBRYAN": 27.47,
-              "BANANA LEAF IN KITSILAN": 37.17,
-              "AHISUSHI": 19.26,
-              "RAMEN DANBO KERRISDALE": 37.08,
-              "THIERRY CHOCOLATES MT": 5.07,
-              "KITS": 77.95,
-              "SING SING BEER BAR": 32.78
-          }
+        "Total": 88.36,
+        "Category": "Online Subscriptions",
+        "Transactions": {
+          "CRAVE": 24.64,
+          "APPLEBILL (3)": 16.77,
+          "CURSOR AI POWERED IDE": 28.37,
+          "MEMBERSHIP FEE INSTALLMENT": 12.99,
+          "AMAZON PRIME MEMBER AMAZONPRI": 5.59
+        },
+        "BiggestTransaction": {
+          "amount": 28.37,
+          "merchant": "CURSOR AI POWERED IDE"
+        }
       },
       {
-          "Category": "Online Subscriptions",
-          "Total": 147.43,
-          "Transactions": {
-              "CURSOR AI POWERED IDE NEW YORK": 28.75,
-              "PLAYSTATION NETWORK": 100.79,
-              "NETFLIXCOM": 6.71,
-              "APPLECOMBILL (2)": 11.18
-          }
+        "Total": 60.64,
+        "Category": "Rogers",
+        "Transactions": {
+          "ROGERS": 60.64
+        },
+        "BiggestTransaction": {
+          "amount": 60.64,
+          "merchant": "ROGERS"
+        }
       },
       {
-          "Category": "Bills",
-          "Total": 24.64,
-          "Transactions": {
-              "BELL MEDIA": 24.64
-          }
-      },
-      {
-          "Category": "Movies",
-          "Total": 50.84,
-          "Transactions": {
-              "CINEPLEX": 15.66,
-              "CINEPLEX WEB QP": 35.18
-          }
-      },
-      {
-          "Category": "Rogers",
-          "Total": 74.24,
-          "Transactions": {
-              "ROGERS": 74.24
-          }
-      },
-      {
-          "Category": "Online Shopping",
-          "Total": 474.6,
-          "Transactions": {
-              "EXPEDIA EXPEDIACA": 474.6
-          }
+        "Total": 35.2,
+        "Category": "Transport",
+        "Transactions": {
+          "COMPASS ACCOUNT BURN (4)": 12.8,
+          "COMPASS VENDING BURN (7)": 22.4
+        },
+        "BiggestTransaction": {
+          "amount": 3.2,
+          "merchant": "COMPASS VENDING BURN"
+        }
       }
-  ],
-  "categories": {
-      "AMZN MKTP CAZNL WWWAMAZONCA": "Amazon",
-      "AMZN MKTP CAZSEV WWWAMAZONCA": "Amazon",
-      "MEMBERSHIP FEE INSTALLMENT": "Personal",
-      "AMZN MKTP CAZMR WWWAMAZONCA": "Amazon",
-      "UBER TRIP HTTPSHELPUB": "Transport",
-      "TOP TEN PRODUCE": "Groceries",
-      "COMPASS ACCOUNT BURN": "Transport",
-      "DOORDASHLEPETITSAIG DOWNTOWN TORONT": "DoorDash",
-      "EVO CAR SHARE": "Evo",
-      "LULULEMON": "Clothes",
-      "SAFEWAY": "Groceries",
-      "RAMENDANBOROBSON": "Restaurants",
-      "CURSOR AI POWERED IDE NEW YORK": "Online Subscriptions",
-      "BREKA BAKERY CAFE": "Restaurants",
-      "KELLY CARLOS OBRYAN": "Restaurants",
-      "PLAYSTATION NETWORK": "Online Subscriptions",
-      "UNIVERSITY GOLF CLUB": "Personal",
-      "BANANA LEAF IN KITSILAN": "Restaurants",
-      "BELL MEDIA": "Bills",
-      "CINEPLEX": "Movies",
-      "AMAZONCA WWWAMAZONCA": "Amazon",
-      "CINEPLEX WEB QP": "Movies",
-      "NETFLIXCOM": "Online Subscriptions",
-      "PRIMEVIDEOCEPKPL WWWAMAZONCA": "Amazon",
-      "DOORDASHDASHPASS DOWNTOWN TORONT": "DoorDash",
-      "UBER LIME SAN FRANCISCO": "Transport",
-      "AIRCANADA WINNIPEG": "Transport",
-      "LULULEMON ATHLETICA BC": "Clothes",
-      "LULULEMONCOM": "Clothes",
+    ],
+    "fileName": "October",
+    "categories": {
+      "KITS": "Personal",
+      "CRAVE": "Online Subscriptions",
       "ROGERS": "Rogers",
-      "AHISUSHI": "Restaurants",
-      "AMAZONCA PRIME MEMBER AMAZONCAPRI": "Amazon",
+      "SAFEWAY": "Groceries",
+      "ANHANDCHI": "Restaurants",
+      "APPLEBILL": "Online Subscriptions",
       "E FOOD INC": "Groceries",
-      "AMTRAK INT WASHINGTON": "Transport",
-      "EXPEDIA EXPEDIACA": "Online Shopping",
-      "RAMEN DANBO KERRISDALE": "Restaurants",
-      "APPLECOMBILL": "Online Subscriptions",
+      "MCDONALDS Q": "Restaurants",
+      "OSAKA SUSHI": "Restaurants",
+      "LONDON DRUGS": "Personal",
+      "LULULEMONCOM": "Clothes",
+      "AMAZON AMAZON": "Online Shopping",
+      "EVO CAR SHARE": "Evo",
+      "GRETA BAR YVR": "Restaurants",
+      "SIEGELS BAGELS": "Restaurants",
+      "THE CIDER HOUSE": "Restaurants",
+      "TOP TEN PRODUCE": "Groceries",
+      "WINNERSHOMESENSE": "Clothes",
+      "BREKA BAKERY CAFE": "Restaurants",
+      "DOORDA DOORDASHKI": "DoorDash",
+      "BEANAROUNDTHEWORLD": "Restaurants",
+      "PIZZA PIZZA VANCOU": "Restaurants",
+      "WHOLE FOODS MARKET": "Groceries",
+      "LS THE ONLY VINTAGE": "Clothes",
+      "AMZN MKTP BSJ AMAZON": "Online Shopping",
+      "COMPASS ACCOUNT BURN": "Transport",
+      "COMPASS VENDING BURN": "Transport",
+      "RAMENDANBOKERRISDALE": "Restaurants",
+      "THE ARTONA GROUP INC": "Personal",
+      "BLARNEY STONE IRISH T": "Restaurants",
+      "CURSOR AI POWERED IDE": "Online Subscriptions",
       "THIERRY CHOCOLATES MT": "Restaurants",
-      "BC LIQUOR VANCOUVE": "Personal",
-      "KITS": "Restaurants",
-      "SING SING BEER BAR": "Restaurants"
-  },
-  "transactions": [
+      "AMZN MKTP HOBUI AMAZON": "Online Shopping",
+      "AMZN MKTP HOCWI AMAZON": "Online Shopping",
+      "HARAMBE RESTAURANTETHI": "Restaurants",
+      "RAIN OR SHINE HOMEMADE": "Restaurants",
+      "PURE INTEGRATIVE PHARMA": "Personal",
+      "MEMBERSHIP FEE INSTALLMENT": "Online Subscriptions",
+      "AMAZON PRIME MEMBER AMAZONPRI": "Online Subscriptions",
+      "PINTOR BARBER BRITISH COLUMBI": "Personal",
+      "DOORDASHDASHPASS DOWNTOWN TORONT": "DoorDash",
+      "DOORDASHNOFRILLS DOWNTOWN TORONT": "DoorDash",
+      "DOORDASHPAPPAROTI DOWNTOWN TORONT": "DoorDash"
+    },
+    "totalSpend": 2268.57,
+    "transactions": [
       {
-          "Merchant": "AMZN MKTP CAZNL WWWAMAZONCA",
-          "Amount": 10.46
+        "Date": 1727420400000,
+        "Amount": 15,
+        "Merchant": "GRETA BAR YVR"
       },
       {
-          "Merchant": "AMZN MKTP CAZSEV WWWAMAZONCA",
-          "Amount": 17.01
+        "Date": 1727506800000,
+        "Amount": 32.67,
+        "Merchant": "BLARNEY STONE IRISH T"
       },
       {
-          "Merchant": "MEMBERSHIP FEE INSTALLMENT",
-          "Amount": 12.99
+        "Date": 1727506800000,
+        "Amount": 22.76,
+        "Merchant": "DOORDASHPAPPAROTI DOWNTOWN TORONT"
       },
       {
-          "Merchant": "AMZN MKTP CAZMR WWWAMAZONCA",
-          "Amount": 56.7
+        "Date": 1727593200000,
+        "Amount": 32.35,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 10.99
+        "Date": 1727679600000,
+        "Amount": 7.44,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "TOP TEN PRODUCE",
-          "Amount": 23.25
+        "Date": 1727679600000,
+        "Amount": 16.22,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1727766000000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1727766000000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "DOORDASHLEPETITSAIG DOWNTOWN TORONT",
-          "Amount": 27.08
+        "Date": 1727766000000,
+        "Amount": 21.55,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 8.53
+        "Date": 1727852400000,
+        "Amount": 6.71,
+        "Merchant": "APPLEBILL"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 12.42
+        "Date": 1727852400000,
+        "Amount": 47.22,
+        "Merchant": "PURE INTEGRATIVE PHARMA"
       },
       {
-          "Merchant": "LULULEMON",
-          "Amount": 12.54
+        "Date": 1727852400000,
+        "Amount": 42.27,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "SAFEWAY",
-          "Amount": 57.64
+        "Date": 1727938800000,
+        "Amount": 4.47,
+        "Merchant": "APPLEBILL"
       },
       {
-          "Merchant": "RAMENDANBOROBSON",
-          "Amount": 39.09
+        "Date": 1727938800000,
+        "Amount": 8.53,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "CURSOR AI POWERED IDE NEW YORK",
-          "Amount": 28.75
+        "Date": 1727938800000,
+        "Amount": 15.12,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 13.14
+        "Date": 1728025200000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 25.65
+        "Date": 1728025200000,
+        "Amount": 18.48,
+        "Merchant": "E FOOD INC"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 5.79
+        "Date": 1728025200000,
+        "Amount": 14.02,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 9.08
+        "Date": 1728025200000,
+        "Amount": 16.12,
+        "Merchant": "SIEGELS BAGELS"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728111600000,
+        "Amount": 27.72,
+        "Merchant": "BEANAROUNDTHEWORLD"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 5.79
+        "Date": 1728111600000,
+        "Amount": 67.95,
+        "Merchant": "KITS"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728284400000,
+        "Amount": 5.59,
+        "Merchant": "AMAZON PRIME MEMBER AMAZONPRI"
       },
       {
-          "Merchant": "TOP TEN PRODUCE",
-          "Amount": 42.69
+        "Date": 1728284400000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "BREKA BAKERY CAFE",
-          "Amount": 15.4
+        "Date": 1728284400000,
+        "Amount": -9.95,
+        "Merchant": "KITS"
       },
       {
-          "Merchant": "KELLY CARLOS OBRYAN",
-          "Amount": 27.47
+        "Date": 1728284400000,
+        "Amount": 38.96,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "PLAYSTATION NETWORK",
-          "Amount": 100.79
+        "Date": 1728370800000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "TOP TEN PRODUCE",
-          "Amount": 8.98
+        "Date": 1728370800000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 11.1
+        "Date": 1728370800000,
+        "Amount": 18.11,
+        "Merchant": "E FOOD INC"
       },
       {
-          "Merchant": "UNIVERSITY GOLF CLUB",
-          "Amount": 16
+        "Date": 1728457200000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS VENDING BURN"
       },
       {
-          "Merchant": "BANANA LEAF IN KITSILAN",
-          "Amount": 37.17
+        "Date": 1728457200000,
+        "Amount": 21.25,
+        "Merchant": "LONDON DRUGS"
       },
       {
-          "Merchant": "BELL MEDIA",
-          "Amount": 24.64
+        "Date": 1728457200000,
+        "Amount": 24.15,
+        "Merchant": "OSAKA SUSHI"
       },
       {
-          "Merchant": "CINEPLEX",
-          "Amount": 15.66
+        "Date": 1728543600000,
+        "Amount": 10.49,
+        "Merchant": "DOORDASHDASHPASS DOWNTOWN TORONT"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728543600000,
+        "Amount": 59.07,
+        "Merchant": "PINTOR BARBER BRITISH COLUMBI"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 7.44
+        "Date": 1728543600000,
+        "Amount": 60.64,
+        "Merchant": "ROGERS"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 11.16
+        "Date": 1728543600000,
+        "Amount": 16.6,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "AMAZONCA WWWAMAZONCA",
-          "Amount": 6.99
+        "Date": 1728630000000,
+        "Amount": 33.15,
+        "Merchant": "HARAMBE RESTAURANTETHI"
       },
       {
-          "Merchant": "CINEPLEX WEB QP",
-          "Amount": 35.18
+        "Date": 1728630000000,
+        "Amount": 45.11,
+        "Merchant": "THE CIDER HOUSE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728716400000,
+        "Amount": 5.24,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "NETFLIXCOM",
-          "Amount": 6.71
+        "Date": 1728716400000,
+        "Amount": 6.34,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "PRIMEVIDEOCEPKPL WWWAMAZONCA",
-          "Amount": 5.59
+        "Date": 1728802800000,
+        "Amount": 12.96,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728889200000,
+        "Amount": 40.32,
+        "Merchant": "ANHANDCHI"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728889200000,
+        "Amount": 147.73,
+        "Merchant": "AMZN MKTP BSJ AMAZON"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1728889200000,
+        "Amount": 43.77,
+        "Merchant": "AMZN MKTP HOBUI AMAZON"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 9.08
+        "Date": 1728889200000,
+        "Amount": 93.62,
+        "Merchant": "THE ARTONA GROUP INC"
       },
       {
-          "Merchant": "SAFEWAY",
-          "Amount": 131.44
+        "Date": 1728975600000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS ACCOUNT BURN"
       },
       {
-          "Merchant": "DOORDASHDASHPASS DOWNTOWN TORONT",
-          "Amount": 10.49
+        "Date": 1728975600000,
+        "Amount": 20.79,
+        "Merchant": "E FOOD INC"
       },
       {
-          "Merchant": "UBER LIME SAN FRANCISCO",
-          "Amount": 21.26
+        "Date": 1728975600000,
+        "Amount": 9.08,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 25.45
+        "Date": 1728975600000,
+        "Amount": 14.43,
+        "Merchant": "THIERRY CHOCOLATES MT"
       },
       {
-          "Merchant": "AIRCANADA WINNIPEG",
-          "Amount": 612.42
+        "Date": 1729062000000,
+        "Amount": 7,
+        "Merchant": "AMAZON AMAZON"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 12.92
+        "Date": 1729062000000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS ACCOUNT BURN"
       },
       {
-          "Merchant": "LULULEMON ATHLETICA BC",
-          "Amount": -10
+        "Date": 1729062000000,
+        "Amount": 24.64,
+        "Merchant": "CRAVE"
       },
       {
-          "Merchant": "LULULEMONCOM",
-          "Amount": 430.08
+        "Date": 1729062000000,
+        "Amount": 13.64,
+        "Merchant": "SAFEWAY"
       },
       {
-          "Merchant": "ROGERS",
-          "Amount": 74.24
+        "Date": 1729148400000,
+        "Amount": 117.6,
+        "Merchant": "LS THE ONLY VINTAGE"
       },
       {
-          "Merchant": "AHISUSHI",
-          "Amount": 19.26
+        "Date": 1729234800000,
+        "Amount": 12.92,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "AMAZONCA PRIME MEMBER AMAZONCAPRI",
-          "Amount": 5.59
+        "Date": 1729234800000,
+        "Amount": 49.59,
+        "Merchant": "WHOLE FOODS MARKET"
       },
       {
-          "Merchant": "E FOOD INC",
-          "Amount": 23.1
+        "Date": 1729234800000,
+        "Amount": 92.35,
+        "Merchant": "WINNERSHOMESENSE"
       },
       {
-          "Merchant": "AMTRAK INT WASHINGTON",
-          "Amount": 314.81
+        "Date": 1729321200000,
+        "Amount": 15.12,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "EXPEDIA EXPEDIACA",
-          "Amount": 474.6
+        "Date": 1729321200000,
+        "Amount": 21.34,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "LULULEMONCOM",
-          "Amount": 69.89
+        "Date": 1729321200000,
+        "Amount": 71.18,
+        "Merchant": "DOORDA DOORDASHKI"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 9.31
+        "Date": 1729407600000,
+        "Amount": 35.87,
+        "Merchant": "RAMENDANBOKERRISDALE"
       },
       {
-          "Merchant": "E FOOD INC",
-          "Amount": 19.32
+        "Date": 1729407600000,
+        "Amount": 3.72,
+        "Merchant": "DOORDASHNOFRILLS DOWNTOWN TORONT"
       },
       {
-          "Merchant": "RAMEN DANBO KERRISDALE",
-          "Amount": 37.08
+        "Date": 1729407600000,
+        "Amount": 87.96,
+        "Merchant": "DOORDASHNOFRILLS DOWNTOWN TORONT"
       },
       {
-          "Merchant": "APPLECOMBILL",
-          "Amount": 4.47
+        "Date": 1729407600000,
+        "Amount": 7.99,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 16.22
+        "Date": 1729407600000,
+        "Amount": 10.73,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "SAFEWAY",
-          "Amount": 147.88
+        "Date": 1729407600000,
+        "Amount": 12.76,
+        "Merchant": "MCDONALDS Q"
       },
       {
-          "Merchant": "THIERRY CHOCOLATES MT",
-          "Amount": 5.07
+        "Date": 1729407600000,
+        "Amount": 11.05,
+        "Merchant": "SAFEWAY"
       },
       {
-          "Merchant": "APPLECOMBILL",
-          "Amount": 6.71
+        "Date": 1729494000000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS ACCOUNT BURN"
       },
       {
-          "Merchant": "BC LIQUOR VANCOUVE",
-          "Amount": 17.84
+        "Date": 1729494000000,
+        "Amount": 15.12,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 10.73
+        "Date": 1729580400000,
+        "Amount": 3.2,
+        "Merchant": "COMPASS ACCOUNT BURN"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 18.41
+        "Date": 1729666800000,
+        "Amount": 28.37,
+        "Merchant": "CURSOR AI POWERED IDE"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 21.55
+        "Date": 1729666800000,
+        "Amount": 5.24,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "KITS",
-          "Amount": 77.95
+        "Date": 1729666800000,
+        "Amount": 23.94,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "SING SING BEER BAR",
-          "Amount": 32.78
+        "Date": 1729753200000,
+        "Amount": 84,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 9.08
+        "Date": 1729753200000,
+        "Amount": 155.9,
+        "Merchant": "LULULEMONCOM"
       },
       {
-          "Merchant": "EVO CAR SHARE",
-          "Amount": 12.92
+        "Date": 1729839600000,
+        "Amount": 5.59,
+        "Merchant": "APPLEBILL"
       },
       {
-          "Merchant": "UBER TRIP HTTPSHELPUB",
-          "Amount": 6.3
+        "Date": 1729839600000,
+        "Amount": 8.45,
+        "Merchant": "BREKA BAKERY CAFE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1729839600000,
+        "Amount": 5.24,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1729839600000,
+        "Amount": 8.89,
+        "Merchant": "TOP TEN PRODUCE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1729926000000,
+        "Amount": 16.77,
+        "Merchant": "EVO CAR SHARE"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1729926000000,
+        "Amount": 15.08,
+        "Merchant": "PIZZA PIZZA VANCOU"
       },
       {
-          "Merchant": "TOP TEN PRODUCE",
-          "Amount": 23.46
+        "Date": 1730012400000,
+        "Amount": 33.59,
+        "Merchant": "AMZN MKTP HOCWI AMAZON"
       },
       {
-          "Merchant": "COMPASS ACCOUNT BURN",
-          "Amount": 3.2
+        "Date": 1730012400000,
+        "Amount": 60.17,
+        "Merchant": "TOP TEN PRODUCE"
+      },
+      {
+        "Date": 1730098800000,
+        "Amount": 12.99,
+        "Merchant": "MEMBERSHIP FEE INSTALLMENT"
+      },
+      {
+        "Date": 1730098800000,
+        "Amount": 4.62,
+        "Merchant": "RAIN OR SHINE HOMEMADE"
       }
-  ],
-  "fileName": "November",
-  "totalSpend": 3516.38
-}
+    ]
+  }

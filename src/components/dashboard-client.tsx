@@ -10,6 +10,7 @@ import Link from "next/link"
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import TransactionsChart from "@/components/timeseries"
+import { LoadingOverlay } from "./loading-overlay"
 export function DashboardClient({
     initialStatements, 
     userName
@@ -21,9 +22,16 @@ export function DashboardClient({
     const [selectedStatement, setSelectedStatement] = useState<DbStatement | null>(
       initialStatements.length > 0 ? initialStatements[0] : null
     )
+
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  
+    const [isLoading, setIsLoading] = useState(false)
+
     return (
+      <>
+        <LoadingOverlay 
+            isOpen={isLoading} 
+            message="Refreshing your statement..."
+        />
       <div className="flex min-h-screen">
         {initialStatements.length === 0 ? (
           <div className="flex-1 flex-col items-center justify-center p-20 mt-10">
@@ -54,6 +62,7 @@ export function DashboardClient({
                 userName={userName}
                 isCollapsed={isSidebarCollapsed}
                 onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                onLoadingChange={setIsLoading}
               />
             </aside>
             <main className="flex-1 overflow-y-auto bg-background/50">
@@ -84,5 +93,6 @@ export function DashboardClient({
           </>
         )}
       </div>
+      </>
     )
   }

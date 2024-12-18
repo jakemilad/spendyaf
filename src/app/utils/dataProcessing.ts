@@ -64,6 +64,96 @@ export function cleanNames(name: string): string {
     return cleaned;
 }
 
+export function getInsights(transactions: Transaction[], categorySummary: CategorySummary[]): any {
+
+    const biggestCategorySpend = () => {
+        let biggestCategory = "";
+        let biggestSpend = 0;
+
+        for(const category of categorySummary) {
+            const curr = category.Total;
+            if(curr > biggestSpend) {
+                biggestSpend = curr;
+                biggestCategory = category.Category;
+            }
+        }
+        return {
+            category: biggestCategory,
+            total: biggestSpend
+        }
+    }
+
+    const biggestTransaction = () => {
+        let biggestTransaction = "";
+        let biggestSpend = 0;
+
+        for(const transaction of transactions) {
+            const curr = transaction.Amount;
+            if(curr > biggestSpend) {
+                biggestSpend = curr;
+                biggestTransaction = transaction.Merchant;
+            }
+        }
+        return {
+            merchant: biggestTransaction,
+            amount: biggestSpend
+        }
+    }
+
+    const mostFrequentTransaction = () => {
+        const freqMap: Record<string, number> = {};
+
+        for(const transaction of transactions) {
+            freqMap[transaction.Merchant] = (freqMap[transaction.Merchant] || 0) + 1;
+        }
+
+        let mostFrequentMerchant: string = "";
+        let highestFrequency = 0;
+        let totalAmount = 0;
+
+        for (const [merchant, frequency] of Object.entries(freqMap)) {
+            if(frequency > highestFrequency) {
+                highestFrequency = frequency;
+                mostFrequentMerchant = merchant;
+            }
+            totalAmount += frequency;
+        }
+
+        totalAmount = transactions.filter(t => t.Merchant === mostFrequentMerchant).reduce((sum, t) => sum + t.Amount, 0);
+
+        return {
+            merchant: mostFrequentMerchant,
+            frequency: highestFrequency,
+            total: totalAmount
+        }
+    }
+
+    const averageSpend = () => {
+        if (transactions.length === 0) return 0;
+
+        const dates = transactions.map(t => t.Date);
+        const firstDate = Math.min(...dates);
+        const lastDate = Math.max(...dates);
+
+        const totalSpend = transactions.reduce((sum, t) => sum + t.Amount, 0);
+
+        const daysDiff = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)) + 1;
+        const weeksDiff = Math.ceil(daysDiff / 7);
+
+        return {
+            daily: Number((totalSpend / daysDiff).toFixed(2)),
+            weekly: Number((totalSpend / weeksDiff).toFixed(2))
+        }
+    }
+    
+    return {
+        biggestCategorySpend: biggestCategorySpend(),
+        biggestTransaction: biggestTransaction(),
+        mostFrequentTransaction: mostFrequentTransaction(),
+        averageSpend: averageSpend()
+    }
+}
+
 export function summarizeSpendByCategory(transactions: Transaction[], categoriesMap: Record<string, string>): CategorySummary[] {
     let summary: SummaryMap = {};
     let transactionCounts: Record<string, Record<string, number>> = {};

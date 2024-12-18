@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner"
-
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 interface FileUploadProps {
     onUploadSuccess: () => Promise<void>;
@@ -49,6 +49,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
             return;
         }
 
+        setShowDialog(false);
         try {
             setIsLoading(true);
             setError(null);
@@ -83,6 +84,10 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
 
     return (
         <>
+            <LoadingOverlay 
+                isOpen={isLoading} 
+                message="Uploading your statement..."
+            />
             <Card className="w-full max-w-md mx-auto mt-10">
                 <CardHeader className="text-center">
                     <CardTitle>Upload your transactions</CardTitle>
@@ -143,8 +148,8 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button onClick={handleUpload} disabled={isLoading}>
-                            {isLoading ? "Uploading..." : "Upload"}
+                        <Button onClick={handleUpload}>
+                            Upload
                         </Button>
                     </DialogFooter>
                 </DialogContent>

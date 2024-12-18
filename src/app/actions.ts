@@ -11,6 +11,8 @@ import pool from "@/lib/db";
 import { DbStatement } from "./types/types";
 import { revalidatePath } from 'next/cache';
 const sql = neon(process.env.DATABASE_URL!);
+import { getInsights } from "./utils/dataProcessing";
+import { Statement } from "./types/types";
 
 async function getSession(): Promise<Session | null> {
     const session = await getServerSession(authOptions);
@@ -45,7 +47,7 @@ export async function getUserStatements(): Promise<DbStatement[] | null> {
     }
 }
 
-export async function uploadAndProcessStatement(formData: FormData): Promise<UploadResult> {
+export async function uploadAndProcessStatement(formData: FormData): Promise<Statement> {
     try {
         const session = await getSession();
 
@@ -74,12 +76,15 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Upl
 
         const totalSpend = transactions.reduce((sum, transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
 
+        const insights = getInsights(transactions, summary);
+
         const response = {
             summary, 
             categories, 
             transactions, 
             fileName,
-            totalSpend: Number(totalSpend)
+            totalSpend: Number(totalSpend),
+            insights
         };
 
         await pool.query(
@@ -87,17 +92,54 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Upl
             [session?.user?.email, JSON.stringify(response), fileName]);
         console.log('inserted into db');
 
-        return {
-            success: true,
-            data: response
-        };
-
+        return response;
     } catch (error) {
         console.error('Upload error:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        throw error;
+    }
+}
+
+
+export async function reprocessStatement(statementId: string): Promise<boolean> {
+    try {
+        const session = await getSession();
+        if (!session) return false;
+
+        const statement = await sql`
+            SELECT data, file_name
+            FROM transaction_records
+            WHERE id = ${statementId} AND user_id = ${session?.user?.email}
+        `;
+
+        if(!statement) return false;
+
+        const transactions = statement[0].data.transactions;
+    
+
+        const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
+        const categories = await openAICategories(uniqueMerchants as string[]);
+        const summary = summarizeSpendByCategory(transactions, categories);
+        const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
+        const insights = getInsights(transactions, summary);
+
+        const updatedData = {
+            summary, 
+            categories, 
+            transactions, 
+            fileName: statement[0].file_name,
+            totalSpend: Number(totalSpend),
+            insights
         };
+
+        await pool.query(
+            'UPDATE transaction_records SET data = $1 WHERE id = $2',
+            [JSON.stringify(updatedData), statementId]
+        );
+        revalidatePath('/dashboard');
+        return true; 
+    } catch (error) {
+        console.error('Error reprocessing statement:', error);
+        return false;
     }
 }
 

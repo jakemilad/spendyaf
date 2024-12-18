@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils"
 import { DbStatement } from "@/app/types/types"
 import { Button } from "@/components/ui/button"
-import { Plus, FileText, Settings, User, Pencil, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, FileText, Settings, User, Pencil, ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -12,9 +12,9 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {format} from "date-fns"
-import { deleteStatement, updateStatement } from "@/app/actions"
+import { deleteStatement, reprocessStatement, updateStatement } from "@/app/actions"
 import { toast } from "sonner"
-
+import { LoadingAnimation } from "@/components/loading-animation"
 
 interface DashboardSidebarProps {
     statements: DbStatement[]
@@ -23,12 +23,14 @@ interface DashboardSidebarProps {
     userName: string
     isCollapsed: boolean
     onToggleCollapse: () => void
+    onLoadingChange: (isLoading: boolean) => void
 }
 
-export function DashboardSidebar({ statements, selectedStatement, onStatementSelect, userName, isCollapsed, onToggleCollapse }: DashboardSidebarProps) {
+export function DashboardSidebar({ statements, selectedStatement, onStatementSelect, userName, isCollapsed, onToggleCollapse, onLoadingChange }: DashboardSidebarProps) {
     const [isDeleting, setIsDeleting] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [editingFileName, setEditingFileName] = useState("")
+    const [isRefreshing, setIsRefreshing] = useState(false)
     const pathname = usePathname()
     const firstName = userName.split(' ')[0]
 
@@ -55,6 +57,24 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
             toast.error('An error occurred while deleting the statement')
         } finally {
             setIsDeleting(false)
+        }
+    }
+
+    const handleRefresh = async (id: string) => {
+        try {
+            setIsRefreshing(true)
+            onLoadingChange(true)
+            const success = await reprocessStatement(id)
+            if(success) {
+                toast.success('Statement refreshed')
+            } else {
+                toast.error('Failed to refresh statement')
+            }
+        } catch (error) {
+            toast.error('An error occurred while refreshing the statement')
+        } finally {
+            setIsRefreshing(false)
+            onLoadingChange(false)
         }
     }
 
@@ -144,7 +164,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                     <CardHeader>
                                         <div className="flex justify-between items-center">
                                             <CardTitle className="text-base">{statement.file_name}</CardTitle>
-                                            <div onClick={(e) => e.stopPropagation()}>
+                                            <div onClick={(e) => e.stopPropagation()} className="flex gap-2">
                                                 <Sheet>
                                                     <SheetTrigger>
                                                         <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
@@ -156,16 +176,23 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                                                 Update your statement details or delete it.
                                                             </SheetDescription>
                                                         </SheetHeader>
-                                                        <div className="grid gap-4 py-4">
-                                                            <div className="grid gap-2">
-                                                                <Label htmlFor="fileName">Statement Name</Label>
-                                                                <Input
-                                                                    id="fileName"
-                                                                    defaultValue={statement.file_name}
-                                                                    onChange={(e) => setEditingFileName(e.target.value)}
-                                                                />
+                                                        {isRefreshing ? (
+                                                            <LoadingAnimation 
+                                                                variant="processing"
+                                                                message="Refreshing your statement..." 
+                                                            />
+                                                        ) : (
+                                                            <div className="grid gap-4 py-4">
+                                                                <div className="grid gap-2">
+                                                                    <Label htmlFor="fileName">Statement Name</Label>
+                                                                    <Input
+                                                                        id="fileName"
+                                                                        defaultValue={statement.file_name}
+                                                                        onChange={(e) => setEditingFileName(e.target.value)}
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        )}
                                                         <div className="flex flex-col gap-4 mt-4">
                                                             <SheetClose asChild>
                                                                 <Button 
@@ -176,6 +203,19 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                                                     )}
                                                                 >
                                                                     Save Changes
+                                                                    </Button>
+                                                            </SheetClose>
+                                                            <SheetClose asChild>
+                                                                <Button
+                                                                variant="secondary"
+                                                                onClick={() => {
+                                                                    if(window.confirm('This action will reprocess the statement through the AI. Are you sure?')){
+                                                                        handleRefresh(statement.id.toString())
+                                                                    }
+                                                                }}
+                                                                disabled={isRefreshing}
+                                                                >
+                                                                    Refresh Statement
                                                                 </Button>
                                                             </SheetClose>
                                                             <Separator orientation="horizontal" />
