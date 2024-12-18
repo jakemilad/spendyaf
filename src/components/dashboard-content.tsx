@@ -139,7 +139,7 @@ export function DashboardContent({ initialStatements, userName }: DashboardConte
                           </div>
                           <div className="flex flex-col gap-4 mt-4">
                               <SheetClose asChild>
-                                  <Button variant="outline" onClick={() => handleUpdate(statement.id, editingFileName || statement.file_name)}>
+                                  <Button variant="outline" onClick={() => handleUpdate(statement.id.toString(), editingFileName || statement.file_name)}>
                                       Save Changes
                                   </Button>
                               </SheetClose>
@@ -148,7 +148,7 @@ export function DashboardContent({ initialStatements, userName }: DashboardConte
                                   variant="destructive"
                                   onClick={() => {
                                       if(window.confirm('Are you sure you want to delete this statement?')) {
-                                          handleDelete(statement.id);
+                                          handleDelete(statement.id.toString());
                                       }
                                   }}
                               >
