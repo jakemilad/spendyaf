@@ -65,8 +65,22 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		keyframes: {
+  			'pig-flip': {
+  				'0%': { transform: 'rotate(0deg)' },
+  				'100%': { transform: 'rotate(180deg)' }
+  			},
+  			'coin-drop': {
+  				'0%': { transform: 'translateY(0)', opacity: '1' },
+  				'100%': { transform: 'translateY(100px)', opacity: '0' }
+  			}
+  		},
+  		animation: {
+  			'pig-flip': 'pig-flip 0.5s ease-in-out forwards',
+  			'coin-drop': 'coin-drop 1s ease-in-out forwards'
   		}
-  	}
+  	} 
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;

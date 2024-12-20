@@ -88,10 +88,32 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
       setIsDialogOpen(true)
     }
 
-    const chartData = statement.data.transactions.map(item => ({
-        date: formatTimeStamp(item.Date),
-        allTransactions: item.Amount > 0 ? item.Amount : item.Amount * -1
-    }))
+    const chartData = React.useMemo(() => {
+        const dailyTotals = new Map<string, number>();
+        
+        const dates = statement.data.transactions.map(t => new Date(t.Date));
+        const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+        const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+        
+        const currentDate = new Date(minDate);
+        while (currentDate <= maxDate) {
+            dailyTotals.set(formatTimeStamp(currentDate.getTime()), 0);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        statement.data.transactions.forEach(item => {
+            const date = formatTimeStamp(item.Date);
+            const amount = item.Amount > 0 ? item.Amount : item.Amount * -1;
+            dailyTotals.set(date, (dailyTotals.get(date) || 0) + amount);
+        });
+
+        return Array.from(dailyTotals.entries())
+            .map(([date, amount]) => ({
+                date,
+                allTransactions: amount
+            }))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [statement.data.transactions]);
 
     return (
       <>
@@ -202,4 +224,3 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
       </>
     )
 }
-

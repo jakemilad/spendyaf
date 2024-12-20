@@ -3,9 +3,8 @@ import { neon } from "@neondatabase/serverless";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "./api/auth/auth.config";
 import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
-import { openAICategories } from "./utils/openai_api";
+import { openAICategories, openAISummary } from "./utils/openai_api";
 import { Transaction } from "./types/types";
-import { UploadResult } from "./types/types";
 import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
 import { DbStatement } from "./types/types";
@@ -13,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 const sql = neon(process.env.DATABASE_URL!);
 import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
+import {tempStatements} from "@/components/temp-data"
 
 async function getSession(): Promise<Session | null> {
     const session = await getServerSession(authOptions);
@@ -25,15 +25,16 @@ export async function getUserStatements(): Promise<DbStatement[] | null> {
         const session = await getSession();
         if (!session) return null;
 
+        // const rawStatements: any = tempStatements;
+
         const rawStatements = await sql`
             SELECT id, file_name, data, created_at 
             FROM transaction_records 
             WHERE user_id = ${session?.user?.email}
             ORDER BY created_at DESC
         `;
-        console.group(rawStatements);
 
-        const statements: DbStatement[] = rawStatements.map(row => ({
+        const statements: DbStatement[] = rawStatements.map((row: any) => ({
             id: row.id.toString(),
             file_name: row.file_name,
             created_at: row.created_at,
@@ -183,7 +184,8 @@ export async function updateStatement(id: string, data: any) {
             fileName: data.data.fileName,
             categories: data.data.categories,
             totalSpend: data.data.totalSpend,
-            transactions: data.data.transactions
+            transactions: data.data.transactions,
+            insights: data.data.insights
         };
         
         await pool.query(
@@ -195,5 +197,16 @@ export async function updateStatement(id: string, data: any) {
     } catch (error) {
         console.error('Error updating statement:', error);
         return false;
+    }
+}
+
+export async function getAISummary(statement: DbStatement, message: boolean): Promise<string> {
+    try {
+        const aiSummary = openAISummary(statement, message);
+        console.log(aiSummary);
+        return aiSummary;
+    } catch (error) {
+        console.error('Error getting summary', error);
+        return "error getting content";
     }
 }

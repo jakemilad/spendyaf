@@ -11,6 +11,10 @@ import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import TransactionsChart from "@/components/timeseries"
 import { LoadingOverlay } from "./loading-overlay"
+import { AiSummary } from "@/components/ai-summary"
+import { InsightsComponent } from "@/components/insights"
+
+
 export function DashboardClient({
     initialStatements, 
     userName
@@ -69,25 +73,33 @@ export function DashboardClient({
               <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                    <div className="bg-card rounded-lg shadow-sm min-h-[400px] max-h-[800px] overflow-y-auto">
+                    <div className="bg-card rounded-lg shadow-sm min-h-[900px] max-h-[1200px] overflow-y-auto">
                       {selectedStatement && (
                         <SummaryTable statement={selectedStatement} />
                       )}
                     </div>
                   </div>
                   <div className="col-span-1">
-                    <div className="bg-card rounded-lg shadow-sm min-h-[400px] max-h-[800px] overflow-y-auto">
-                      {selectedStatement && (
-                        <PieChartComponent statement={selectedStatement} />
-                      )}
-                    </div>
+                      <div className="bg-card rounded-lg shadow-sm min-h-[450px] overflow-y-auto">
+                        {selectedStatement && (
+                          <PieChartComponent statement={selectedStatement} />
+                        )}
+                      </div>
+                      <div className="bg-card rounded-lg shadow-sm min-h-[450px] overflow-y-auto -mt-16">
+                        {selectedStatement && (
+                          <InsightsComponent statement={selectedStatement} />
+                        )}
+                      </div>
                   </div>
                 </div>
-                <div className="mt-2">
-                    {selectedStatement && (
-                      <TransactionsChart statement={selectedStatement} />
-                    )}
-                  </div>
+                <div className="mt-6 grid grid-cols-1 gap-6">
+                  {selectedStatement && (
+                    <TransactionsChart statement={selectedStatement} />
+                  )}
+                  {selectedStatement && (
+                    <AiSummary statement={selectedStatement} />
+                  )}
+                </div>
               </div>
             </main>
           </>
