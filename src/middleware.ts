@@ -18,7 +18,7 @@ export default withAuth(
 export const config = {
   matcher: [
     "/dashboard/:path*", 
-    "/upload-statements/:path*",
+    "/upload-statement/:path*",
     "/api/amex/:path*"
     ],
 }; 
