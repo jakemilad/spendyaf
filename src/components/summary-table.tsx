@@ -25,14 +25,17 @@ export function SummaryTable({ statement }: SummaryTableProps) {
     return (
         <div className="h-full w-full">
             <Card className="h-full">
-                <CardContent className="p-6">
+                <CardContent className="p-5 -mt-4">
                     <Table>
-                        <TableCaption className="text-center font-medium text-xl mb-6 caption-top text-white">
+                        <TableCaption className="text-left font-bold text-lg caption-top dark:text-white -mb-2">
                             {statement.data.fileName} Statement Summary
+                        </TableCaption>
+                        <TableCaption className="text-left font-bold text-sm mb-4 caption-top text-muted-foreground">
+                            Categorized transactions powered by AI
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[40%] py-4 pl-4 text-lg">Category</TableHead>
+                                <TableHead className="w-[40%] py-4 pl-2 text-lg">Category</TableHead>
                                 <TableHead className="w-[30%] text-left pr-2 text-lg">Largest Transaction</TableHead>
                                 <TableHead className="w-[30%] text-right text-lg">Total</TableHead>
                             </TableRow>

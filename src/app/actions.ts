@@ -184,7 +184,8 @@ export async function updateStatement(id: string, data: any) {
             fileName: data.data.fileName,
             categories: data.data.categories,
             totalSpend: data.data.totalSpend,
-            transactions: data.data.transactions
+            transactions: data.data.transactions,
+            insights: data.data.insights
         };
         
         await pool.query(

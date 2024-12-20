@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils"
 import { DbStatement } from "@/app/types/types"
 import { Button } from "@/components/ui/button"
-import { Plus, FileText, Settings, User, Pencil, ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react"
+import { Plus, FileText, Settings, User, Pencil, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -215,7 +215,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                                                 }}
                                                                 disabled={isRefreshing}
                                                                 >
-                                                                    Refresh Statement
+                                                                    Reprocess Statement
                                                                 </Button>
                                                             </SheetClose>
                                                             <Separator orientation="horizontal" />

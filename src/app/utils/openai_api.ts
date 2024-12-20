@@ -15,30 +15,45 @@ export async function Test(query: string) {
 }
 
 export async function openAICategories(merchants: string[]) {
-    const prompt = `You are categorizing a list of merchants into the following categories:
-${CATEGORIES.join(', ')}.
+    const prompt = `You are an AI specialized in categorizing financial transactions with high accuracy.
 
-Here are examples of correct categorizations:
-'Amazon Purchase' -> 'Online Shopping'
-'Prime Video' -> 'Online Subscriptions'
-'CRAVE' -> 'Online Subscriptions'
-'DOORDASH' -> 'DoorDash'
-'Disney Subscription' -> 'Online Subscriptions'
-'EVO Car Share' -> 'Evo'
-'Whole Foods Market' -> 'Groceries'
-'KITS' -> 'Personal'
+Instructions:
+1. Categorize each merchant into exactly one of these categories: ${CATEGORIES.join(', ')}
+2. Use exact matches for category names - no variations allowed
+3. Return ONLY a valid JavaScript object/dictionary
+4. When in doubt, use the 'Other' category rather than guessing
 
-Categorize each of the following merchants into one of these categories.
+Reference categorizations:
+{
+    "Amazon Purchase": "Online Shopping",
+    "Prime Video": "Online Subscriptions",
+    "CRAVE": "Online Subscriptions",
+    "DOORDASH": "DoorDash",
+    "Disney Subscription": "Online Subscriptions",
+    "EVO Car Share": "Evo",
+    "Whole Foods Market": "Groceries",
+    "KITS": "Personal"
+}
+
+Merchants to categorize:
 ${merchants.join(', ')}
 
-Return the result strictly as a JavaScript dictionary where each key is a merchant name and the value is the category. Do not return a string, list, or any other data type, only a JavaScript dictionary.
-Do not include any other text in the response, only return the JavaScript Dictionary and do not include \`\`\` backticks.`;
+Response requirements:
+- Format: JavaScript dictionary only (object)
+- No explanations or additional text
+- No markdown formatting or backticks
+- Each merchant must map to a valid category`;
+
     const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
-            {role: "system", content: "You are a helpful assistant that will help cateogirze my transactions."},
+            {
+                role: "system", 
+                content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories."
+            },
             {role: "user", content: prompt}
-        ]
+        ],
+        temperature: 0.1 
     });
     try {
         const content = response.choices[0].message.content;
@@ -51,57 +66,72 @@ Do not include any other text in the response, only return the JavaScript Dictio
 }
 
 export async function openAISummary(statement: DbStatement, message: boolean) {
-  const summary = statement.data.summary;
-  const tranascations = statement.data.transactions
-  const insights = statement.data.insights
-  const categories = statement.data.categories
-  
-  let extra: string = `
-  You have already tried to summarize this statement and the user was not happy with it, be more critical and concise.
-  Let's ensure we can produce a better summary for the user.
-  `
+    const summary = statement.data.summary;
+    const transactions = statement.data.transactions;
+    const insights = statement.data.insights;
+    const categories = statement.data.categories;
+    
+    const extra = `Based on previous feedback, please provide a more focused analysis, the user is requesting the summary again:
+- Be more critical of spending patterns
+- Keep insights brief and actionable
+- Highlight the most impactful areas for improvement`;
 
-  const prompt = `You are an adept financial analyst and advisor. You make precise, clear and concise observations and summaries of your clients financial information. 
-  Your task is to assess a summary of transactions broken down by categories, a list of transactions, insights and categories and return a comprehensive summary of your clients
-  spending for the statement. 
+    const prompt = `You are a direct and insightful financial advisor analyzing a monthly statement.
 
-  ${message ? extra : ''}
-  
-  Here is the financial data, it is organized as JSON objects.
+Role: Personal Financial Advisor
+Goal: Provide a clear, actionable summary of spending patterns and opportunities for improvement
 
-  Summary of spending by category, includes information on all transactions for that category, total spend and the biggest transaction: ${JSON.stringify(summary, null, 2)}
-  
-  Transactions organized by date, amount and merchant: ${JSON.stringify(tranascations, null, 2)} 
-  
-  Insights, pre calculated insights on the user's spending: ${JSON.stringify(insights, null, 2)}
+Available Data:
+1. Category Summary: Breakdown of spending by category with totals and largest transactions
+2. Transaction List: Detailed list of individual transactions
+3. Pre-calculated Insights: System-generated spending patterns
+4. Category Definitions: Reference for spending classifications
 
-  Categories, this is more of a nice to have for your own analysis, this does not have to be summarized necessarily, but can be used to train and understand 
-  what this person's categories are for their spending: ${JSON.stringify(categories, null, 2)}
+Analysis Requirements:
+1. Focus Areas:
+   - Highlight unusual spending patterns
+   - Identify potential savings opportunities
+   - Compare spending across categories
+   - Note any concerning trends
 
-  Suggest potential areas of savings for the user, this is a nice to have, but not necessary, but its more about observations and insights.
+2. Response Format:
+   - Use natural, conversational language
+   - Address the user directly as "you"
+   - Keep paragraphs short and focused
+   - Avoid technical jargon
+   - No formatting, tables, or special characters
+   - 150 words or less
 
-  The summary you output will be displayed to the user alongside a dashboard that includes a table of their summary, a timeseries of their transactions, pie chart of spending
-  as well as a list of the insights. Only return a summary as words (as a string), dont draw any charts or create tables or have any special styling
-  This includes trying to put astrix in the response to bold it just plain text. Refer to the client as "you", do not say the client.
-  This will only be a worded summary.
-  `;
-  
-  const response = await openai.chat.completions.create({
-    model:"gpt-4o",
-    messages: [
-      {role: "system", content: "You are a helpful financial advisor that will help summarize the user's transactions according to the given data."},
-      {role: "user", content: prompt}
-    ]
-  });
+${message ? extra : ''}
 
-  try {
-    const content = response.choices[0].message.content;
-    if(!content) return "No content found";
-    return content;
-  } catch (error) {
-    console.error(error);
-    return "Error generating summary";
-  }
+Financial Data:
+- Category Summary: ${JSON.stringify(summary, null, 2)}
+- Transactions: ${JSON.stringify(transactions, null, 2)}
+- Insights: ${JSON.stringify(insights, null, 2)}
+- Categories: ${JSON.stringify(categories, null, 2)}
+
+Remember: The user will see this summary alongside visual data (charts, tables, insights), so focus on insights rather than repeating numbers.`;
+
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            {
+                role: "system",
+                content: "You are a concise, direct financial advisor focused on actionable insights. Maintain a professional yet approachable tone."
+            },
+            {role: "user", content: prompt}
+        ],
+        temperature: 0.7  // Allow for some creativity in analysis while maintaining consistency
+    });
+
+    try {
+        const content = response.choices[0].message.content;
+        if(!content) return "No content found";
+        return content;
+    } catch (error) {
+        console.error(error);
+        return "Error generating summary";
+    }
 }
 
 export default openai;
