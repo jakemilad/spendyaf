@@ -11,6 +11,9 @@ import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import TransactionsChart from "@/components/timeseries"
 import { LoadingOverlay } from "./loading-overlay"
+import { AiSummary } from "@/components/ai-summary"
+
+
 export function DashboardClient({
     initialStatements, 
     userName
@@ -83,11 +86,14 @@ export function DashboardClient({
                     </div>
                   </div>
                 </div>
-                <div className="mt-2">
-                    {selectedStatement && (
-                      <TransactionsChart statement={selectedStatement} />
-                    )}
-                  </div>
+                <div className="mt-6 grid grid-cols-1 gap-6">
+                  {selectedStatement && (
+                    <TransactionsChart statement={selectedStatement} />
+                  )}
+                  {selectedStatement && (
+                    <AiSummary statement={selectedStatement} />
+                  )}
+                </div>
               </div>
             </main>
           </>
