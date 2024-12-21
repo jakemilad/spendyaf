@@ -50,7 +50,7 @@ export function InsightsComponent({ statement }: { statement: DbStatement }) {
             <div className="text-2xl font-bold">
               ${insights.biggestTransaction.amount.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {insights.biggestTransaction.merchant}
             </p>
           </CardContent>

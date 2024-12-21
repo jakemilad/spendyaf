@@ -47,10 +47,6 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
     const [selectedTransactions, setSelectedTransactions] = React.useState<Array<{Amount: number, Merchant: string}>>([])
 
-    const total = React.useMemo(() => {
-        return statement.data.transactions.reduce((acc, curr) => acc + curr.Amount, 0).toFixed(2)
-    }, [statement.data.transactions])
-
     const formatTimeStamp = (timestamp: number): string => {
         return new Date(timestamp).toLocaleDateString("en-CA", {
             year: "numeric",
@@ -62,7 +58,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
     const formatSelectedDate = (date: string | null): string => {
       if(!date) return ""
       const [year, month, day] = date.split("-")
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString("en-US", {
+      return new Date(parseInt(year), parseInt(month)-1, parseInt(day)-1).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric"

@@ -25,9 +25,9 @@ export function SummaryTable({ statement }: SummaryTableProps) {
     return (
         <div className="h-full w-full">
             <Card className="h-full">
-                <CardContent className="p-5 -mt-4">
-                    <Table>
-                        <TableCaption className="text-left font-bold text-lg caption-top dark:text-white -mb-2">
+                <CardContent className="h-full p-6 overflow-x-auto">
+                    <Table className="h-full">
+                        <TableCaption className="text-left -mt-1 font-bold text-lg caption-top dark:text-white -mb-2">
                             {statement.data.fileName} Statement Summary
                         </TableCaption>
                         <TableCaption className="text-left font-bold text-sm mb-4 caption-top text-muted-foreground">
