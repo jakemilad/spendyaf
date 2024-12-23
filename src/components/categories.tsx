@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { toast } from "sonner";
 import { updateUserCategories, getUserStatements, reprocessStatement } from "../app/actions";
 import { MotionWrapper } from "./motion-wrapper";
-
+import { useRouter } from "next/navigation";
 
 interface CategoriesProps {
     initialCategories: string[]
@@ -24,7 +24,7 @@ export default function Categories({ initialCategories }: CategoriesProps) {
     const [tempCategories, setTempCategories] = useState<string[]>([]);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-
+    const router = useRouter();
 
     const handleAddCategory = () => {
         if(!newCategory.trim()) return;
@@ -49,19 +49,25 @@ export default function Categories({ initialCategories }: CategoriesProps) {
                 throw new Error('Failed to update categories');
             }
             const statements = await getUserStatements();
-            if(statements && statements.length > 0) {
-                toast.info('Reprocessing all statements with new categories');
-                for (const statement of statements) {
-                    await reprocessStatement(statement.id);
+            try {
+                if(statements && statements.length > 0) {
+                    toast.info('Reprocessing all statements with new categories');
+                    for (const statement of statements) {
+                        await reprocessStatement(statement.id);
+                    }
                 }
+            } catch (error) {
+                console.warn('Failed to reprocess statements');
+            } finally {
+                toast.success('Categories updated and statements reprocessed');
             }
-            toast.success('Categories updated and statements reprocessed');
         } catch (error) {
             toast.error('Failed to update categories and reprocess statements');
             setCategories(tempCategories);
         } finally {
             setIsProcessing(false);
             setShowConfirmDialog(false);
+            router.push('/dashboard');
         }
     }
 
