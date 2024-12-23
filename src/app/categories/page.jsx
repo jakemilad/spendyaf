@@ -1,8 +1,10 @@
 
 import Categories from "@/components/categories"
+import { getUserCategories } from "../actions"
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+    const categories = await getUserCategories()
     return (
-        <Categories />
+        <Categories initialCategories={categories} />
     )
 }

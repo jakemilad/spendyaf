@@ -10,22 +10,21 @@ import { XIcon } from "lucide-react";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { updateUserCategories, getUserStatements, reprocessStatement } from "../app/actions";
+import { MotionWrapper } from "./motion-wrapper";
 
-export default function Categories() {
-    const [categories, setCategories] = useState<string[]>([]);
+
+interface CategoriesProps {
+    initialCategories: string[]
+}
+
+export default function Categories({ initialCategories }: CategoriesProps) {
+    const [categories, setCategories] = useState<string[]>(initialCategories);
     const [newCategory, setNewCategory] = useState<string>('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [tempCategories, setTempCategories] = useState<string[]>([]);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
 
-    useEffect(() => {
-        const loadCategories = async () => {
-            const categories = await getUserCategories();
-            setCategories(categories);
-        }
-        loadCategories();
-    }, []);
 
     const handleAddCategory = () => {
         if(!newCategory.trim()) return;
@@ -72,10 +71,10 @@ export default function Categories() {
             isOpen={isProcessing}
             message="Updating categories and reprocessing statements..."
         />
-
-        <Card className="w-full max-w-2xl mx-auto mt-6">
-            <CardHeader>
-                <CardTitle>Manage Categories</CardTitle>
+        <MotionWrapper animation="fadeInUp" delay={0.1}> 
+            <Card className="w-full max-w-2xl mx-auto mt-6">
+                <CardHeader>
+                    <CardTitle>Manage Categories</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
@@ -127,6 +126,7 @@ export default function Categories() {
                 </div>
             </CardContent>
         </Card>
+        </MotionWrapper>
         <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
             <AlertDialogContent>
                 <AlertDialogHeader>

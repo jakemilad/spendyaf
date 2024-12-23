@@ -7,7 +7,7 @@ export interface Transaction {
 export interface CategorySummary {
     Category: string;
     Total: number;
-    Transactions: {[merchant: string]: number};
+    Transactions: Record<string, number> | {[merchant: string]: number};
     BiggestTransaction: {merchant: string, amount: number};
 }
 

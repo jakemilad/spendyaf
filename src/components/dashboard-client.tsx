@@ -13,7 +13,8 @@ import TransactionsChart from "@/components/timeseries"
 import { LoadingOverlay } from "./loading-overlay"
 import { AiSummary } from "@/components/ai-summary"
 import { InsightsComponent } from "@/components/insights"
-
+import { motion } from "framer-motion"
+import { fadeIn, fadeInUp } from "@/components/animations"
 
 export function DashboardClient({
     initialStatements, 
@@ -86,14 +87,19 @@ export function DashboardClient({
               />
             </aside>
             <main className="flex-1 overflow-y-auto bg-background/50">
-              <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+              <motion.div 
+                initial="initial"
+                animate="animate"
+                variants={fadeInUp}
+                className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                    <div className="bg-card rounded-lg shadow-sm h-[1000px] overflow-y-auto">
+                      <div
+                        className="bg-card rounded-lg shadow-sm h-[1000px] overflow-y-auto">
                       {selectedStatement && (
                         <SummaryTable statement={selectedStatement} />
                       )}
-                    </div>
+                      </div>
                   </div>
                   <div className="col-span-1 flex flex-col gap-3">
                       <div className="bg-card rounded-lg shadow-sm h-[370px] overflow-y-auto">
@@ -116,7 +122,7 @@ export function DashboardClient({
                     <AiSummary statement={selectedStatement} />
                   )}
                 </div>
-              </div>
+              </motion.div>
             </main>
           </>
         )}
