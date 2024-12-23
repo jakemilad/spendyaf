@@ -44,7 +44,7 @@ export interface Statement {
 }
 
 export interface DbStatement {
-    id: string | number;
+    id: string;
     file_name: string;
     created_at: string;
     data: Statement;

@@ -88,16 +88,10 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
                 isOpen={isLoading} 
                 message="Uploading your statement..."
             />
-            <Card className="w-full max-w-md mx-auto mt-10">
-                <CardHeader className="text-center">
-                    <CardTitle>Upload your transactions</CardTitle>
-                    <CardDescription>
-                        Choose a file to upload your transaction data
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
+            <Card className="w-full">
+                <CardContent className="pt-6">
                     <div className="flex flex-col items-center space-y-4">
-                        <div className="relative w-full max-w-xs">
+                        <div className="w-full">
                             <input
                                 type="file"
                                 id="file"
@@ -107,21 +101,25 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
                             />
                             <label
                                 htmlFor="file"
-                                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                                className="group relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer bg-background hover:bg-accent/50 transition-colors duration-200 ease-in-out"
                             >
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
-                                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                                        {file ? file.name : 'Drop your file here or click to upload'}
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        CSV files only
-                                    </p>
+                                <div className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
+                                    <div className="rounded-full bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors">
+                                        <Upload className="w-8 h-8 text-primary" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="font-medium text-base">
+                                            {file ? file.name : 'Drop your CSV file here'}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            or click to browse from your computer
+                                        </p>
+                                    </div>
                                 </div>
                             </label>
                         </div>
                         {error && (
-                            <div className="text-red-500 text-sm mt-2">
+                            <div className="text-destructive text-sm bg-destructive/10 px-4 py-2 rounded-md w-full text-center">
                                 {error}
                             </div>
                         )}

@@ -36,7 +36,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
 
     const navigation = [
         { name: 'Statements', href: '/dashboard', icon: FileText },
-        { name: 'Settings', href: '/settings', icon: Settings },
+        { name: 'Categories', href: '/categories', icon: Settings },
         { name: 'Profile', href: '/profile', icon: User },
     ]
 

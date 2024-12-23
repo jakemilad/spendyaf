@@ -17,5 +17,9 @@ export const siteConfig = {
       title: "Upload",
       href: "/upload-statement",
     },
+    {
+      title: "Categories",
+      href: "/categories",
+    }
   ],
 }

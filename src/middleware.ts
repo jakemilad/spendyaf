@@ -19,6 +19,8 @@ export const config = {
   matcher: [
     "/dashboard/:path*", 
     "/upload-statement/:path*",
-    "/api/amex/:path*"
+    "/api/amex/:path*",
+    "/categories/:path*",
+    "/profile/:path*",
     ],
 }; 

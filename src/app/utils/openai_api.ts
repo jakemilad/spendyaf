@@ -1,4 +1,3 @@
-import { CATEGORIES } from "@/app/utils/dicts";
 import OpenAI from "openai";
 import { DbStatement } from "../types/types";
 
@@ -14,14 +13,13 @@ export async function Test(query: string) {
   return response.choices[0].message.content;
 }
 
-export async function openAICategories(merchants: string[]) {
+export async function openAICategories(merchants: string[], userCategories: string[]) {
     const prompt = `You are an AI specialized in categorizing financial transactions with high accuracy.
 
 Instructions:
-1. Categorize each merchant into exactly one of these categories: ${CATEGORIES.join(', ')}
+1. Categorize each merchant into exactly one of these categories: ${userCategories.join(', ')}
 2. Use exact matches for category names - no variations allowed
 3. Return ONLY a valid JavaScript object/dictionary
-4. When in doubt, use the 'Other' category rather than guessing
 
 Reference categorizations:
 {

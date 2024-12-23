@@ -31,3 +31,19 @@ export const CATEGORIES = [
   "Online Shopping",
   "Transport",
 ];
+
+export const DEFAULT_CATEGORIES = [
+  "Restaurants",    
+  "Bills",
+  "Groceries",
+  "Online Subscriptions",
+  "Phone Bill",
+  "Clothes",
+  "Personal",
+  "Entertainment",
+  "Online Shopping",
+  "Transport",
+  "Gym and Fitness",
+  "Other",
+];
+

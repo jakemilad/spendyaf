@@ -9,10 +9,12 @@ import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
 import { DbStatement } from "./types/types";
 import { revalidatePath } from 'next/cache';
-const sql = neon(process.env.DATABASE_URL!);
 import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
 import {tempStatements} from "@/components/temp-data"
+import { DEFAULT_CATEGORIES } from "./utils/dicts";
+
+const sql = neon(process.env.DATABASE_URL!);
 
 async function getSession(): Promise<Session | null> {
     const session = await getServerSession(authOptions);
@@ -71,8 +73,16 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
 
         const transactions = processedTransactions.filter(t => !t.Merchant.includes("PAYMENT RECEIVED"))
 
+        let userCategories: string[] = [];
+
+        if(session?.user?.email === 'jake.milad@gmail.com') {
+            userCategories = DEFAULT_CATEGORIES;
+        } else {
+            userCategories = await getUserCategories();
+        }
+
         const uniqueMerchants: string[] = [... new Set(transactions.map(t => t.Merchant))];
-        const categories = await openAICategories(uniqueMerchants);
+        const categories = await openAICategories(uniqueMerchants, userCategories);
         const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
 
         const totalSpend = transactions.reduce((sum, transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
@@ -115,10 +125,11 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
         if(!statement) return false;
 
         const transactions = statement[0].data.transactions;
-    
+
+        const userCategories = await getUserCategories();
 
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
-        const categories = await openAICategories(uniqueMerchants as string[]);
+        const categories = await openAICategories(uniqueMerchants as string[], userCategories);
         const summary = summarizeSpendByCategory(transactions, categories);
         const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
         const insights = getInsights(transactions, summary);
@@ -208,5 +219,42 @@ export async function getAISummary(statement: DbStatement, message: boolean): Pr
     } catch (error) {
         console.error('Error getting summary', error);
         return "error getting content";
+    }
+}
+
+export async function getUserCategories(): Promise<string[]> {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) return DEFAULT_CATEGORIES;
+        const result = await sql`
+            SELECT categories
+            FROM user_categories
+            WHERE user_id = ${session?.user?.email}
+        `
+        if(result.length === 0) return DEFAULT_CATEGORIES;
+        return result[0].categories;
+    } catch (error) {
+        console.error('Error fetching user categories:', error);
+        return DEFAULT_CATEGORIES;
+    }
+}
+
+export async function updateUserCategories(categories: string[]) {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) return;
+
+        await sql`
+            INSERT INTO user_categories (user_id, categories)
+            VALUES (${session?.user?.email}, ${categories})
+            ON CONFLICT (user_id) DO UPDATE SET
+                categories = ${categories},
+                updated_at = CURRENT_TIMESTAMP
+        `;
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error('Error updating user categories:', error);
+        return false;
     }
 }

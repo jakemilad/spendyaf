@@ -38,6 +38,21 @@ export function DashboardClient({
         />
       <div className="flex min-h-screen">
         {initialStatements.length === 0 ? (
+          <>
+            <aside className={cn(
+              "border-r border-border/40 transition-all duration-300",
+              isSidebarCollapsed ? "w-12" : "w-64"
+          )}>
+            <DashboardSidebar 
+              statements={initialStatements}
+              selectedStatement={selectedStatement}
+              onStatementSelect={setSelectedStatement}
+              userName={userName}
+              isCollapsed={isSidebarCollapsed}
+              onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              onLoadingChange={setIsLoading}
+            />
+          </aside>
           <div className="flex-1 flex-col items-center justify-center p-20 mt-10">
             <div className="text-center space-y-4">
               <h2 className="text-2xl font-semibold">Welcome, {userName}!</h2>
@@ -52,7 +67,8 @@ export function DashboardClient({
                 </Link>
               </Button>
             </div>
-          </div>
+            </div>
+          </>
         ) : (
           <>
             <aside className={cn(
