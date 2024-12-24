@@ -47,7 +47,7 @@ Response requirements:
         messages: [
             {
                 role: "system", 
-                content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories."
+                content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories, no backticks or markdown formatting."
             },
             {role: "user", content: prompt}
         ],
@@ -55,6 +55,7 @@ Response requirements:
     });
     try {
         const content = response.choices[0].message.content;
+        console.log(content);
         if(!content) return {"error": "No content returned from OpenAI"};
         return JSON.parse(content);
     } catch (error) {

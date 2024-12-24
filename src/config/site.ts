@@ -20,6 +20,10 @@ export const siteConfig = {
     {
       title: "Categories",
       href: "/categories",
+    },
+    {
+      title: "Compare",
+      href: "/compare",
     }
   ],
 }

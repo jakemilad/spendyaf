@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth"
-import { authOptions } from "../api/auth/auth.config"
+import { authOptions } from "../../api/auth/auth.config"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { getUserStatements } from "../actions"
+import { getUserStatements } from "../../actions"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)

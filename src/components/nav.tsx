@@ -9,12 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
 import { PiggyBank, CircleDollarSign } from "lucide-react";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+
 export function Nav() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isFlipped, setIsFlipped] = useState(false);
     const [showCoin, setShowCoin] = useState(false);
     const [canAnimate, setCanAnimate] = useState(true);
+    const { data: session } = useSession();
 
     const handleMouseEnter = () => {
         if (canAnimate) {
@@ -87,7 +90,7 @@ export function Nav() {
                         </button>
 
                         <nav className="hidden md:flex gap-2" aria-label="Main">
-                            {siteConfig.mainNav.map((item) => (
+                            {session && siteConfig.mainNav.map((item) => (
                                 <Button
                                     key={item.href}
                                     variant={pathname === item.href ? "secondary" : "ghost"}

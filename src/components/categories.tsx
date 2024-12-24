@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { getUserCategories } from "../app/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingOverlay } from "./loading-overlay";
 import { Input } from "@/components/ui/input";
@@ -9,15 +8,17 @@ import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { updateUserCategories, getUserStatements, reprocessStatement } from "../app/actions";
+import { updateUserCategories, reprocessStatement } from "../app/actions";
 import { MotionWrapper } from "./motion-wrapper";
 import { useRouter } from "next/navigation";
+import { DbStatement } from "@/app/types/types";
 
 interface CategoriesProps {
     initialCategories: string[]
+    statements: DbStatement[]
 }
 
-export default function Categories({ initialCategories }: CategoriesProps) {
+export default function Categories({ initialCategories, statements }: CategoriesProps) {
     const [categories, setCategories] = useState<string[]>(initialCategories);
     const [newCategory, setNewCategory] = useState<string>('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +29,14 @@ export default function Categories({ initialCategories }: CategoriesProps) {
 
     const handleAddCategory = () => {
         if(!newCategory.trim()) return;
-        setCategories([...categories, newCategory.trim()]);
+        const trimmedCategory = newCategory.trim();
+        
+        if (categories.some(cat => cat.toLowerCase() === trimmedCategory.toLowerCase())) {
+            toast.error('This category already exists');
+            return;
+        }
+        
+        setCategories([...categories, trimmedCategory]);
         setNewCategory('');
     }
 
@@ -48,21 +56,18 @@ export default function Categories({ initialCategories }: CategoriesProps) {
             if(!success) {
                 throw new Error('Failed to update categories');
             }
-            const statements = await getUserStatements();
-            try {
-                if(statements && statements.length > 0) {
-                    toast.info('Reprocessing all statements with new categories');
-                    for (const statement of statements) {
-                        await reprocessStatement(statement.id);
-                    }
+            
+            if(statements && statements.length > 0) {
+                toast.info('Reprocessing all statements with new categories');
+                for (const statement of statements) {
+                    await reprocessStatement(statement.id);
                 }
-            } catch (error) {
-                console.warn('Failed to reprocess statements');
-            } finally {
                 toast.success('Categories updated and statements reprocessed');
+            } else {
+                toast.success('Categories updated successfully');
             }
         } catch (error) {
-            toast.error('Failed to update categories and reprocess statements');
+            toast.error('Failed to update categories');
             setCategories(tempCategories);
         } finally {
             setIsProcessing(false);
@@ -100,16 +105,16 @@ export default function Categories({ initialCategories }: CategoriesProps) {
                                 No categories added yet. Add your first category above.
                             </p>
                         ) : (
-                            categories.map((category, index) => (
+                            categories.map((category) => (
                                 <div
-                                    key={index}
+                                    key={category}
                                     className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                                 >
                                     <span className="font-medium">{category}</span>
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleRemoveCategory(index)}
+                                        onClick={() => handleRemoveCategory(categories.indexOf(category))}
                                         className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                                     >
                                         <XIcon className="w-4 h-4" />
@@ -141,8 +146,10 @@ export default function Categories({ initialCategories }: CategoriesProps) {
                     You sure?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                    This will update your categories and reprocess your statements. 
-                    This process may take a few minutes depending on the number of statements.
+                    {statements && statements.length > 0 
+                        ? "This will update your categories and reprocess your statements. This process may take a few minutes depending on the number of statements."
+                        : "This will update your categories for future statement uploads."
+                    }
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

@@ -17,10 +17,13 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", 
-    "/upload-statement/:path*",
-    "/api/amex/:path*",
-    "/categories/:path*",
+    "/dashboard/:path*",
     "/profile/:path*",
-    ],
+    "/categories/:path*",
+    "/compare/:path*",
+    "/upload-statement/:path*",
+    "/temp/:path*",
+    "/test/:path*",
+    "/api/amex/:path*",
+  ]
 }; 

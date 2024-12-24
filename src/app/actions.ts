@@ -13,19 +13,20 @@ import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
 import {tempStatements} from "@/components/temp-data"
 import { DEFAULT_CATEGORIES } from "./utils/dicts";
+import { stat } from "fs";
 
 const sql = neon(process.env.DATABASE_URL!);
 
-async function getSession(): Promise<Session | null> {
+export async function getSession(): Promise<Session | null> {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return null;
     return session;
 }
 
-export async function getUserStatements(): Promise<DbStatement[] | null> {
+export async function getUserStatements(): Promise<DbStatement[]> {
     try {
         const session = await getSession();
-        if (!session) return null;
+        if (!session) return [];
 
         // const rawStatements: any = tempStatements;
 
@@ -46,7 +47,7 @@ export async function getUserStatements(): Promise<DbStatement[] | null> {
         return statements;
     } catch (error) {
         console.error('Error fetching statements:', error);
-        return null;
+        return [];
     }
 }
 
@@ -126,8 +127,13 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
 
         const transactions = statement[0].data.transactions;
 
-        const userCategories = await getUserCategories();
+        let userCategories: string[] = [];
 
+        if(session?.user?.email === 'jake.milad@gmail.com') {
+            userCategories = DEFAULT_CATEGORIES;
+        } else {
+            userCategories = await getUserCategories();
+        }
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
         const categories = await openAICategories(uniqueMerchants as string[], userCategories);
         const summary = summarizeSpendByCategory(transactions, categories);
@@ -232,7 +238,7 @@ export async function getUserCategories(): Promise<string[]> {
             WHERE user_id = ${session?.user?.email}
         `
         if(result.length === 0) return DEFAULT_CATEGORIES;
-        return result[0].categories;
+        return [...new Set(result[0].categories as string[])];
     } catch (error) {
         console.error('Error fetching user categories:', error);
         return DEFAULT_CATEGORIES;
@@ -256,5 +262,39 @@ export async function updateUserCategories(categories: string[]) {
     } catch (error) {
         console.error('Error updating user categories:', error);
         return false;
+    }
+}
+
+export async function compareStatements(): Promise<{ data: any[], months: string[] }> {
+    try {
+        const session = await getSession();
+        if(!session?.user?.email) return { data: [], months: [] };
+
+        const statements = await getUserStatements();
+        const allCategories = await getUserCategories();
+
+        const months = statements?.map(s => s.file_name.split('.')[0]) || [];
+        
+        return {
+            data: Array.from(allCategories).map(category => {
+                const dataPoint: { category: string; [key: string]: number | string } = { 
+                    category 
+                };
+                
+                statements?.forEach(statement => {
+                    const monthName = statement.file_name.split('.')[0];
+                    const categoryData = statement.data.summary.find(
+                        (item: CategorySummary) => item.Category === category
+                    );
+                    dataPoint[monthName] = categoryData ? categoryData.Total : 0;
+                });
+
+                return dataPoint;
+            }),
+            months
+        };
+    } catch (error) {
+        console.error('Error comparing statements:', error);
+        return { data: [], months: [] };
     }
 }
