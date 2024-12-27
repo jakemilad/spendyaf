@@ -376,7 +376,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
         <h1 className="text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl bg-gradient-to-r from-primary to-yellow-700 bg-clip-text text-transparent">
           You're Spendy AF,
           <br className="hidden sm:inline" />
-          let's manage your transactions.
+          be serious.
         </h1>
         <p className="max-w-[700px] text-xl text-muted-foreground">
           Transform your financial data into actionable insights with our AI-powered expense analyzer.
@@ -417,15 +417,15 @@ export function FeaturesSection({ features }: { features: any[] }) {
             className="group relative rounded-2xl border p-8 shadow-lg transition-all hover:shadow-xl"
           >
             <div className="aspect-[16/10] relative overflow-hidden rounded-xl mb-8">
-              {/* <Image
+              <Image
                 src={feature.image}
                 alt={feature.alt}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-110"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 priority={index < 2}
-              /> */}
-              <SummaryTable statement={statement} />
+              />
+              {/* <SummaryTable statement={statement} /> */}
             </div>
             <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
             <p className="text-lg text-muted-foreground">{feature.description}</p>

@@ -3,7 +3,7 @@ import { neon } from "@neondatabase/serverless";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "./api/auth/auth.config";
 import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
-import { openAICategories, openAISummary } from "./utils/openai_api";
+import { openAICategories, openAICategoriesFromTransactions, openAISummary } from "./utils/openai_api";
 import { Transaction } from "./types/types";
 import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
@@ -13,7 +13,7 @@ import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
 import {tempStatements} from "@/components/temp-data"
 import { DEFAULT_CATEGORIES } from "./utils/dicts";
-import { stat } from "fs";
+import { assert } from "console";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -71,18 +71,23 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
 
         const buffer = Buffer.from(await file.arrayBuffer());
         const processedTransactions: Transaction[] = await processCSV(buffer);
-
         const transactions = processedTransactions.filter(t => !t.Merchant.includes("PAYMENT RECEIVED"))
-
-        let userCategories: string[] = [];
-
-        if(session?.user?.email === 'jake.milad@gmail.com') {
-            userCategories = DEFAULT_CATEGORIES;
-        } else {
-            userCategories = await getUserCategories();
-        }
-
         const uniqueMerchants: string[] = [... new Set(transactions.map(t => t.Merchant))];
+
+        let userCategories: string[] = await getUserCategories();
+        
+        if(userCategories.length === 0) {
+            userCategories = await getAICategories(uniqueMerchants);
+            await updateUserCategories(userCategories);
+        }
+        assert(userCategories.length > 0, 'No user categories found');
+        
+        // if(session?.user?.email === 'jake.milad@gmail.com') {
+        //     userCategories = DEFAULT_CATEGORIES;
+        // } else {
+        //     userCategories = await getUserCategories();
+        // }
+
         const categories = await openAICategories(uniqueMerchants, userCategories);
         const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
 
@@ -127,13 +132,8 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
 
         const transactions = statement[0].data.transactions;
 
-        let userCategories: string[] = [];
+        let userCategories: string[] = await getUserCategories();
 
-        if(session?.user?.email === 'jake.milad@gmail.com') {
-            userCategories = DEFAULT_CATEGORIES;
-        } else {
-            userCategories = await getUserCategories();
-        }
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
         const categories = await openAICategories(uniqueMerchants as string[], userCategories);
         const summary = summarizeSpendByCategory(transactions, categories);
@@ -228,20 +228,36 @@ export async function getAISummary(statement: DbStatement, message: boolean): Pr
     }
 }
 
+// export async function getUserCategories(): Promise<string[]> {
+//     try {
+//         const session = await getSession();
+//         if (!session?.user?.email) return DEFAULT_CATEGORIES;
+//         const result = await sql`
+//             SELECT categories
+//             FROM user_categories
+//             WHERE user_id = ${session?.user?.email}
+//         `
+//         if(result.length === 0) return DEFAULT_CATEGORIES;
+//         return [...new Set(result[0].categories as string[])];
+//     } catch (error) {
+//         console.error('Error fetching user categories:', error);
+//         return DEFAULT_CATEGORIES;
+//     }
+// }
 export async function getUserCategories(): Promise<string[]> {
     try {
         const session = await getSession();
-        if (!session?.user?.email) return DEFAULT_CATEGORIES;
+        if (!session?.user?.email) return [];
         const result = await sql`
             SELECT categories
             FROM user_categories
             WHERE user_id = ${session?.user?.email}
         `
-        if(result.length === 0) return DEFAULT_CATEGORIES;
+        if(result.length === 0) return [];
         return [...new Set(result[0].categories as string[])];
     } catch (error) {
         console.error('Error fetching user categories:', error);
-        return DEFAULT_CATEGORIES;
+        return [];
     }
 }
 
@@ -297,4 +313,9 @@ export async function compareStatements(): Promise<{ data: any[], months: string
         console.error('Error comparing statements:', error);
         return { data: [], months: [] };
     }
+}
+
+export async function getAICategories(transactions: string[]) {
+    const categories = await openAICategoriesFromTransactions(transactions);
+    return categories;
 }

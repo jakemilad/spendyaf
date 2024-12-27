@@ -18,12 +18,12 @@ export const siteConfig = {
       href: "/upload-statement",
     },
     {
-      title: "Categories",
-      href: "/categories",
-    },
-    {
       title: "Compare",
       href: "/compare",
+    },
+    {
+      title: "Categories",
+      href: "/categories",
     }
   ],
 }

@@ -13,13 +13,13 @@ interface UploadProps {
 }
 
 export function Upload({statements, categories}: UploadProps) {
-    const { data: session } = useSession();
     const router = useRouter();
 
     return (
-        <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto space-y-8">
-                <div className="text-center space-y-2">
+        <section>
+            <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="text-center space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight">Upload Statement</h1>
                     <p className="text-muted-foreground">
                         Upload your transaction data to start tracking your expenses
@@ -43,9 +43,9 @@ export function Upload({statements, categories}: UploadProps) {
 
                     <div className="md:col-span-2">
                         <div className="rounded-lg border bg-card p-6">
-                            <h3 className="text-lg font-semibold mb-4">Available Categories</h3>
                             {categories.length > 0 ? (
                                 <>
+                                <h3 className="text-lg font-semibold mb-4">Available Categories</h3>
                                     <div className="flex flex-wrap gap-2 mb-6">
                                         {categories.map((category) => (
                                             <div key={category} 
@@ -57,23 +57,27 @@ export function Upload({statements, categories}: UploadProps) {
                                     <div className="text-sm text-muted-foreground mb-4">
                                         These categories will be used to automatically classify your transactions.
                                     </div>
+                                    <Link 
+                                        href="/categories" 
+                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full"
+                                    >
+                                        Customize Categories
+                                    </Link>
                                 </>
                             ) : (
-                                <p className="text-muted-foreground mb-4">
-                                    No categories set up yet. Set up categories to automatically classify your transactions.
-                                </p>
+                                <>
+                                    <h3 className="text-lg font-semibold mb-4">No available categories</h3>
+                                    <p className="text-muted-foreground mb-4">
+                                        Uploading your statement will generate categories.
+                                    </p>
+                                </>
                             )}
-                            <Link 
-                                href="/categories" 
-                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full"
-                            >
-                                Customize Categories
-                            </Link>
                         </div>
                     </div>
                 </div>
                 </MotionWrapper>
             </div>
         </div>
+    </section>
     )
 }

@@ -12,6 +12,8 @@ import { updateUserCategories, reprocessStatement } from "../app/actions";
 import { MotionWrapper } from "./motion-wrapper";
 import { useRouter } from "next/navigation";
 import { DbStatement } from "@/app/types/types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface CategoriesProps {
     initialCategories: string[]
@@ -24,6 +26,8 @@ export default function Categories({ initialCategories, statements }: Categories
     const [isProcessing, setIsProcessing] = useState(false);
     const [tempCategories, setTempCategories] = useState<string[]>([]);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [allowManualCategories, setAllowManualCategories] = useState(false);
+    const [showWarningDialog, setShowWarningDialog] = useState(false);
 
     const router = useRouter();
 
@@ -76,6 +80,14 @@ export default function Categories({ initialCategories, statements }: Categories
         }
     }
 
+    const handleManualToggle = (checked: boolean) => {
+        if (checked) {
+            setShowWarningDialog(true);
+        } else {
+            setAllowManualCategories(false);
+        }
+    }
+
     return (
         <>
         <LoadingOverlay 
@@ -86,57 +98,73 @@ export default function Categories({ initialCategories, statements }: Categories
             <Card className="w-full max-w-2xl mx-auto mt-6">
                 <CardHeader>
                     <CardTitle>Manage Categories</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-6">
-                    <div className="flex gap-2">
-                        <Input
-                            placeholder="Add New Category"
-                            value={newCategory}
-                            onChange={(e) => setNewCategory(e.target.value)}
-                            className="flex-1"
-                        />
-                        <Button onClick={handleAddCategory}>Add Category</Button>
-                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                checked={allowManualCategories}
+                                onCheckedChange={handleManualToggle}
+                            />
+                            <Label>Enable manual category management</Label>
+                        </div>
 
-                    <div className="space-y-2">
-                        {categories.length === 0 ? (
-                            <p className="text-muted-foreground text-center py-4">
-                                No categories added yet. Add your first category above.
-                            </p>
-                        ) : (
-                            categories.map((category) => (
-                                <div
-                                    key={category}
-                                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-                                >
-                                    <span className="font-medium">{category}</span>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRemoveCategory(categories.indexOf(category))}
-                                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                                    >
-                                        <XIcon className="w-4 h-4" />
-                                    </Button>
+                        {allowManualCategories ? (
+                            <>
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="Add New Category"
+                                        value={newCategory}
+                                        onChange={(e) => setNewCategory(e.target.value)}
+                                        className="flex-1"
+                                    />
+                                    <Button onClick={handleAddCategory}>Add Category</Button>
                                 </div>
-                            ))
-                        )}
-                    </div>
 
-                    <div className="pt-4">
-                        <Button 
-                            onClick={handleSaveClick} 
-                            className="w-full"
-                            variant="default"
-                            size="lg"
-                        >
-                            Save Changes
-                        </Button>
+                                <div className="space-y-2">
+                                    {categories.length === 0 ? (
+                                        <p className="text-muted-foreground text-center py-4">
+                                            No categories added yet. Uploading your statement will generate categories.
+                                        </p>
+                                    ) : (
+                                        categories.map((category) => (
+                                            <div
+                                                key={category}
+                                                className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                                            >
+                                                <span className="font-medium">{category}</span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleRemoveCategory(categories.indexOf(category))}
+                                                    className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                                >
+                                                    <XIcon className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-muted-foreground text-center py-4">
+                                Upload your statement to automatically generate AI-powered categories. Enable manual management above to add your own categories.
+                            </p>
+                        )}
+
+                        <div className="pt-4">
+                            <Button 
+                                onClick={handleSaveClick} 
+                                className="w-full"
+                                variant="default"
+                                size="lg"
+                            >
+                                Save Changes
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
         </MotionWrapper>
         <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
             <AlertDialogContent>
@@ -155,6 +183,27 @@ export default function Categories({ initialCategories, statements }: Categories
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleSave}>Save</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        Manual Category Management
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        By enabling manual category management, the AI will no longer automatically generate categories for your statements. You will be responsible for creating and managing all categories. Are you sure you want to proceed?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setShowWarningDialog(false)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => {
+                        setAllowManualCategories(true);
+                        setShowWarningDialog(false);
+                    }}>
+                        Enable Manual Management
+                    </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

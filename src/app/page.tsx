@@ -2,6 +2,7 @@ import { HeroSection, FeaturesSection, CTASection } from "@/components/animated-
 import { getServerSession } from "next-auth"
 import { authOptions } from "./api/auth/auth.config"
 import { getUserStatements } from "@/app/actions"
+import Insights from "@/components/ui/Insights.svg"
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
@@ -16,7 +17,7 @@ export default async function Home() {
     {
       title: "Smart Transaction Summary",
       description: "AI-powered categorization breaks down your spending with precision",
-      image: "/table.png",
+      image: Insights,
       alt: "Statement summary showing categorized transactions"
     },
     {

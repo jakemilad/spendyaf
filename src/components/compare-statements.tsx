@@ -1,7 +1,7 @@
 'use client'
 import { ChartConfig } from "@/components/ui/chart";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Bar, BarChart, CartesianGrid, XAxis, Legend } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, Legend, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 interface CompareStatementsProps {
@@ -39,9 +39,10 @@ export function CompareStatements({ data, months }: CompareStatementsProps) {
 
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Monthly Spending by Category</CardTitle>
+        <section>
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Monthly Spending by Category</CardTitle>
                 <CardDescription>
                     Comparing {months.join(', ')}
                 </CardDescription>
@@ -56,14 +57,20 @@ export function CompareStatements({ data, months }: CompareStatementsProps) {
                             tickMargin={10}
                             axisLine={false}
                         />
+                        <YAxis
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
+                            tickFormatter={(value) => `$${value}`}
+                        />
                         <ChartTooltip
                             cursor={false}
-                            content={<ChartTooltipContent indicator="dashed" />}
+                            content={<ChartTooltipContent indicator="line" className="text-lg"/>}
                         />
                         <Legend 
                             verticalAlign="top" 
                             height={36}
-                            formatter={(value) => <span className="text-sm">{value}</span>}
+                            formatter={(value) => <span className="text-md">{value}</span>}
                         />
                         {months.map((month, index) => (
                             <Bar 
@@ -75,8 +82,9 @@ export function CompareStatements({ data, months }: CompareStatementsProps) {
                             />
                         ))}
                     </BarChart>
-                </ChartContainer>
-            </CardContent>
-        </Card>
+                    </ChartContainer>
+                    </CardContent>
+                </Card>
+        </section>
     );
 }

@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { DbStatement } from "../types/types";
+import { DbStatement, Transaction } from "../types/types";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -71,9 +71,9 @@ export async function openAISummary(statement: DbStatement, message: boolean) {
     const categories = statement.data.categories;
     
     const extra = `Based on previous feedback, please provide a more focused analysis, the user is requesting the summary again:
-- Be more critical of spending patterns
-- Keep insights brief and actionable
-- Highlight the most impactful areas for improvement`;
+    - Be more critical of spending patterns
+    - Keep insights brief and actionable
+    - Highlight the most impactful areas for improvement`;
 
     const prompt = `You are a direct and insightful financial advisor analyzing a monthly statement.
 
@@ -120,7 +120,7 @@ Remember: The user will see this summary alongside visual data (charts, tables, 
             },
             {role: "user", content: prompt}
         ],
-        temperature: 0.7  // Allow for some creativity in analysis while maintaining consistency
+        temperature: 0.7
     });
 
     try {
@@ -130,6 +130,45 @@ Remember: The user will see this summary alongside visual data (charts, tables, 
     } catch (error) {
         console.error(error);
         return "Error generating summary";
+    }
+}
+
+export async function openAICategoriesFromTransactions(transactions: string[]): Promise<string[]> {
+    const prompt = `
+    You are an AI tasked with categorizing financial transactions based on merchant names.
+    Instructions:
+    1. Analyze the list of unique merchant names provided.
+    2. Identify a distinct set of single-word categories that can encompass all the merchants listed.
+    3. Ensure that each category name is concise and consists of only one word.
+    4. Return the result as a JavaScript array of unique strings, where each string is a category name.
+    5. Do not include any explanations, formatting, or additional text—only the array of unique category names.
+
+    Unique Merchants:
+    ${transactions.join(', ')}
+
+    Response requirements:
+    - Format: JavaScript array of unique strings
+    - No explanations or additional text
+    - No markdown formatting or backticks
+    `
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            {
+                role: "system",
+                content: "You are a concise, direct financial advisor focused on actionable insights. You only output valid JavaScript arrays of strings, no backticks or markdown formatting."
+            },
+            {role: "user", content: prompt}
+        ],
+        temperature: 0.1
+    });
+    try {
+        const content = response.choices[0].message.content;
+        if(!content) return [];
+        return JSON.parse(content);
+    } catch (error) {
+        console.error(error);
+        return [];
     }
 }
 

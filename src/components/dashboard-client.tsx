@@ -14,7 +14,7 @@ import { LoadingOverlay } from "./loading-overlay"
 import { AiSummary } from "@/components/ai-summary"
 import { InsightsComponent } from "@/components/insights"
 import { motion } from "framer-motion"
-import { fadeIn, fadeInUp } from "@/components/animations"
+import { fadeInUp } from "@/components/animations"
 
 export function DashboardClient({
     initialStatements, 
