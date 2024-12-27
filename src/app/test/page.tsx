@@ -1,7 +1,8 @@
 
 import { compareStatements, getAICategories } from "../actions";
+import { Transaction } from "@/app/types/types";
 
-const transactions = [
+const transactions: Transaction[] = [
     {
       "Date": 1709269200000,
       "Amount": 9.99,

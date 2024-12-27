@@ -77,7 +77,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         let userCategories: string[] = await getUserCategories();
         
         if(userCategories.length === 0) {
-            userCategories = await getAICategories(uniqueMerchants);
+            userCategories = await openAICategoriesFromTransactions(uniqueMerchants);
             await updateUserCategories(userCategories);
         }
         assert(userCategories.length > 0, 'No user categories found');
@@ -315,7 +315,8 @@ export async function compareStatements(): Promise<{ data: any[], months: string
     }
 }
 
-export async function getAICategories(transactions: string[]) {
-    const categories = await openAICategoriesFromTransactions(transactions);
+export async function getAICategories(transactions: Transaction[]) {
+    const uniqueMerchants = [... new Set(transactions.map(t => t.Merchant))] as string[];
+    const categories = await openAICategoriesFromTransactions(uniqueMerchants);
     return categories;
 }
