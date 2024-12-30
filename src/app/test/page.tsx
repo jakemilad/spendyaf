@@ -1,6 +1,7 @@
 
 import { compareStatements, getAICategories } from "../actions";
 import { Transaction } from "@/app/types/types";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 const transactions: Transaction[] = [
     {
@@ -110,7 +111,8 @@ export default async function TestPage(){
     const results = await getAICategories(transactions);
     return(
         <div>
-            {JSON.stringify(results, null, 2)}
+            {/* {JSON.stringify(results, null, 2)} */}
+            <LoadingOverlay isOpen={true} message="Processing..." />
         </div>
     )
 }

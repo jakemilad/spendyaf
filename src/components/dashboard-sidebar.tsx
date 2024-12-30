@@ -15,6 +15,7 @@ import {format} from "date-fns"
 import { deleteStatement, reprocessStatement, updateStatement } from "@/app/actions"
 import { toast } from "sonner"
 import { LoadingAnimation } from "@/components/loading-animation"
+import { LoadingOverlay } from "./loading-overlay"
 
 interface DashboardSidebarProps {
     statements: DbStatement[]
@@ -177,9 +178,9 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                                             </SheetDescription>
                                                         </SheetHeader>
                                                         {isRefreshing ? (
-                                                            <LoadingAnimation 
-                                                                variant="processing"
-                                                                message="Refreshing your statement..." 
+                                                            <LoadingOverlay 
+                                                                isOpen={isRefreshing} 
+                                                                message="Refreshing your statement..."
                                                             />
                                                         ) : (
                                                             <div className="grid gap-4 py-4">
