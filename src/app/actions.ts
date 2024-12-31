@@ -44,7 +44,9 @@ export async function getUserStatements(): Promise<DbStatement[]> {
             data: row.data
         }));
 
-        return statements;
+        const sortedStatements = statements.sort((a, b) => b.data.transactions[0].Date - a.data.transactions[0].Date);
+
+        return sortedStatements;
     } catch (error) {
         console.error('Error fetching statements:', error);
         return [];
@@ -281,12 +283,11 @@ export async function updateUserCategories(categories: string[]) {
     }
 }
 
-export async function compareStatements(): Promise<{ data: any[], months: string[] }> {
+export async function compareStatements(statements: DbStatement[]): Promise<{ data: any[], months: string[] }> {
     try {
         const session = await getSession();
         if(!session?.user?.email) return { data: [], months: [] };
 
-        const statements = await getUserStatements();
         const allCategories = await getUserCategories();
 
         const months = statements?.map(s => s.file_name.split('.')[0]) || [];
@@ -313,6 +314,30 @@ export async function compareStatements(): Promise<{ data: any[], months: string
         console.error('Error comparing statements:', error);
         return { data: [], months: [] };
     }
+}
+
+export async function compareStatementAreaChart(statements: DbStatement[]) {
+    const sortedStatements = statements.sort((a, b) => a.data.transactions[0].Date - b.data.transactions[0].Date);
+
+    // chart data of average spend for each statement
+    const averageSpendChartData = sortedStatements.map(statement => {
+        return {
+            date: statement.file_name,
+            weeklyAverage: statement.data.insights.averageSpend.weekly,
+        }
+    });
+
+    const totalSpendChartData = sortedStatements.map(statement => {
+        return {
+            date: statement.file_name,
+            totalSpend: statement.data.totalSpend,
+        }
+    });
+
+    return {
+        weeklyAverage: averageSpendChartData,
+        totalSpend: totalSpendChartData,
+    } 
 }
 
 export async function getAICategories(transactions: Transaction[]) {

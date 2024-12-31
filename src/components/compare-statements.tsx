@@ -27,7 +27,7 @@ const COLORS = [
     "hsl(50, 85%, 60%)",  // Yellow
 ];
 
-export function CompareStatements({ data, months }: CompareStatementsProps) {
+export default function CompareStatements({ data, months }: CompareStatementsProps) {
 
     const chartConfig = months.reduce((config, month: any, index: any) => {
         config[month] = {
