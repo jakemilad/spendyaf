@@ -39,38 +39,48 @@ export default function CompareStatements({ data, months }: CompareStatementsPro
 
 
     return (
-        <section>
-                <Card>
-                    <CardHeader>
-                    <CardTitle>Monthly Spending by Category</CardTitle>
-                <CardDescription>
-                    Comparing {months.join(', ')}
+        <Card className="w-full">
+            <CardHeader className="pb-4">
+                <CardTitle className="text-xl">Monthly Spending by Category</CardTitle>
+                <CardDescription className="text-sm">
+                    Comparing spending across {months.join(', ')}
                 </CardDescription>
             </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig}>
-                    <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid vertical={false} />
+            <CardContent className="pb-6">
+                <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+                    <BarChart 
+                        data={data} 
+                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                        className="w-full"
+                    >
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.4} />
                         <XAxis
                             dataKey="category"
                             tickLine={false}
                             tickMargin={10}
                             axisLine={false}
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                            fontSize={12}
+                            interval={0}
                         />
                         <YAxis
                             tickLine={false}
                             tickMargin={10}
                             axisLine={false}
                             tickFormatter={(value) => `$${value}`}
+                            fontSize={12}
                         />
                         <ChartTooltip
                             cursor={false}
-                            content={<ChartTooltipContent indicator="line" className="text-lg"/>}
+                            content={<ChartTooltipContent indicator="line" className="text-sm"/>}
                         />
                         <Legend 
                             verticalAlign="top" 
-                            height={36}
-                            formatter={(value) => <span className="text-md">{value}</span>}
+                            height={40}
+                            wrapperStyle={{ paddingBottom: '20px' }}
+                            formatter={(value) => <span className="text-sm font-medium">{value}</span>}
                         />
                         {months.map((month, index) => (
                             <Bar 
@@ -78,13 +88,12 @@ export default function CompareStatements({ data, months }: CompareStatementsPro
                                 name={month}
                                 dataKey={month}
                                 fill={COLORS[index % COLORS.length]}
-                                radius={4}
+                                radius={[2, 2, 0, 0]}
                             />
                         ))}
                     </BarChart>
-                    </ChartContainer>
-                    </CardContent>
-                </Card>
-        </section>
+                </ChartContainer>
+            </CardContent>
+        </Card>
     );
 }

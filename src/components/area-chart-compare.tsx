@@ -79,12 +79,15 @@ export default function AreaChartCompare({ areaChartData }: any) {
               </SelectContent>
             </Select>
           </CardHeader>
-          <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <CardContent className="px-1 pt-2 sm:px-3 sm:pt-3">
             <ChartContainer
               config={chartConfig}
-              className="aspect-auto h-[250px] w-full"
+              className="aspect-auto h-[400px] w-full"
             >
-              <AreaChart data={chartData}>
+              <AreaChart 
+                data={chartData}
+                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              >
                 <defs>
                   <linearGradient id="fillSpend" x1="0" y1="0" x2="0" y2="1">
                     <stop
@@ -104,12 +107,14 @@ export default function AreaChartCompare({ areaChartData }: any) {
                   dataKey="date"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={8}
+                  tickMargin={5}
+                  scale="point"
+                  padding={{ left: 10, right: 10 }}
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={15}
+                  tickMargin={8}
                   tickFormatter={(value) => `$${value}`}
                   />
                 <ChartTooltip
