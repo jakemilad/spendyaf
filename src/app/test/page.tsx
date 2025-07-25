@@ -1,7 +1,7 @@
 
 import { compareStatements, getAICategories } from "../actions";
-import { Transaction } from "@/app/types/types";
-import { LoadingOverlay } from "@/components/loading-overlay";
+import { Transaction } from "@/app/types/types";  
+import { LoadingOverlay } from "@/components/loading/loading-overlay";
 
 const transactions: Transaction[] = [
     {

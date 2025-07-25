@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { buttonVariants } from "@/components/ui/button"
-import { SummaryTable } from "./summary-table"
+import { SummaryTable } from "../features/insights/summary-table"
 import { DbStatement } from "@/app/types/types"
 import { fadeInUp, staggerContainer } from "./animations"
 

@@ -11,7 +11,7 @@ import { DbStatement } from "./types/types";
 import { revalidatePath } from 'next/cache';
 import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
-import {tempStatements} from "@/components/temp-data"
+import {tempStatements} from "@/components/temp/temp-data"
 import { DEFAULT_CATEGORIES } from "./utils/dicts";
 import { assert } from "console";
 

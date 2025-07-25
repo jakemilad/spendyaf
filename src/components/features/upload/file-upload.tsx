@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner"
-import { LoadingOverlay } from "@/components/loading-overlay";
+import { LoadingOverlay } from "@/components/loading/loading-overlay";
 
 interface FileUploadProps {
     onUploadSuccess: () => Promise<void>;

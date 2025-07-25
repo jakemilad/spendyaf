@@ -1,4 +1,4 @@
-import { HeroSection, FeaturesSection, CTASection } from "@/components/animated-sections"
+import { HeroSection, FeaturesSection, CTASection } from "@/components/animations/animated-sections"
 import { getServerSession } from "next-auth"
 import { authOptions } from "./api/auth/auth.config"
 import { getUserStatements } from "@/app/actions"

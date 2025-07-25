@@ -1,11 +1,11 @@
 "use client"
 
-import { FileUpload } from "@/components/file-upload";
+import { FileUpload } from "@/components/features/upload/file-upload";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DbStatement } from "@/app/types/types";
-import { MotionWrapper } from "./motion-wrapper";
+import { MotionWrapper } from "@/components/animations/motion-wrapper";
 
 interface UploadProps {
     statements: DbStatement[]

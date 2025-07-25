@@ -1,5 +1,4 @@
-
-import Categories from "@/components/categories"
+import Categories from "@/components/features/categories/categories"
 import { getUserCategories, getUserStatements } from "../actions"
 
 export default async function CategoriesPage() {

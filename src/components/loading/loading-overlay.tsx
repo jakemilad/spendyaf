@@ -1,6 +1,6 @@
 'use client'
 
-import { LoadingAnimation } from "./loading-animation"
+import { LoadingAnimation } from "@/components/loading/loading-animation"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { FileText, ArrowUpDown, Brain, Calculator, PieChart } from "lucide-react"

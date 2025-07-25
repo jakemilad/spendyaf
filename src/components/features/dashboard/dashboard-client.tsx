@@ -2,19 +2,19 @@
 
 import { useState } from "react"
 import { DbStatement } from "@/app/types/types"
-import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { PieChartComponent } from "@/components/pie-chart"
-import { SummaryTable } from "@/components/summary-table"
+import { DashboardSidebar } from "@/components/features/dashboard/dashboard-sidebar"
+import { PieChartComponent } from "@/components/charts/pie-chart"
+import { SummaryTable } from "@/components/features/insights/summary-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import TransactionsChart from "@/components/timeseries"
-import { LoadingOverlay } from "./loading-overlay"
-import { AiSummary } from "@/components/ai-summary"
-import { InsightsComponent } from "@/components/insights"
+import TransactionsChart from "@/components/charts/timeseries"
+import { LoadingOverlay } from "@/components/loading/loading-overlay"
+import { AiSummary } from "@/components/features/insights/ai-summary"
+import { InsightsComponent } from "@/components/features/insights/insights"
 import { motion } from "framer-motion"
-import { fadeInUp } from "@/components/animations"
+import { fadeInUp } from "@/components/animations/animations"
 
 export function DashboardClient({
     initialStatements, 

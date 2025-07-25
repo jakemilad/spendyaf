@@ -1,8 +1,8 @@
 'use client'
 
 import Link from "next/link";
-import { ThemeToggle } from "./theme-toggle";
-import { Button } from "./ui/button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { SignInButton } from "@/components/auth/signin-button";
 import { Separator } from "@/components/ui/separator";

@@ -2,8 +2,8 @@
 
 import { DbStatement } from "@/app/types/types";
 import { useState } from "react";
-import CompareStatements from "@/components/compare-statements";
-import AreaChartCompare from "@/components/area-chart-compare";
+import CompareStatements from "@/components/features/compare/compare-statements";
+import AreaChartCompare from "@/components/features/compare/area-chart-compare";
 
 export function CompareClient({ data, months, areaChartData }: { data: any, months: any, areaChartData: any }) {
 

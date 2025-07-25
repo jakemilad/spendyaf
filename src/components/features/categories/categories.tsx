@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LoadingOverlay } from "./loading-overlay";
+import { LoadingOverlay } from "@/components/loading/loading-overlay";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { updateUserCategories, reprocessStatement } from "../app/actions";
-import { MotionWrapper } from "./motion-wrapper";
+import { updateUserCategories, reprocessStatement } from "../../../app/actions";
+import { MotionWrapper } from "../../animations/motion-wrapper";
 import { useRouter } from "next/navigation";
 import { DbStatement } from "@/app/types/types";
 import { Switch } from "@/components/ui/switch";

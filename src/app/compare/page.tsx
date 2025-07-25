@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { compareStatementAreaChart, compareStatements, getUserStatements } from "../actions";
-import { CompareClient } from "@/components/compare-client";
+import { CompareClient } from "@/components/features/compare/compare-client";
 import { Button } from "@/components/ui/button";
 
 export default async function ComparePage() {

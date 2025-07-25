@@ -1,7 +1,7 @@
 import { getUserStatements } from "@/app/actions"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../api/auth/auth.config"
-import { DashboardClient } from "@/components/dashboard-client"
+import { DashboardClient } from "@/components/features/dashboard/dashboard-client"
 import { DbStatement } from "../types/types"
 import { redirect } from "next/navigation"
 

@@ -14,8 +14,8 @@ import { Separator } from "@/components/ui/separator"
 import {format} from "date-fns"
 import { deleteStatement, reprocessStatement, updateStatement } from "@/app/actions"
 import { toast } from "sonner"
-import { LoadingAnimation } from "@/components/loading-animation"
-import { LoadingOverlay } from "./loading-overlay"
+import { LoadingAnimation } from "@/components/loading/loading-animation"
+import { LoadingOverlay } from "@/components/loading/loading-overlay"
 
 interface DashboardSidebarProps {
     statements: DbStatement[]
