@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         
         if (!result) {
             return NextResponse.json(
-                { message: result },
+                { message: 'No result returned from upload process' },
                 { status: 400 }
             );
         }
@@ -20,8 +20,50 @@ export async function POST(req: Request) {
         );
     } catch (error) {
         console.error('API error:', error);
+        
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('unauthorized')) {
+            return NextResponse.json(
+                { message: 'Authentication required' },
+                { status: 401 }
+            );
+        }
+        
+        if (errorMessage.includes('No file uploaded') || 
+            errorMessage.includes('File must be a CSV') ||
+            errorMessage.includes('Please provide both a file and a name')) {
+            return NextResponse.json(
+                { message: errorMessage },
+                { status: 400 }
+            );
+        }
+        
+        if (errorMessage.includes('400') && 
+            (errorMessage.includes('temperature') || 
+             errorMessage.includes('invalid_request_error') ||
+             errorMessage.includes('Unsupported value'))) {
+            return NextResponse.json(
+                { message: 'AI service configuration error - please try again later' },
+                { status: 503 } 
+            );
+        }
+        
+        if (errorMessage.includes('rate_limit') || 
+            errorMessage.includes('quota') ||
+            errorMessage.includes('429')) {
+            return NextResponse.json(
+                { message: 'AI service temporarily unavailable - please try again' },
+                { status: 503 } 
+            );
+        }
+        
         return NextResponse.json(
-            { message: 'Internal server error' },
+            { 
+                message: errorMessage.includes('Internal server error') 
+                    ? 'Internal server error - please try again' 
+                    : errorMessage 
+            },
             { status: 500 }
         );
     }

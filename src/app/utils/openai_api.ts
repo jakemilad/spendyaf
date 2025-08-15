@@ -52,8 +52,7 @@ Response requirements:
                 content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories, no backticks or markdown formatting."
             },
             {role: "user", content: prompt}
-        ],
-        temperature: 0.1 
+        ]
     });
     try {
         const content = response.choices[0].message.content;
@@ -121,8 +120,7 @@ Remember: The user will see this summary alongside visual data (charts, tables, 
                 content: "You are a concise, direct financial advisor focused on actionable insights. Maintain a professional yet approachable tone."
             },
             {role: "user", content: prompt}
-        ],
-        temperature: 0.7
+        ]
     });
 
     try {
@@ -161,8 +159,7 @@ export async function openAICategoriesFromTransactions(transactions: string[]): 
                 content: "You are a concise, direct financial advisor focused on actionable insights. You only output valid JavaScript arrays of strings, no backticks or markdown formatting."
             },
             {role: "user", content: prompt}
-        ],
-        temperature: 0.1
+        ]
     });
     try {
         const content = response.choices[0].message.content;

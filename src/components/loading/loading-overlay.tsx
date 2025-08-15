@@ -31,7 +31,6 @@ export function LoadingOverlay({ isOpen, message = "Processing..." }: LoadingOve
                 const timer = setTimeout(() => {
                     setCurrentStep(index)
                     if (index === steps.length - 1) {
-                        // Delay before showing completion
                         const completionTimer = setTimeout(() => {
                             setIsCompleted(true)
                         }, 1000)
@@ -57,7 +56,7 @@ export function LoadingOverlay({ isOpen, message = "Processing..." }: LoadingOve
             <motion.div
                 key="overlay"
                 className={cn(
-                    "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
+                    "fixed inset-0 bg-background z-50 flex items-center justify-center"
                 )}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

@@ -16,6 +16,7 @@ import { useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner"
 import { LoadingOverlay } from "@/components/loading/loading-overlay";
+import { retryFetch } from "@/lib/retry";
 
 interface FileUploadProps {
     onUploadSuccess: () => Promise<void>;
@@ -27,6 +28,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
     const [showDialog, setShowDialog] = useState(false);
     const [fileName, setFileName] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [retryAttempt, setRetryAttempt] = useState(0);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -50,43 +52,59 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
         }
 
         setShowDialog(false);
-        try {
-            setIsLoading(true);
-            setError(null);
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('fileName', fileName);
+        setIsLoading(true);
+        setError(null);
+        setRetryAttempt(0);
 
-            const response = await fetch('/api/amex', {
-                method: 'POST',
-                credentials: 'include', 
-                body: formData,
-            });
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', fileName);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Upload failed');
+        const result = await retryFetch('/api/amex', {
+            method: 'POST',
+            credentials: 'include', 
+            body: formData,
+        }, {
+            maxRetries: 3,
+            baseDelay: 1000,
+            backoffFactor: 2,
+            onRetry: (attempt, error) => {
+                setRetryAttempt(attempt);
+                toast.warning(`Upload failed, retrying... (Attempt ${attempt}/3)`);
             }
+        });
 
-            const data = await response.json();
-            console.log(data);
-            await onUploadSuccess();
-            toast.success('Statement successfully uploaded')
-            setFile(null);
-            setFileName("");
-            setShowDialog(false);
-        } catch (error) {
-            setError(error instanceof Error ? error.message : 'Upload failed');
-        } finally {
-            setIsLoading(false);
+        if (result.success) {
+            try {
+                const data = await result.data!.json();
+                console.log(data);
+                await onUploadSuccess();
+                toast.success('Statement successfully uploaded');
+                setFile(null);
+                setFileName("");
+                setRetryAttempt(0);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to process response';
+                setError(`Upload succeeded but failed to process response: ${errorMessage}`);
+                toast.error('Upload succeeded but failed to process response');
+            }
+        } else {
+            const errorMessage = result.error?.message || 'Upload failed';
+            setError(`Upload failed after ${result.attempts} attempts: ${errorMessage}`);
+            toast.error('Upload failed after multiple attempts. Please try again.');
         }
+
+        setIsLoading(false);
     };
 
     return (
         <>
             <LoadingOverlay 
                 isOpen={isLoading} 
-                message="Uploading your statement..."
+                message={retryAttempt > 0 
+                    ? `Uploading your statement... (Attempt ${retryAttempt + 1}/4)` 
+                    : "Uploading your statement..."
+                }
             />
             <Card className="w-full">
                 <CardContent className="pt-6">

@@ -111,7 +111,6 @@ export default async function TestPage(){
     const results = await getAICategories(transactions);
     return(
         <div>
-            {/* {JSON.stringify(results, null, 2)} */}
             <LoadingOverlay isOpen={true} message="Processing..." />
         </div>
     )
