@@ -1,18 +1,19 @@
 import OpenAI from "openai";
 import { DbStatement, Transaction } from "../types/types";
 
-const model = "gpt-5";
+const model = "gpt-5-mini";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+
 export async function Test(query: string) {
-  const response = await openai.chat.completions.create({
+  const response = await openai.responses.create({
     model: model,
-    messages: [{ role: "user", content: query }],
+    input: [{ role: "user", content: query }],
   });
-  return response.choices[0].message.content;
+  return {response: response.output_text, usage: response.usage, model: response.model};
 }
 
 export async function openAICategories(merchants: string[], userCategories: string[]) {
@@ -44,9 +45,9 @@ Response requirements:
 - No markdown formatting or backticks
 - Each merchant must map to a valid category`;
 
-    const response = await openai.chat.completions.create({
+    const response = await openai.responses.create({
         model: model,
-        messages: [
+        input: [
             {
                 role: "system", 
                 content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories, no backticks or markdown formatting."
@@ -55,7 +56,7 @@ Response requirements:
         ]
     });
     try {
-        const content = response.choices[0].message.content;
+        const content = response.output_text;
         console.log(content);
         if(!content) return {"error": "No content returned from OpenAI"};
         return JSON.parse(content);
@@ -112,9 +113,9 @@ Financial Data:
 
 Remember: The user will see this summary alongside visual data (charts, tables, insights), so focus on insights rather than repeating numbers.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await openai.responses.create({
         model: model,
-        messages: [
+        input: [
             {
                 role: "system",
                 content: "You are a concise, direct financial advisor focused on actionable insights. Maintain a professional yet approachable tone."
@@ -124,7 +125,7 @@ Remember: The user will see this summary alongside visual data (charts, tables, 
     });
 
     try {
-        const content = response.choices[0].message.content;
+        const content = response.output_text;
         if(!content) return "No content found";
         return content;
     } catch (error) {
@@ -151,9 +152,9 @@ export async function openAICategoriesFromTransactions(transactions: string[]): 
     - No explanations or additional text
     - No markdown formatting or backticks
     `
-    const response = await openai.chat.completions.create({
+    const response = await openai.responses.create({
         model: model,
-        messages: [
+        input: [
             {
                 role: "system",
                 content: "You are a concise, direct financial advisor focused on actionable insights. You only output valid JavaScript arrays of strings, no backticks or markdown formatting."
@@ -162,7 +163,7 @@ export async function openAICategoriesFromTransactions(transactions: string[]): 
         ]
     });
     try {
-        const content = response.choices[0].message.content;
+        const content = response.output_text;
         if(!content) return [];
         return JSON.parse(content);
     } catch (error) {
