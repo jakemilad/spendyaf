@@ -56,7 +56,7 @@ export function LoadingOverlay({ isOpen, message = "Processing..." }: LoadingOve
             <motion.div
                 key="overlay"
                 className={cn(
-                    "fixed inset-0 bg-background z-50 flex items-center justify-center"
+                    "fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center"
                 )}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

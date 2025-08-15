@@ -65,12 +65,13 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
             credentials: 'include', 
             body: formData,
         }, {
-            maxRetries: 3,
-            baseDelay: 1000,
-            backoffFactor: 2,
+            maxRetries: 2, 
+            baseDelay: 2000,
+            backoffFactor: 1.5, 
             onRetry: (attempt, error) => {
                 setRetryAttempt(attempt);
-                toast.warning(`Upload failed, retrying... (Attempt ${attempt}/3)`);
+                toast.warning(`Processing failed, retrying... (Attempt ${attempt}/3)`);
+                console.log(`Retry attempt ${attempt}:`, error.message);
             }
         });
 
@@ -78,12 +79,15 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
             try {
                 const data = await result.data!.json();
                 console.log(data);
-                await onUploadSuccess();
+                
                 toast.success('Statement successfully uploaded');
                 setFile(null);
                 setFileName("");
                 setRetryAttempt(0);
+                
+                await onUploadSuccess();
             } catch (error) {
+                console.error('Error processing response:', error);
                 const errorMessage = error instanceof Error ? error.message : 'Failed to process response';
                 setError(`Upload succeeded but failed to process response: ${errorMessage}`);
                 toast.error('Upload succeeded but failed to process response');
@@ -91,7 +95,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
         } else {
             const errorMessage = result.error?.message || 'Upload failed';
             setError(`Upload failed after ${result.attempts} attempts: ${errorMessage}`);
-            toast.error('Upload failed after multiple attempts. Please try again.');
+            toast.error(`Upload failed. ${result.attempts > 1 ? 'Tried multiple times.' : ''} Please try again.`);
         }
 
         setIsLoading(false);
@@ -102,8 +106,8 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
             <LoadingOverlay 
                 isOpen={isLoading} 
                 message={retryAttempt > 0 
-                    ? `Uploading your statement... (Attempt ${retryAttempt + 1}/4)` 
-                    : "Uploading your statement..."
+                    ? `Processing your statement... (Attempt ${retryAttempt + 1}/3)` 
+                    : "Processing your statement..."
                 }
             />
             <Card className="w-full">

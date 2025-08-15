@@ -77,9 +77,9 @@ export async function retryFetch(
   return withRetry(async () => {
     const response = await fetch(url, init);
     
-    // Consider 5xx errors and 503 (Service Unavailable) as retryable
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const responseClone = response.clone();
+      const errorData = await responseClone.json().catch(() => ({}));
       const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
       
       // Retry these specific statuses: 
