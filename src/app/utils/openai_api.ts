@@ -1,13 +1,15 @@
 import OpenAI from "openai";
 import { DbStatement, Transaction } from "../types/types";
 
+const model = "gpt-5";
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function Test(query: string) {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: model,
     messages: [{ role: "user", content: query }],
   });
   return response.choices[0].message.content;
@@ -43,7 +45,7 @@ Response requirements:
 - Each merchant must map to a valid category`;
 
     const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: model,
         messages: [
             {
                 role: "system", 
@@ -112,7 +114,7 @@ Financial Data:
 Remember: The user will see this summary alongside visual data (charts, tables, insights), so focus on insights rather than repeating numbers.`;
 
     const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: model,
         messages: [
             {
                 role: "system",
@@ -152,7 +154,7 @@ export async function openAICategoriesFromTransactions(transactions: string[]): 
     - No markdown formatting or backticks
     `
     const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: model,
         messages: [
             {
                 role: "system",
