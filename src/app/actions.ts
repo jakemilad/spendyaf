@@ -4,6 +4,7 @@ import { getServerSession, Session } from "next-auth";
 import { authOptions } from "./api/auth/auth.config";
 import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
 import { openAICategories, openAICategoriesFromTransactions, openAISummary } from "./utils/openai_api";
+import { openAICategories as claudeCategories } from "./utils/claude";
 import { Transaction } from "./types/types";
 import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
@@ -137,8 +138,9 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
         let userCategories: string[] = await getUserCategories();
 
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
-        const categories = await openAICategories(uniqueMerchants as string[], userCategories);
-        const summary = summarizeSpendByCategory(transactions, categories);
+        // const categories = await openAICategories(uniqueMerchants as string[], userCategories);
+        const categories = await claudeCategories(uniqueMerchants as string[], userCategories);
+        const summary = summarizeSpendByCategory(transactions, categories as Record<string, string>);
         const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
         const insights = getInsights(transactions, summary);
 
