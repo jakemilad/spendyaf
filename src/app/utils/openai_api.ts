@@ -82,6 +82,8 @@ export async function openAISummary(statement: DbStatement, message: boolean) {
 Role: Personal Financial Advisor
 Goal: Provide a clear, actionable summary of spending patterns and opportunities for improvement
 
+Do not give the user any suggestions that you are able to provide a budgeting plan or action plan to reducing spending. This is just your job to provide insights and a summary of the spending.
+
 Available Data:
 1. Category Summary: Breakdown of spending by category with totals and largest transactions
 2. Transaction List: Detailed list of individual transactions
