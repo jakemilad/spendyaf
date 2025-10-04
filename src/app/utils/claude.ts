@@ -40,10 +40,22 @@ Output:`;
   });
   try {
     const content = response.content[0];
-    if(!content) return {"error": "No content returned from OpenAI"};
-    return content.type === 'text' ? content.text : 'No text content';
+    if(!content) {
+      console.warn('⚠️  No content returned from Claude');
+      return {"error": "No content returned from Claude"};
+    }
+    
+    const textContent = content.type === 'text' ? content.text : 'No text content';
+    console.log('🤖 Raw Claude Response:', textContent);
+    
+    // Parse the JSON response
+    const parsed = JSON.parse(textContent);
+    console.log('✅ Parsed Claude Categories:', parsed);
+    console.log('📊 Claude categories count:', Object.keys(parsed).length);
+    return parsed;
   } catch (error) {
-    console.error(error);
+    console.error('❌ Error parsing Claude response:', error);
+    console.error('🔍 Raw content that failed to parse:', response.content[0]);
     return {"error": "Error parsing Claude response"};
   }
 }

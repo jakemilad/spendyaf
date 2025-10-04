@@ -34,16 +34,48 @@ export function AiSummary({ statement }: AiSummaryProps) {
     const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null)
 
     useEffect(() => {
-        const cachedData = localStorage.getItem(`${CACHE_KEY_PREFIX}${statement.id}`)
+        setAiSummary("")
+        setIsGenerated(false)
+        setIsLoading(false)
+        setError(null)
+        setFeedback(null)
+        setRetryCount(0)
+        
+        const cleanupCache = () => {
+            const keys = Object.keys(localStorage)
+            keys.filter(key => key.startsWith(CACHE_KEY_PREFIX)).forEach(key => {
+                try {
+                    const data = localStorage.getItem(key)
+                    if (data) {
+                        const { timestamp } = JSON.parse(data) as SummaryCache
+                        const age = Date.now() - timestamp
+                        if (age >= 24 * 60 * 60 * 1000) {
+                            localStorage.removeItem(key)
+                        }
+                    }
+                } catch (error) {
+                    localStorage.removeItem(key)
+                }
+            })
+        }
+        cleanupCache()
+        
+        const uniqueCacheKey = `${CACHE_KEY_PREFIX}${statement.id}-${statement.file_name}-${statement.created_at}`
+        const cachedData = localStorage.getItem(uniqueCacheKey)
         if (cachedData) {
-            const { text, timestamp } = JSON.parse(cachedData) as SummaryCache
-            const age = Date.now() - timestamp
-            if (age < 24 * 60 * 60 * 1000) { 
-                setAiSummary(text)
-                setIsGenerated(true)
+            try {
+                const { text, timestamp } = JSON.parse(cachedData) as SummaryCache
+                const age = Date.now() - timestamp
+                if (age < 24 * 60 * 60 * 1000) { 
+                    setAiSummary(text)
+                    setIsGenerated(true)
+                }
+            } catch (error) {
+                console.error('Error parsing cached data:', error)
+                localStorage.removeItem(uniqueCacheKey)
             }
         }
-    }, [statement.id])
+    }, [statement.id, statement.file_name, statement.created_at])
 
     const handleError = useCallback((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : "An error occurred"
@@ -75,7 +107,8 @@ export function AiSummary({ statement }: AiSummaryProps) {
                 text: response,
                 timestamp: Date.now(),
             }
-            localStorage.setItem(`${CACHE_KEY_PREFIX}${statement.id}`, JSON.stringify(cacheData))
+            const uniqueCacheKey = `${CACHE_KEY_PREFIX}${statement.id}-${statement.file_name}-${statement.created_at}`
+            localStorage.setItem(uniqueCacheKey, JSON.stringify(cacheData))
             
             setAiSummary(response)
             setIsGenerated(true)
