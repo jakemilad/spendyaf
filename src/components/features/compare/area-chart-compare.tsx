@@ -15,7 +15,7 @@ interface ViewType {
   value: string;
   label: string;
   dataKey: string;
-  dataSource: 'weeklyAverage' | 'totalSpend'
+  dataSource: 'weeklyAverage' | 'totalSpend' | 'spendVol';
 }
 
 const VIEW_TYPES: ViewType[] = [
@@ -30,7 +30,13 @@ const VIEW_TYPES: ViewType[] = [
     label: 'Total Spend',
     dataKey: 'totalSpend',
     dataSource: 'totalSpend'
-  }
+  },
+  {
+    value: 'volatility',
+    label: 'Volatility',
+    dataKey: 'spendVol',
+    dataSource: 'spendVol',
+  },
 ];
 
 const chartConfig = {

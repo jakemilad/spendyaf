@@ -14,6 +14,15 @@ export async function POST(req: Request) {
             );
         }
 
+        console.log('/amex route - Processing completed successfully!');
+        console.log('Final Results Summary:');
+        console.log(` File: ${result.fileName}`);
+        console.log(` Total Spend: $${result.totalSpend}`);
+        console.log(` Unique Merchants: ${Object.keys(result.categories).length}`);
+        console.log(` Categories Used: ${Object.values(result.categories).filter((v, i, a) => a.indexOf(v) === i).length}`);
+        console.log(` Transactions: ${result.transactions.length}`);
+        console.log(` Insights Generated: ${Object.keys(result.insights).length} types`);
+        
         return NextResponse.json(
             result,
             { status: 200 }

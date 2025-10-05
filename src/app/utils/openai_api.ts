@@ -1,7 +1,8 @@
 import OpenAI from "openai";
 import { DbStatement, Transaction } from "../types/types";
+import pool from "@/lib/db";
 
-const model = "gpt-5-mini";
+const model = "gpt-4o-mini"; // Fixed model name
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,11 +10,11 @@ const openai = new OpenAI({
 
 
 export async function Test(query: string) {
-  const response = await openai.responses.create({
+  const response = await openai.chat.completions.create({
     model: model,
-    input: [{ role: "user", content: query }],
+    messages: [{ role: "user", content: query }],
   });
-  return {response: response.output_text, usage: response.usage, model: response.model};
+  return {response: response.choices[0]?.message?.content, usage: response.usage, model: response.model};
 }
 
 export async function openAICategories(merchants: string[], userCategories: string[]) {
@@ -45,23 +46,35 @@ Response requirements:
 - No markdown formatting or backticks
 - Each merchant must map to a valid category`;
 
-    const response = await openai.responses.create({
+    console.log('🚀 Calling OpenAI with', merchants.length, 'merchants and', userCategories.length, 'categories');
+    console.log('🏪 Merchants to categorize:', merchants);
+    console.log('🏷️  Available categories:', userCategories);
+    
+    const response = await openai.chat.completions.create({
         model: model,
-        input: [
+        messages: [
             {
                 role: "system", 
                 content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories, no backticks or markdown formatting."
             },
             {role: "user", content: prompt}
-        ]
+        ],
+        temperature: 0.1
     });
     try {
-        const content = response.output_text;
-        console.log(content);
-        if(!content) return {"error": "No content returned from OpenAI"};
-        return JSON.parse(content);
+        const content = response.choices[0]?.message?.content;
+        console.log('🤖 Raw AI Response:', content);
+        if(!content) {
+            console.warn('⚠️  No content returned from OpenAI');
+            return {"error": "No content returned from OpenAI"};
+        }
+        const parsed = JSON.parse(content);
+        console.log('✅ Parsed AI Categories:', parsed);
+        console.log('📊 Categories count:', Object.keys(parsed).length);
+        return parsed;
     } catch (error) {
-        console.error(error);
+        console.error('❌ Error parsing OpenAI response:', error);
+        console.error('🔍 Raw content that failed to parse:', response.choices[0]?.message?.content);
         return {"error": "Error parsing OpenAI response"};
     }
 }
@@ -81,6 +94,8 @@ export async function openAISummary(statement: DbStatement, message: boolean) {
 
 Role: Personal Financial Advisor
 Goal: Provide a clear, actionable summary of spending patterns and opportunities for improvement
+
+Do not give the user any suggestions that you are able to provide a budgeting plan or action plan to reducing spending. This is just your job to provide insights and a summary of the spending.
 
 Available Data:
 1. Category Summary: Breakdown of spending by category with totals and largest transactions
@@ -113,9 +128,9 @@ Financial Data:
 
 Remember: The user will see this summary alongside visual data (charts, tables, insights), so focus on insights rather than repeating numbers.`;
 
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
         model: model,
-        input: [
+        messages: [
             {
                 role: "system",
                 content: "You are a concise, direct financial advisor focused on actionable insights. Maintain a professional yet approachable tone."
@@ -125,7 +140,7 @@ Remember: The user will see this summary alongside visual data (charts, tables, 
     });
 
     try {
-        const content = response.output_text;
+        const content = response.choices[0]?.message?.content;
         if(!content) return "No content found";
         return content;
     } catch (error) {
@@ -152,24 +167,93 @@ export async function openAICategoriesFromTransactions(transactions: string[]): 
     - No explanations or additional text
     - No markdown formatting or backticks
     `
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
         model: model,
-        input: [
+        messages: [
             {
                 role: "system",
                 content: "You are a concise, direct financial advisor focused on actionable insights. You only output valid JavaScript arrays of strings, no backticks or markdown formatting."
             },
             {role: "user", content: prompt}
-        ]
+        ],
+        temperature: 0.1
     });
     try {
-        const content = response.output_text;
-        if(!content) return [];
-        return JSON.parse(content);
+        const content = response.choices[0]?.message?.content;
+        console.log('🤖 Raw AI Category Generation Response:', content);
+        if(!content) {
+            console.warn('⚠️  No content returned from category generation');
+            return [];
+        }
+        const parsed = JSON.parse(content);
+        console.log('✅ Generated User Categories:', parsed);
+        console.log('📊 Generated categories count:', parsed.length);
+        return parsed;
     } catch (error) {
-        console.error(error);
+        console.error('❌ Error parsing category generation response:', error);
+        const content = response.choices[0]?.message?.content;
+        console.error('🔍 Raw content that failed to parse:', content);
         return [];
     }
+}
+
+// Merchant category caching functions
+export async function getCachedMerchantCategories(userId: string, merchants: string[]): Promise<Record<string, string>> {
+    try {
+        if (merchants.length === 0) return {};
+
+        const result = await pool.query(
+            'SELECT merchant, category FROM merchant_categories WHERE user_id = $1 AND merchant = ANY($2)',
+            [userId, merchants]
+        );
+
+        const cached: Record<string, string> = {};
+        result.rows.forEach(row => {
+            cached[row.merchant] = row.category;
+        });
+
+        return cached;
+    } catch (error) {
+        console.error('Error fetching cached merchant categories:', error);
+        return {};
+    }
+}
+
+export async function cacheMerchantCategories(userId: string, merchantCategories: Record<string, string>): Promise<void> {
+    try {
+        const entries = Object.entries(merchantCategories);
+        if (entries.length === 0) return;
+
+        const values = entries.map((_, index) =>
+            `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`
+        ).join(', ');
+
+        const params: any[] = [];
+        entries.forEach(([merchant, category]) => {
+            params.push(userId, merchant, category);
+        });
+
+        await pool.query(
+            `INSERT INTO merchant_categories (user_id, merchant, category)
+             VALUES ${values}
+             ON CONFLICT (user_id, merchant) DO UPDATE SET
+                category = EXCLUDED.category,
+                updated_at = CURRENT_TIMESTAMP`,
+            params
+        );
+    } catch (error) {
+        console.error('Error caching merchant categories:', error);
+    }
+}
+
+// openAICategories with timeout and batch processing
+export async function openAICategoriesWithTimeout(merchants: string[], userCategories: string[], timeoutMs: number = 8000): Promise<Record<string, string>> {
+    return Promise.race([
+        openAICategories(merchants, userCategories),
+        new Promise<Record<string, string>>((_, reject) =>
+            setTimeout(() => reject(new Error('AI categorization timeout')), timeoutMs)
+        )
+    ]);
 }
 
 export default openai;

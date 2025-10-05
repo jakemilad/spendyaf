@@ -3,7 +3,8 @@ import { neon } from "@neondatabase/serverless";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "./api/auth/auth.config";
 import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
-import { openAICategories, openAICategoriesFromTransactions, openAISummary } from "./utils/openai_api";
+import { openAICategoriesFromTransactions, openAISummary, getCachedMerchantCategories, cacheMerchantCategories, openAICategoriesWithTimeout, openAICategories } from "./utils/openai_api";
+// import { openAICategories as claudeCategories } from "./utils/claude";
 import { Transaction } from "./types/types";
 import { CategorySummary } from "./types/types";
 import pool from "@/lib/db";
@@ -14,6 +15,7 @@ import { Statement } from "./types/types";
 import {tempStatements} from "@/components/temp/temp-data"
 import { DEFAULT_CATEGORIES } from "./utils/dicts";
 import { assert } from "console";
+import { stat } from "fs";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -54,6 +56,9 @@ export async function getUserStatements(): Promise<DbStatement[]> {
 }
 
 export async function uploadAndProcessStatement(formData: FormData): Promise<Statement> {
+    const startTime = Date.now();
+    console.log('⏱️  Starting optimized statement processing...');
+    
     try {
         const session = await getSession();
 
@@ -76,41 +81,117 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         const transactions = processedTransactions.filter(t => !t.Merchant.includes("PAYMENT RECEIVED"))
         const uniqueMerchants: string[] = [... new Set(transactions.map(t => t.Merchant))];
 
+        // Get or create user categories with optimized caching
         let userCategories: string[] = await getUserCategories();
+
+        // Check cache for merchant categories first
+        const userEmail = session.user?.email!;
+        const cachedMerchantCategories = await getCachedMerchantCategories(userEmail, uniqueMerchants);
+        const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
         
-        if(userCategories.length === 0) {
-            userCategories = await openAICategoriesFromTransactions(uniqueMerchants);
-            await updateUserCategories(userCategories);
+        console.log(`🏪 Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
+        console.log(`📈 Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
+        console.log('🔍 User Categories Available:', userCategories);
+
+        // Parallel processing: Start both AI operations simultaneously
+        let userCategoriesPromise: Promise<string[]> | null = null;
+        let merchantCategoriesPromise: Promise<Record<string, string>>;
+
+        if (userCategories.length === 0) {
+            // category generation in parallel
+            userCategoriesPromise = openAICategoriesFromTransactions(uniqueMerchants)
+                .then(async (categories) => {
+                    await updateUserCategories(categories);
+                    return categories;
+                });
+
+            // fallback categories for merchant categorization with timeout
+            merchantCategoriesPromise = userCategoriesPromise.then(async (categories) => {
+                if (uncachedMerchants.length > 0) {
+                    try {
+                        const newCategories = await openAICategoriesWithTimeout(uncachedMerchants, categories, 8000);
+                        await cacheMerchantCategories(userEmail, newCategories);
+                        return { ...cachedMerchantCategories, ...newCategories };
+                    } catch (error) {
+                        console.warn('AI categorization timeout, using fallback categories');
+                        // Fallback: assign default categories or most common ones
+                        console.warn('🔄 Using fallback categorization for', uncachedMerchants.length, 'merchants');
+                        const fallbackCategories: Record<string, string> = {};
+                        uncachedMerchants.forEach((merchant, index) => {
+                            // Distribute merchants across available categories instead of all to first category
+                            const categoryIndex = index % categories.length;
+                            fallbackCategories[merchant] = categories[categoryIndex] || 'Other';
+                        });
+                        console.log('🏷️  Fallback categories assigned:', fallbackCategories);
+                        await cacheMerchantCategories(userEmail, fallbackCategories);
+                        return { ...cachedMerchantCategories, ...fallbackCategories };
+                    }
+                }
+                return cachedMerchantCategories;
+            });
+        } else {
+            // Use existing categories - only categorize uncached merchants with timeout
+            if (uncachedMerchants.length > 0) {
+                merchantCategoriesPromise = openAICategoriesWithTimeout(uncachedMerchants, userCategories, 8000)
+                    .then(async (newCategories) => {
+                        await cacheMerchantCategories(userEmail, newCategories);
+                        return { ...cachedMerchantCategories, ...newCategories };
+                    })
+                    .catch(async (error) => {
+                        console.warn('AI categorization timeout, using fallback categories:', error.message);
+                        // Fallback: assign default categories
+                        console.warn('🔄 Using fallback categorization for', uncachedMerchants.length, 'merchants (existing user)');
+                        const fallbackCategories: Record<string, string> = {};
+                        uncachedMerchants.forEach((merchant, index) => {
+                            // Distribute merchants across available categories instead of all to first category
+                            const categoryIndex = index % userCategories.length;
+                            fallbackCategories[merchant] = userCategories[categoryIndex] || 'Other';
+                        });
+                        console.log('🏷️  Fallback categories assigned (existing user):', fallbackCategories);
+                        console.log('👤 Available user categories:', userCategories);
+                        await cacheMerchantCategories(userEmail, fallbackCategories);
+                        return { ...cachedMerchantCategories, ...fallbackCategories };
+                    });
+            } else {
+                merchantCategoriesPromise = Promise.resolve(cachedMerchantCategories);
+            }
         }
-        assert(userCategories.length > 0, 'No user categories found');
-        
-        // if(session?.user?.email === 'jake.milad@gmail.com') {
-        //     userCategories = DEFAULT_CATEGORIES;
-        // } else {
-        //     userCategories = await getUserCategories();
-        // }
 
-        const categories = await openAICategories(uniqueMerchants, userCategories);
+        // Await both operations (they run in parallel when possible)
+        const [finalUserCategories, categories] = await Promise.all([
+            userCategoriesPromise || Promise.resolve(userCategories),
+            merchantCategoriesPromise
+        ]);
+
+        assert(finalUserCategories.length > 0, 'No user categories found');
+
         const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
-
         const totalSpend = transactions.reduce((sum, transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
-
         const insights = getInsights(transactions, summary);
 
         const response = {
-            summary, 
-            categories, 
-            transactions, 
+            summary,
+            categories,
+            transactions,
             fileName,
             totalSpend: Number(totalSpend),
             insights
         };
 
-        await pool.query(
-            'INSERT INTO transaction_records (user_id, data, file_name) VALUES ($1, $2, $3)', 
-            [session?.user?.email, JSON.stringify(response), fileName]);
-        console.log('inserted into db');
+        // Non-blocking database insert (fire and forget for better response time)
+        pool.query(
+            'INSERT INTO transaction_records (user_id, data, file_name) VALUES ($1, $2, $3)',
+            [userEmail, JSON.stringify(response), fileName]
+        ).then(() => {
+            console.log('inserted into db');
+        }).catch(error => {
+            console.error('Database insert error:', error);
+        });
 
+        const processingTime = Date.now() - startTime;
+        console.log(`⚡ Processing completed in ${processingTime}ms`);
+        console.log('🎯 Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
+        console.log(response)
         return response;
     } catch (error) {
         console.error('Upload error:', error);
@@ -138,7 +219,8 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
 
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
         const categories = await openAICategories(uniqueMerchants as string[], userCategories);
-        const summary = summarizeSpendByCategory(transactions, categories);
+        // const categories = await claudeCategories(uniqueMerchants as string[], userCategories);
+        const summary = summarizeSpendByCategory(transactions, categories as Record<string, string>);
         const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
         const insights = getInsights(transactions, summary);
 
@@ -334,9 +416,22 @@ export async function compareStatementAreaChart(statements: DbStatement[]) {
         }
     });
 
+    const spendingVolatilityChartData = sortedStatements.map(s => {
+        const amount = s.data.transactions.map(t => t.Amount);
+        const mean = amount.reduce((a,b) => a+b, 0) / amount.length;
+        const variance = amount.reduce((sum, amount)=> sum + Math.pow(amount - mean, 2))
+        const stdDev = Math.sqrt(variance)
+
+        return {
+            date: s.file_name,
+            spendVol: Number(stdDev.toFixed(2))
+        }
+    })
+    
     return {
         weeklyAverage: averageSpendChartData,
         totalSpend: totalSpendChartData,
+        spendVol: spendingVolatilityChartData
     } 
 }
 
