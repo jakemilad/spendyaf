@@ -15,6 +15,7 @@ import { Statement } from "./types/types";
 import {tempStatements} from "@/components/temp/temp-data"
 import { DEFAULT_CATEGORIES } from "./utils/dicts";
 import { assert } from "console";
+import { stat } from "fs";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -97,14 +98,14 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         let merchantCategoriesPromise: Promise<Record<string, string>>;
 
         if (userCategories.length === 0) {
-            // Start category generation in parallel
+            // category generation in parallel
             userCategoriesPromise = openAICategoriesFromTransactions(uniqueMerchants)
                 .then(async (categories) => {
                     await updateUserCategories(categories);
                     return categories;
                 });
 
-            // Use fallback categories for merchant categorization with timeout
+            // fallback categories for merchant categorization with timeout
             merchantCategoriesPromise = userCategoriesPromise.then(async (categories) => {
                 if (uncachedMerchants.length > 0) {
                     try {
@@ -415,9 +416,22 @@ export async function compareStatementAreaChart(statements: DbStatement[]) {
         }
     });
 
+    const spendingVolatilityChartData = sortedStatements.map(s => {
+        const amount = s.data.transactions.map(t => t.Amount);
+        const mean = amount.reduce((a,b) => a+b, 0) / amount.length;
+        const variance = amount.reduce((sum, amount)=> sum + Math.pow(amount - mean, 2))
+        const stdDev = Math.sqrt(variance)
+
+        return {
+            date: s.file_name,
+            spendVol: Number(stdDev.toFixed(2))
+        }
+    })
+    
     return {
         weeklyAverage: averageSpendChartData,
         totalSpend: totalSpendChartData,
+        spendVol: spendingVolatilityChartData
     } 
 }
 

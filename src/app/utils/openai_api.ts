@@ -246,7 +246,7 @@ export async function cacheMerchantCategories(userId: string, merchantCategories
     }
 }
 
-// Enhanced openAICategories with timeout and batch processing
+// openAICategories with timeout and batch processing
 export async function openAICategoriesWithTimeout(merchants: string[], userCategories: string[], timeoutMs: number = 8000): Promise<Record<string, string>> {
     return Promise.race([
         openAICategories(merchants, userCategories),
