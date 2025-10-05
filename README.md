@@ -1,4 +1,4 @@
-# Spendy AF 💸
+# Spendy AF
 
 > **Broke AF? There's a Reason.**
 
@@ -8,7 +8,7 @@ A modern, AI-powered financial expense analyzer that transforms your credit card
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-## ✨ Features
+## Features
 
 ### AI-Powered Analysis
 
