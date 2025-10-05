@@ -2,13 +2,17 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import Image from "next/image"
 import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { SummaryTable } from "../features/insights/summary-table"
+import { PieChartComponent } from "../charts/pie-chart"
+import TransactionsChart from "../charts/timeseries"
+import { InsightsComponent } from "../features/insights/insights"
 import { DbStatement } from "@/app/types/types"
 import { fadeInUp, staggerContainer } from "./animations"
+import { Sparkles, TrendingUp, Shield, Zap } from "lucide-react"
 
-const statement: DbStatement = 
+const statement: DbStatement =
   {
     "id": "17",
     "user_id": "yacoub.milad@gmail.com",
@@ -363,82 +367,218 @@ const statement: DbStatement =
 
 export function HeroSection({ targetPath }: { targetPath: string }) {
   return (
-    <motion.section 
-      initial="initial"
-      animate="animate"
-      variants={staggerContainer}
-      className="min-h-[40vh] flex items-center gap-6 pb-8 pt-6 md:py-10"
-    >
-      <motion.div 
-        variants={fadeInUp}
-        className="flex max-w-[980px] flex-col items-start gap-4"
-      >
-        <h1 className="text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl bg-gradient-to-r from-primary dark:to-white to-yellow-700 bg-clip-text text-transparent">
-          You're Spendy AF,
-          <br className="hidden sm:inline" />
-          be serious.
-        </h1>
-        <p className="max-w-[700px] text-xl text-muted-foreground">
-          Transform your financial data into actionable insights with our AI-powered expense analyzer.
-        </p>
-        <motion.div 
-          variants={fadeInUp}
-          className="mt-8"
+    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden py-20 md:py-32">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
+
+      <div className="relative z-10 container mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium"
         >
-          <Link 
-            href={targetPath} 
-            className={buttonVariants({ 
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>AI-Powered Financial Insights</span>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tighter mb-6"
+        >
+          <span className="bg-gradient-to-r from-primary via-primary to-yellow-600 dark:from-primary dark:via-cyan-400 dark:to-primary bg-clip-text text-transparent">
+            Broke AF?
+          </span>
+          <br />
+          <span className="text-foreground">There's a Reason.</span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12"
+        >
+          Your statement says you spent $4,000 this month. Cool, but on what? We use AI to figure out which transaction goes where,
+          and give you the insights you need to understand your spending.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex flex-wrap items-center justify-center gap-4 mb-12"
+        >
+          {[
+            { icon: Zap, text: "Instant Analysis" },
+            { icon: Shield, text: "Secure & Private" },
+            { icon: TrendingUp, text: "Smart Insights" },
+          ].map((feature, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border shadow-sm"
+            >
+              <feature.icon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{feature.text}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
+          <Link
+            href={targetPath}
+            className={buttonVariants({
               size: "lg",
-              className: "text-lg px-8 py-6 rounded-full hover:scale-105 transition-transform"
+              className: "text-lg px-10 py-7 rounded-full hover:scale-105 transition-all shadow-lg hover:shadow-xl group"
             })}
           >
-            Get Started
+            <span>Get Started Free</span>
+            <Sparkles className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
           </Link>
+          <Button
+            variant="outline"
+            size="lg"
+            asChild
+            className="text-lg px-10 py-7 rounded-full hover:scale-105 transition-all"
+          >
+            <a href="#features">
+              See How It Works
+            </a>
+          </Button>
         </motion.div>
-      </motion.div>
-    </motion.section>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto"
+        >
+          {[
+            { value: "AI", label: "Powered" },
+            { value: "∞", label: "Categories" },
+            { value: "<5s", label: "Analysis" },
+          ].map((stat, index) => (
+            <div key={index} className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-1">
+                {stat.value}
+              </div>
+              <div className="text-sm text-muted-foreground">{stat.label}</div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
   )
 }
 
-export function FeaturesSection({ features }: { features: any[] }) {
+export function FeaturesSection() {
   return (
-    <motion.section 
-      initial="initial"
-      whileInView="animate"
-      viewport={{ once: true }}
-      variants={staggerContainer}
-      className="py-24"
-    >
-      <div className="grid gap-16 md:grid-cols-2">
-        {features.map((feature, index) => (
-          <motion.div 
-            key={index}
-            variants={fadeInUp}
-            className="group relative rounded-2xl border p-8 shadow-lg transition-all hover:shadow-xl"
-          >
-            <div className="aspect-[16/10] relative overflow-hidden rounded-xl mb-8">
-              <Image
-                src={feature.image}
-                alt={feature.alt}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-110"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                priority={index < 2}
-              />
-              {/* <SummaryTable statement={statement} /> */}
+    <section className="py-24" id="features">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="text-center mb-16"
+      >
+        <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          All Your Receipts, But Make Them Pretty
+        </h2>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Real demo with fake data (your real data is even more interesting)
+        </p>
+      </motion.div>
+
+      <div className="grid gap-6 auto-rows-[minmax(320px,auto)]">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="group relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold mb-2">AI-Powered Categorization</h3>
+              <p className="text-muted-foreground">Automatically categorizes and summarizes your spending</p>
             </div>
-            <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-            <p className="text-lg text-muted-foreground">{feature.description}</p>
+            <SummaryTable statement={statement} />
+          </div>
+        </motion.div>
+
+        {/* Row 2: Charts side by side */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="group relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-2xl font-bold mb-2">Spending Distribution</h3>
+                <p className="text-muted-foreground">Interactive donut chart with category breakdown</p>
+              </div>
+              <div className="flex-1 min-h-[400px]">
+                <PieChartComponent statement={statement} />
+              </div>
+            </div>
           </motion.div>
-        ))}
+
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="group relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+              <div className="mb-4">
+                <h3 className="text-2xl font-bold mb-2">Smart Insights</h3>
+                <p className="text-muted-foreground">Key metrics and spending patterns at a glance</p>
+              </div>
+              <div className="flex-1">
+                <InsightsComponent statement={statement} />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="group relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold mb-2">Time Series Analysis</h3>
+              <p className="text-muted-foreground">Track your daily spending trends and click bars for transaction details</p>
+            </div>
+            <TransactionsChart statement={statement} />
+          </div>
+        </motion.div>
       </div>
-    </motion.section>
+    </section>
   )
 }
 
 export function CTASection({ targetPath }: { targetPath: string }) {
   return (
-    <motion.section 
+    <motion.section
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -448,12 +588,12 @@ export function CTASection({ targetPath }: { targetPath: string }) {
       <p className="mx-auto mt-4 max-w-2xl text-slate-300 text-lg">
         Some links:
       </p>
-      <Link 
+      <Link
         href={targetPath}
-        className={buttonVariants({ 
-          variant: "secondary", 
-          size: "lg", 
-          className: "mt-8 px-8 py-6 text-lg rounded-full hover:scale-105 transition-transform" 
+        className={buttonVariants({
+          variant: "secondary",
+          size: "lg",
+          className: "mt-8 px-8 py-6 text-lg rounded-full hover:scale-105 transition-transform"
         })}
       >
         LinkedIn
