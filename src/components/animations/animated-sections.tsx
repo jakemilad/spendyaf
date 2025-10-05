@@ -373,7 +373,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
         variants={fadeInUp}
         className="flex max-w-[980px] flex-col items-start gap-4"
       >
-        <h1 className="text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl bg-gradient-to-r from-primary to-yellow-700 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl bg-gradient-to-r from-primary dark:to-white to-yellow-700 bg-clip-text text-transparent">
           You're Spendy AF,
           <br className="hidden sm:inline" />
           be serious.

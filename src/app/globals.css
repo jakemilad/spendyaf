@@ -50,7 +50,7 @@ body {
     --card-foreground: 210 20% 92%;
     --popover: 215 25% 20%;
     --popover-foreground: 210 20% 92%;
-    --primary: 20.5 90.2% 48.2%;
+    --primary: 200 70% 55%;
     --primary-foreground: 60 9.1% 97.8%;
     --secondary: 215 20% 25%;
     --secondary-foreground: 210 15% 85%;
@@ -62,7 +62,7 @@ body {
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 215 20% 25%;
     --input: 215 20% 25%;
-    --ring: 20.5 90.2% 48.2%;
+    --ring: 200 70% 55%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

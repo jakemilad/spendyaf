@@ -42,3 +42,5 @@ next-env.d.ts
 src/app/utils/csv/
 
 src/app/api/amex/example.json
+
+/scripts
