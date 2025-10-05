@@ -13,10 +13,10 @@ export default async function Home() {
   }
 
   return (
-    <div className="container relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <>
       <HeroSection targetPath={targetPath} />
       <FeaturesSection />
       {/* <CTASection targetPath={targetPath} /> */}
-    </div>
+    </>
   )
 }

@@ -9,7 +9,6 @@ import { PieChartComponent } from "../charts/pie-chart"
 import TransactionsChart from "../charts/timeseries"
 import { InsightsComponent } from "../features/insights/insights"
 import { DbStatement } from "@/app/types/types"
-import { fadeInUp, staggerContainer } from "./animations"
 import { Sparkles, TrendingUp, Shield, Zap } from "lucide-react"
 
 const statement: DbStatement =
@@ -367,18 +366,18 @@ const statement: DbStatement =
 
 export function HeroSection({ targetPath }: { targetPath: string }) {
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden py-20 md:py-32">
+    <section className="relative w-full min-h-[80vh] flex items-center justify-center overflow-x-hidden py-12 sm:py-20 md:py-32">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
 
-      <div className="relative z-10 container mx-auto text-center">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium"
+          className="inline-flex items-center gap-2 mb-6 sm:mb-8 px-3 sm:px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-xs sm:text-sm font-medium"
         >
-          <Sparkles className="h-4 w-4 text-primary" />
+          <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
           <span>AI-Powered Financial Insights</span>
         </motion.div>
 
@@ -386,7 +385,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tighter mb-6"
+          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tighter mb-4 sm:mb-6 px-2"
         >
           <span className="bg-gradient-to-r from-primary via-primary to-yellow-600 dark:from-primary dark:via-cyan-400 dark:to-primary bg-clip-text text-transparent">
             Broke AF?
@@ -399,7 +398,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12"
+          className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 sm:mb-12 px-4"
         >
           Your statement says you spent $4,000 this month. Cool, but on what? We use AI to figure out which transaction goes where,
           and give you the insights you need to understand your spending.
@@ -409,7 +408,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-wrap items-center justify-center gap-4 mb-12"
+          className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 px-4"
         >
           {[
             { icon: Zap, text: "Instant Analysis" },
@@ -418,10 +417,10 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           ].map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border shadow-sm"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-card border shadow-sm"
             >
-              <feature.icon className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">{feature.text}</span>
+              <feature.icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+              <span className="text-xs sm:text-sm font-medium">{feature.text}</span>
             </div>
           ))}
         </motion.div>
@@ -430,23 +429,23 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4"
         >
           <Link
             href={targetPath}
             className={buttonVariants({
               size: "lg",
-              className: "text-lg px-10 py-7 rounded-full hover:scale-105 transition-all shadow-lg hover:shadow-xl group"
+              className: "w-full sm:w-auto text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 rounded-full hover:scale-105 transition-all shadow-lg hover:shadow-xl group"
             })}
           >
             <span>Get Started Free</span>
-            <Sparkles className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
+            <Sparkles className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:rotate-12 transition-transform" />
           </Link>
           <Button
             variant="outline"
             size="lg"
             asChild
-            className="text-lg px-10 py-7 rounded-full hover:scale-105 transition-all"
+            className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 rounded-full hover:scale-105 transition-all"
           >
             <a href="#features">
               See How It Works
@@ -458,7 +457,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto"
+          className="mt-12 sm:mt-16 grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto px-4"
         >
           {[
             { value: "AI", label: "Powered" },
@@ -466,10 +465,10 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
             { value: "<5s", label: "Analysis" },
           ].map((stat, index) => (
             <div key={index} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-1">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1">
                 {stat.value}
               </div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}
         </motion.div>
@@ -480,97 +479,98 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
 
 export function FeaturesSection() {
   return (
-    <section className="py-24" id="features">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.6 }}
-        className="text-center mb-16"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold mb-4">
-          All Your Receipts, But Make Them Pretty
-        </h2>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Real demo with fake data (your real data is even more interesting)
-        </p>
-      </motion.div>
-
-      <div className="grid gap-6 auto-rows-[minmax(320px,auto)]">
+    <section className="w-full py-12 sm:py-16 md:py-24 overflow-x-hidden" id="features">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="group relative"
+          className="text-center mb-12 sm:mb-16"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
-            <div className="mb-4">
-              <h3 className="text-2xl font-bold mb-2">AI-Powered Categorization</h3>
-              <p className="text-muted-foreground">Automatically categorizes and summarizes your spending</p>
-            </div>
-            <SummaryTable statement={statement} />
-          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-4">
+            All Your Receipts, But Make Them Pretty
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
+            Real demo with fake data (your real data is even more interesting)
+          </p>
         </motion.div>
 
-        {/* Row 2: Charts side by side */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-4 sm:gap-6 auto-rows-[minmax(320px,auto)]">
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
             className="group relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
               <div className="mb-4">
-                <h3 className="text-2xl font-bold mb-2">Spending Distribution</h3>
-                <p className="text-muted-foreground">Interactive donut chart with category breakdown</p>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">AI-Powered Categorization</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">Automatically categorizes and summarizes your spending</p>
               </div>
-              <div className="flex-1 min-h-[400px]">
-                <PieChartComponent statement={statement} />
-              </div>
+              <SummaryTable statement={statement} />
             </div>
           </motion.div>
 
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="group relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+                <div className="mb-4">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-2">Spending Distribution</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground">Interactive donut chart with category breakdown</p>
+                </div>
+                <div className="flex-1 min-h-[300px] sm:min-h-[400px]">
+                  <PieChartComponent statement={statement} />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="group relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+                <div className="mb-4">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-2">Smart Insights</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground">Key metrics and spending patterns at a glance</p>
+                </div>
+                <div className="flex-1">
+                  <InsightsComponent statement={statement} />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="group relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
               <div className="mb-4">
-                <h3 className="text-2xl font-bold mb-2">Smart Insights</h3>
-                <p className="text-muted-foreground">Key metrics and spending patterns at a glance</p>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">Time Series Analysis</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">Track your daily spending trends and click bars for transaction details</p>
               </div>
-              <div className="flex-1">
-                <InsightsComponent statement={statement} />
-              </div>
+              <TransactionsChart statement={statement} />
             </div>
           </motion.div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="group relative"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative bg-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
-            <div className="mb-4">
-              <h3 className="text-2xl font-bold mb-2">Time Series Analysis</h3>
-              <p className="text-muted-foreground">Track your daily spending trends and click bars for transaction details</p>
-            </div>
-            <TransactionsChart statement={statement} />
-          </div>
-        </motion.div>
       </div>
     </section>
   )
