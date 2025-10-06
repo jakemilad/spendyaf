@@ -366,7 +366,7 @@ const statement: DbStatement =
 
 export function HeroSection({ targetPath }: { targetPath: string }) {
   return (
-    <section className="relative w-full min-h-[80vh] flex items-center justify-center overflow-x-hidden py-12 sm:py-20 md:py-32">
+    <section className="relative w-full min-h-[80vh] flex items-center justify-center overflow-x-hidden py-2 sm:py-4 md:py-6">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
 
@@ -496,7 +496,7 @@ export function FeaturesSection() {
           </p>
         </motion.div>
 
-        <div className="grid gap-4 sm:gap-6 auto-rows-[minmax(320px,auto)]">
+        <div className="grid gap-4 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -505,10 +505,10 @@ export function FeaturesSection() {
             className="group relative"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
-              <div className="mb-4">
-                <h3 className="text-xl sm:text-2xl font-bold mb-2">AI-Powered Categorization</h3>
-                <p className="text-sm sm:text-base text-muted-foreground">Automatically categorizes and summarizes your spending</p>
+            <div className="relative bg-card rounded-2xl p-3 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
+              <div className="mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">AI-Powered Categorization</h3>
+                <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Automatically categorizes and summarizes your spending</p>
               </div>
               <SummaryTable statement={statement} />
             </div>
@@ -523,12 +523,12 @@ export function FeaturesSection() {
               className="group relative"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
-                <div className="mb-4">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-2">Spending Distribution</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground">Interactive donut chart with category breakdown</p>
+              <div className="relative bg-card rounded-2xl p-3 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+                <div className="mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Spending Distribution</h3>
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Interactive donut chart with category breakdown</p>
                 </div>
-                <div className="flex-1 min-h-[300px] sm:min-h-[400px]">
+                <div className="flex-1">
                   <PieChartComponent statement={statement} />
                 </div>
               </div>
@@ -542,10 +542,10 @@ export function FeaturesSection() {
               className="group relative"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
-                <div className="mb-4">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-2">Smart Insights</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground">Key metrics and spending patterns at a glance</p>
+              <div className="relative bg-card rounded-2xl p-3 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border h-full flex flex-col">
+                <div className="mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Smart Insights</h3>
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Key metrics and spending patterns at a glance</p>
                 </div>
                 <div className="flex-1">
                   <InsightsComponent statement={statement} />
@@ -562,10 +562,10 @@ export function FeaturesSection() {
             className="group relative"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-card rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
-              <div className="mb-4">
-                <h3 className="text-xl sm:text-2xl font-bold mb-2">Time Series Analysis</h3>
-                <p className="text-sm sm:text-base text-muted-foreground">Track your daily spending trends and click bars for transaction details</p>
+            <div className="relative bg-card rounded-2xl p-3 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border">
+              <div className="mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Time Series Analysis</h3>
+                <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Track your daily spending trends and click bars for transaction details</p>
               </div>
               <TransactionsChart statement={statement} />
             </div>

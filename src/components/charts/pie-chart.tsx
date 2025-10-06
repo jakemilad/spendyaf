@@ -101,7 +101,7 @@ export function PieChartComponent({ statement }: PieChartProps) {
                         className='ml-auto h-7 w-[130px] rounded-lg pl-2.5'
                         aria-label="Select a value"
                     >
-                        <SelectValue placeholder="Select Category" />  
+                        <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent align="end" className='rounded-xl'>
                         {sortedCategories.map((key) => {
@@ -110,8 +110,8 @@ export function PieChartComponent({ statement }: PieChartProps) {
                             return(
                                 <SelectItem key={key} value={key} className='rounded-lg [&_span]:flex'>
                                     <div className='flex items-center gap-2 text-xs'>
-                                        <span 
-                                            className='flex h-3 w-3 shrink-0 rounded-sm' 
+                                        <span
+                                            className='flex h-3 w-3 shrink-0 rounded-sm'
                                             style={{backgroundColor: config.color}}
                                         />
                                         {config.label}

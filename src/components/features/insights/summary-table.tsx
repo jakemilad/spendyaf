@@ -25,19 +25,19 @@ export function SummaryTable({ statement }: SummaryTableProps) {
     return (
         <div className="h-full w-full">
             <Card className="h-full">
-                <CardContent className="h-full p-6 overflow-x-auto">
+                <CardContent className="h-full p-3 sm:p-6 overflow-x-auto">
                     <Table className="h-full">
-                        <TableCaption className="text-left -mt-1 font-bold text-lg caption-top dark:text-white -mb-2">
+                        <TableCaption className="text-left -mt-1 font-bold text-sm sm:text-lg caption-top dark:text-white -mb-2">
                             {statement.data.fileName} Statement Summary
                         </TableCaption>
-                        <TableCaption className="text-left font-bold text-sm mb-4 caption-top text-muted-foreground">
+                        <TableCaption className="text-left font-bold text-xs sm:text-sm mb-4 caption-top text-muted-foreground">
                             Categorized transactions powered by AI
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[40%] py-4 pl-2 text-lg">Category</TableHead>
-                                <TableHead className="w-[30%] text-left pr-2 text-lg">Largest Transaction</TableHead>
-                                <TableHead className="w-[30%] text-right text-lg">Total</TableHead>
+                                <TableHead className="w-[40%] py-3 sm:py-4 pl-2 text-sm sm:text-lg">Category</TableHead>
+                                <TableHead className="w-[30%] text-left pr-2 text-sm sm:text-lg">Largest Transaction</TableHead>
+                                <TableHead className="w-[30%] text-right text-sm sm:text-lg">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -45,14 +45,14 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                                 <Dialog key={row.Category}>
                                     <DialogTrigger asChild>
                                         <TableRow className="cursor-pointer hover:bg-accent/50">
-                                            <TableCell className="text-left font-medium text-lg py-4">{row.Category}</TableCell>
-                                            <TableCell className="text-left text-lg">
+                                            <TableCell className="text-left font-medium text-sm sm:text-lg py-3 sm:py-4">{row.Category}</TableCell>
+                                            <TableCell className="text-left text-sm sm:text-lg">
                                                 {row.BiggestTransaction.merchant.split(' ').slice(0, 2).join(' ')}
-                                                <span className="text-sm text-muted-foreground block mt-1">
+                                                <span className="text-xs sm:text-sm text-muted-foreground block mt-1">
                                                     ${row.BiggestTransaction.amount}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-right text-lg">${row.Total}</TableCell>
+                                            <TableCell className="text-right text-sm sm:text-lg">${row.Total}</TableCell>
                                         </TableRow>
                                     </DialogTrigger>
                                     <DialogContent>
@@ -81,9 +81,9 @@ export function SummaryTable({ statement }: SummaryTableProps) {
                         </TableBody>
                         <TableFooter>
                             <TableRow>
-                                <TableCell className="text-lg">Total</TableCell>
+                                <TableCell className="text-sm sm:text-lg">Total</TableCell>
                                 <TableCell></TableCell>
-                                <TableCell className="text-right text-lg">${statement.data.totalSpend}</TableCell>
+                                <TableCell className="text-right text-sm sm:text-lg">${statement.data.totalSpend}</TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>
