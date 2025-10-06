@@ -366,7 +366,7 @@ const statement: DbStatement =
 
 export function HeroSection({ targetPath }: { targetPath: string }) {
   return (
-    <section className="relative w-full min-h-[80vh] flex items-center justify-center overflow-x-hidden py-2 sm:py-4 md:py-6">
+    <section className="relative w-full min-h-[80vh] flex items-center justify-center overflow-x-hidden py-2 sm:py-6 md:py-11">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
 
