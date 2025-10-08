@@ -44,3 +44,5 @@ src/app/utils/csv/
 src/app/api/amex/example.json
 
 /scripts
+
+src/app/temp
