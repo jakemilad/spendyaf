@@ -246,7 +246,7 @@ export function AiSummary({ statement }: AiSummaryProps) {
                                             <Sparkles className="mr-2 h-4 w-4" />
                                             Generate AI Summary
                                         </Button>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Get personalized insights about your spending patterns</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Get insights about spending patterns</p>
                                     </div>
                                 )}
                             </div>

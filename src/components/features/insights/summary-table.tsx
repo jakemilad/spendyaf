@@ -43,10 +43,10 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[25%] py-3 sm:py-4 pl-2 text-sm sm:text-lg">Category</TableHead>
-                                <TableHead className="w-[20%] text-left pr-2 text-sm sm:text-lg">Largest Transaction</TableHead>
-                                <TableHead className="w-[35%] text-left text-sm sm:text-lg">Budget</TableHead>
-                                <TableHead className="w-[20%] text-right text-sm sm:text-lg">Total</TableHead>
+                                <TableHead className="w-[25%] text-left text-base">Category</TableHead>
+                                <TableHead className="w-[25%] text-left text-base">Largest Transaction</TableHead>
+                                <TableHead className="w-[30%] text-left text-base">Budget</TableHead>
+                                <TableHead className="w-[20%] text-right text-base">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -242,11 +242,9 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                         </TableBody>
                         <TableFooter>
                             <TableRow>
-                                <TableCell className="text-sm sm:text-lg">Total</TableCell>
-                                <TableCell></TableCell>
-                                <TableCell></TableCell>
+                                <TableCell colSpan={3}></TableCell>
                                 <TableCell className="text-right text-sm sm:text-lg font-semibold">
-                                    {formatCurrency(statement.data.totalSpend ?? 0)}
+                                    Total: {formatCurrency(statement.data.totalSpend ?? 0)}
                                 </TableCell>
                             </TableRow>
                         </TableFooter>
