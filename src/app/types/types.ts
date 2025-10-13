@@ -41,6 +41,7 @@ export interface Statement {
     fileName: string;
     totalSpend?: number;
     insights?: any;
+    budgets?: CategoryBudgetMap;
 }
 
 export interface DbStatement {

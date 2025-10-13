@@ -1,4 +1,4 @@
-import { HeroSection, FeaturesSection, CTASection } from "@/components/animations/animated-sections"
+import { HeroSection, TransformationDemoSection, FeaturesSection, CTASection } from "@/components/animations/animated-sections"
 import { getServerSession } from "next-auth"
 import { authOptions } from "./api/auth/auth.config"
 import { getUserStatements } from "@/app/actions"
@@ -15,6 +15,7 @@ export default async function Home() {
   return (
     <>
       <HeroSection targetPath={targetPath} />
+      <TransformationDemoSection />
       <FeaturesSection />
       {/* <CTASection targetPath={targetPath} /> */}
     </>

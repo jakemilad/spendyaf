@@ -28,7 +28,7 @@ const formatCurrency = (value: number) =>
 
 export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) {
     const sortedSummary = [...statement.data.summary].sort((a, b) => b.Total - a.Total)
-    const budgets = categoryBudgets ?? {}
+    const budgets = categoryBudgets ?? statement.data.budgets ?? {}
 
     return (
         <div className="h-full w-full">

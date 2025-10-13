@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { buttonVariants } from "@/components/ui/button"
 import { Button } from "@/components/ui/button"
 import { SummaryTable } from "../features/insights/summary-table"
@@ -9,10 +10,65 @@ import { PieChartComponent } from "../charts/pie-chart"
 import TransactionsChart from "../charts/timeseries"
 import { InsightsComponent } from "../features/insights/insights"
 import { DbStatement } from "@/app/types/types"
-import { Sparkles, TrendingUp, Shield, Zap } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { LoadingAnimation } from "../loading/loading-animation"
+import {
+  Sparkles,
+  TrendingUp,
+  Shield,
+  Zap,
+  FileText,
+  Brain,
+  ListChecks,
+  PieChart as PieChartIcon,
+  ArrowUpDown,
+  RefreshCcw,
+  Calculator,
+} from "lucide-react"
 
-const statement: DbStatement =
-  {
+const randomBudgets = {
+  Shopping: 2200,
+  Groceries: 650,
+  Travel: 900,
+  Fitness: 200,
+  "Food & Drink": 300,
+  Utilities: 180,
+  Pets: 250,
+  Transportation: 150,
+  Subscriptions: 120,
+  Entertainment: 180
+}
+
+const CSV_PREVIEW_SAMPLE = [
+  "Date,Description,Amount,Balance",
+  "2024-02-01,Amazon Purchase,-177.82,1325.90",
+  "2024-02-02,Grocery Store,-188.31,1137.59",
+  "2024-02-04,Target Purchase,-81.08,1056.51",
+  "2024-02-05,Restaurant Dinner,-91.72,964.79",
+  "2024-02-07,Electronics,-448.07,516.72",
+].join("\n")
+
+type AnimationStep = {
+  icon: typeof FileText
+  label: string
+  delay: number
+}
+
+const PROCESSING_STEPS: AnimationStep[] = [
+  { icon: FileText, label: "Reading rows", delay: 0 },
+  { icon: ArrowUpDown, label: "Normalizing fields", delay: 300 },
+  { icon: RefreshCcw, label: "Reconciling merchants", delay: 600 },
+  { icon: Brain, label: "Categorizing with AI", delay: 900 },
+  { icon: Calculator, label: "Summarizing budgets", delay: 1200 },
+]
+
+const INSIGHT_HIGHLIGHTS = [
+  { icon: PieChartIcon, title: "Shopping", value: "$1,951", subline: "Largest category this month" },
+  { icon: TrendingUp, title: "Daily average", value: "$142", subline: "Up 12% vs last month" },
+  { icon: ListChecks, title: "Auto tags", value: "48 matches", subline: "99% confidence on every row" },
+] as const
+
+const statement: DbStatement = {
     "id": "17",
     "user_id": "yacoub.milad@gmail.com",
     "data": {
@@ -90,13 +146,13 @@ const statement: DbStatement =
           }
         },
         {
-          "Total": 116.46,
+          "Total": 295.13,
           "Category": "Pets",
           "Transactions": {
-            "Pet Supplies (2)": 116.46
+            "Pet Supplies (2)": 295.13
           },
           "BiggestTransaction": {
-            "amount": 65.13,
+            "amount": 165.13,
             "merchant": "Pet Supplies"
           }
         },
@@ -177,6 +233,7 @@ const statement: DbStatement =
         "Spotify Subscription": "Subscriptions"
       },
       "totalSpend": 3692.9,
+      "budgets": randomBudgets,
       "transactions": [
         {
           "Date": 1706936400000,
@@ -190,7 +247,7 @@ const statement: DbStatement =
         },
         {
           "Date": 1707109200000,
-          "Amount": 65.13,
+          "Amount": 295.13,
           "Merchant": "Pet Supplies"
         },
         {
@@ -400,8 +457,8 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 sm:mb-12 px-4"
         >
-          Your statement says you spent $4,000 this month. Cool, but on what? We use AI to figure out which transaction goes where,
-          and give you the insights you need to understand your spending.
+          Your statement says you spent $4,000 this month. But on what? This app uses AI to figure out which transaction goes where,
+          and gives you the insights you need to understand your spending.
         </motion.p>
 
         <motion.div
@@ -477,6 +534,157 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
   )
 }
 
+export function TransformationDemoSection() {
+  const [activeStage, setActiveStage] = useState(0)
+  const [loadingStep, setLoadingStep] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStage((prev) => (prev + 1) % 3)
+    }, 2500)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const stepTimer = setInterval(() => {
+      setLoadingStep((prev) => (prev + 1) % PROCESSING_STEPS.length)
+    }, 1200)
+
+    return () => clearInterval(stepTimer)
+  }, [])
+
+  const stages = [
+    {
+      title: "Raw CSV Upload",
+      description: "Drop in the same boring spreadsheet your bank exports.",
+      icon: FileText,
+      content: (
+        <pre className="h-full min-h-[180px] w-full overflow-hidden rounded-xl border bg-background p-4 text-left text-xs leading-relaxed text-muted-foreground shadow-inner sm:text-sm">
+          {CSV_PREVIEW_SAMPLE}
+        </pre>
+      ),
+    },
+    {
+      title: "AI Processing",
+      description: "We clean, categorize, and enrich every transaction automatically.",
+      icon: Brain,
+      content: (
+        <div className="h-full rounded-xl border bg-background p-2 sm:p-3">
+          <LoadingAnimation steps={PROCESSING_STEPS} currentStep={loadingStep} />
+        </div>
+      ),
+    },
+    {
+      title: "Interactive Insights",
+      description: "Jump straight into charts, budgets, and smart callouts.",
+      icon: Sparkles,
+      content: (
+        <div className="grid gap-3">
+          {INSIGHT_HIGHLIGHTS.map(({ icon: Icon, title, value, subline }) => (
+            <div
+              key={title}
+              className="rounded-xl border bg-background/80 p-4 shadow-sm backdrop-blur-sm"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {title}
+                  </div>
+                  <div className="text-lg font-semibold text-foreground">
+                    {value}
+                  </div>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">{subline}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ] as const
+
+  return (
+    <section className="w-full border-y border-border/60 bg-muted/30 py-16 sm:py-20 md:py-24">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            From CSV Chaos to Clarity
+          </h2>
+          <p className="text-base sm:text-lg text-muted-foreground">
+            Watch the pipeline that turns raw transactions into insights - no spreadsheets, no formulas, just vibes.
+          </p>
+        </motion.div>
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+          {stages.map((stage, index) => {
+            const StageIcon = stage.icon
+            return (
+              <motion.div
+                key={stage.title}
+                animate={{
+                  opacity: activeStage === index ? 1 : 0.55,
+                  scale: activeStage === index ? 1 : 0.97,
+                  y: activeStage === index ? 0 : 6,
+                }}
+                transition={{ type: "spring", stiffness: 200, damping: 24 }}
+                className={cn(
+                  "relative flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 sm:p-6 transition-shadow",
+                  activeStage === index
+                    ? "shadow-2xl shadow-primary/10 ring-2 ring-primary/30"
+                    : "shadow-none"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <StageIcon className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold">{stage.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{stage.description}</p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  {stage.content}
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-muted-foreground sm:text-sm">
+          {["Upload CSV", "AI Processing", "See Insights"].map((label, index) => (
+            <div
+              key={label}
+              className={cn(
+                "flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors",
+                activeStage === index
+                  ? "border-primary/50 bg-primary/10 text-primary"
+                  : "border-transparent bg-muted/60"
+              )}
+            >
+              <span
+                className={cn(
+                  "h-2.5 w-2.5 rounded-full transition-colors",
+                  activeStage === index ? "bg-primary" : "bg-muted-foreground/40"
+                )}
+              />
+              {label}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function FeaturesSection() {
   return (
     <section className="w-full py-12 sm:py-16 md:py-24 overflow-x-hidden" id="features">
@@ -492,7 +700,7 @@ export function FeaturesSection() {
             All Your Receipts, But Make Them Pretty
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-            Real demo with fake data (your real data is even more interesting)
+            Real demo with fake data, but your real data is even more interesting
           </p>
         </motion.div>
 
