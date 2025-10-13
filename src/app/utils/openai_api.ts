@@ -1,13 +1,61 @@
 import OpenAI from "openai";
-import { DbStatement, Transaction } from "../types/types";
+import { CategorySummary, DbStatement, Transaction } from "../types/types";
 import pool from "@/lib/db";
 
-const model = "gpt-4o-mini"; // Fixed model name
+const model = "gpt-4o-mini";
+const MAX_SAMPLE_TRANSACTIONS = 50;
+const MAX_SAMPLE_SUMMARY_ROWS = 12;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function normalizeJSONString(content: string | null | undefined) {
+  if (!content) return null;
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start !== -1 && end !== -1 && end > start) {
+      const candidate = trimmed.slice(start, end + 1);
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+function buildSampleMapping(merchants: string[], userCategories: string[]) {
+  if (!merchants.length || !userCategories.length) {
+    return {};
+  }
+
+  const sample: Record<string, string> = {};
+  const sliceLength = Math.min(4, merchants.length);
+  for (let i = 0; i < sliceLength; i++) {
+    const merchant = merchants[i];
+    const category = userCategories[i % userCategories.length];
+    sample[merchant] = category;
+  }
+  return sample;
+}
+
+function trimTransactions<T>(items: T[]): T[] {
+  if (items.length <= MAX_SAMPLE_TRANSACTIONS) return items;
+  return items.slice(0, MAX_SAMPLE_TRANSACTIONS);
+}
+
+function trimSummary(summary: CategorySummary[]): CategorySummary[] {
+  if (summary.length <= MAX_SAMPLE_SUMMARY_ROWS) return summary;
+  return summary.slice(0, MAX_SAMPLE_SUMMARY_ROWS);
+}
 
 export async function Test(query: string) {
   const response = await openai.chat.completions.create({
@@ -18,72 +66,63 @@ export async function Test(query: string) {
 }
 
 export async function openAICategories(merchants: string[], userCategories: string[]) {
-    const prompt = `You are an AI specialized in categorizing financial transactions with high accuracy.
+    if (!merchants.length || !userCategories.length) {
+        console.warn('openAICategories called without merchants or categories');
+        return {};
+    }
 
-Instructions:
-1. Categorize each merchant into exactly one of these categories: ${userCategories.join(', ')}
-2. Use exact matches for category names - no variations allowed
-3. Return ONLY a valid JavaScript object/dictionary
+    const sampleMapping = buildSampleMapping(merchants, userCategories);
+    const prompt = `You map merchant names to spending categories.
 
-Reference categorizations:
-{
-    "Amazon Purchase": "Online Shopping",
-    "Prime Video": "Online Subscriptions",
-    "CRAVE": "Online Subscriptions",
-    "DOORDASH": "DoorDash",
-    "Disney Subscription": "Online Subscriptions",
-    "EVO Car Share": "Evo",
-    "Whole Foods Market": "Groceries",
-    "KITS": "Personal"
-}
+Rules:
+- Use ONLY these categories verbatim: ${userCategories.join(', ')}
+- Every merchant must map to exactly one category from the list above
+- Output must be a JSON object where each key is a merchant and each value is the chosen category
+
+Example format (for illustration only, adapt to the actual merchants):
+${JSON.stringify(sampleMapping, null, 2)}
 
 Merchants to categorize:
 ${merchants.join(', ')}
 
-Response requirements:
-- Format: JavaScript dictionary only (object)
-- No explanations or additional text
-- No markdown formatting or backticks
-- Each merchant must map to a valid category`;
+Return only the JSON object. No narration or markdown.`;
 
-    console.log('🚀 Calling OpenAI with', merchants.length, 'merchants and', userCategories.length, 'categories');
-    console.log('🏪 Merchants to categorize:', merchants);
-    console.log('🏷️  Available categories:', userCategories);
-    
+    console.log('Calling OpenAI with', merchants.length, 'merchants and', userCategories.length, 'categories');
+    console.log('Merchants to categorize:', merchants);
+    console.log('Available categories:', userCategories);
+
     const response = await openai.chat.completions.create({
         model: model,
         messages: [
             {
-                role: "system", 
-                content: "You are a precise transaction categorization system. You only output valid JavaScript objects mapping merchants to predefined categories, no backticks or markdown formatting."
+                role: "system",
+                content: "You are a precise transaction categorization system. You always return valid JSON objects mapping merchants to predefined categories."
             },
-            {role: "user", content: prompt}
+            { role: "user", content: prompt }
         ],
-        temperature: 0.1
+        temperature: 0.1,
+        response_format: { type: "json_object" }
     });
-    try {
-        const content = response.choices[0]?.message?.content;
-        console.log('🤖 Raw AI Response:', content);
-        if(!content) {
-            console.warn('⚠️  No content returned from OpenAI');
-            return {"error": "No content returned from OpenAI"};
-        }
-        const parsed = JSON.parse(content);
-        console.log('✅ Parsed AI Categories:', parsed);
-        console.log('📊 Categories count:', Object.keys(parsed).length);
-        return parsed;
-    } catch (error) {
-        console.error('❌ Error parsing OpenAI response:', error);
-        console.error('🔍 Raw content that failed to parse:', response.choices[0]?.message?.content);
-        return {"error": "Error parsing OpenAI response"};
+    const content = response.choices[0]?.message?.content;
+    const parsed = normalizeJSONString(content);
+
+    if (!parsed) {
+        console.error('Error parsing OpenAI response for categories:', content);
+        return {};
     }
+
+    console.log('Parsed AI Categories:', parsed);
+    console.log('Categories count:', Object.keys(parsed).length);
+    return parsed;
 }
 
 export async function openAISummary(statement: DbStatement, message: boolean) {
-    const summary = statement.data.summary;
-    const transactions = statement.data.transactions;
+    const summary = trimSummary(statement.data.summary);
+    const transactions = trimTransactions(statement.data.transactions);
     const insights = statement.data.insights;
     const categories = statement.data.categories;
+    const totalSummaryRows = statement.data.summary.length;
+    const totalTransactions = statement.data.transactions.length;
     
     const extra = `Based on previous feedback, please provide a more focused analysis, the user is requesting the summary again:
     - Be more critical of spending patterns
@@ -121,8 +160,8 @@ Analysis Requirements:
 ${message ? extra : ''}
 
 Financial Data:
-- Category Summary: ${JSON.stringify(summary, null, 2)}
-- Transactions: ${JSON.stringify(transactions, null, 2)}
+- Category Summary (${totalSummaryRows > summary.length ? `showing ${summary.length} of ${totalSummaryRows}` : `${summary.length}`} categories): ${JSON.stringify(summary, null, 2)}
+- Transactions (${totalTransactions > transactions.length ? `showing ${transactions.length} of ${totalTransactions}` : `${transactions.length}`} records): ${JSON.stringify(transactions, null, 2)}
 - Insights: ${JSON.stringify(insights, null, 2)}
 - Categories: ${JSON.stringify(categories, null, 2)}
 
@@ -150,51 +189,48 @@ Remember: The user will see this summary alongside visual data (charts, tables, 
 }
 
 export async function openAICategoriesFromTransactions(transactions: string[]): Promise<string[]> {
-    const prompt = `
-    You are an AI tasked with categorizing financial transactions based on merchant names.
-    Instructions:
-    1. Analyze the list of unique merchant names provided.
-    2. Identify a distinct set of single-word categories that can encompass all the merchants listed.
-    3. Ensure that each category name is concise and consists of only one word.
-    4. Return the result as a JavaScript array of unique strings, where each string is a category name.
-    5. Do not include any explanations, formatting, or additional text—only the array of unique category names.
+    if (!transactions.length) return [];
 
-    Unique Merchants:
-    ${transactions.join(', ')}
+    const prompt = `Generate concise, single-word spending category names that cover all provided merchants.
 
-    Response requirements:
-    - Format: JavaScript array of unique strings
-    - No explanations or additional text
-    - No markdown formatting or backticks
-    `
+Rules:
+- Output a JSON object with a single key "categories" whose value is an array of unique strings
+- Each string must be a single descriptive word (e.g., "Groceries", "Travel")
+- Limit the list to the smallest set that reasonably covers all merchants
+- Do not include explanations or additional text
+
+Merchants:
+${transactions.join(', ')}
+
+Return only the JSON object.`;
+
     const response = await openai.chat.completions.create({
         model: model,
         messages: [
             {
                 role: "system",
-                content: "You are a concise, direct financial advisor focused on actionable insights. You only output valid JavaScript arrays of strings, no backticks or markdown formatting."
+                content: "You return only JSON objects of the form { \"categories\": string[] }."
             },
-            {role: "user", content: prompt}
+            { role: "user", content: prompt }
         ],
-        temperature: 0.1
+        temperature: 0.1,
+        response_format: { type: "json_object" }
     });
-    try {
-        const content = response.choices[0]?.message?.content;
-        console.log('🤖 Raw AI Category Generation Response:', content);
-        if(!content) {
-            console.warn('⚠️  No content returned from category generation');
-            return [];
-        }
-        const parsed = JSON.parse(content);
-        console.log('✅ Generated User Categories:', parsed);
-        console.log('📊 Generated categories count:', parsed.length);
-        return parsed;
-    } catch (error) {
-        console.error('❌ Error parsing category generation response:', error);
-        const content = response.choices[0]?.message?.content;
-        console.error('🔍 Raw content that failed to parse:', content);
+
+    const content = response.choices[0]?.message?.content;
+    const parsed = normalizeJSONString(content);
+
+    if (!parsed || !Array.isArray(parsed.categories)) {
+        console.error('Error parsing category generation response:', content);
         return [];
     }
+
+    const uniqueCategories = [...new Set(parsed.categories)]
+        .filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+
+    console.log('Generated User Categories:', uniqueCategories);
+    console.log('Generated categories count:', uniqueCategories.length);
+    return uniqueCategories;
 }
 
 // Merchant category caching functions
