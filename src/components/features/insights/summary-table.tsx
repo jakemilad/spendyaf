@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 interface SummaryTableProps {
@@ -55,6 +54,16 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                 const budgetTarget = budgets[row.Category]
                                 const ratio = budgetTarget ? row.Total / budgetTarget : 0
                                 const progressPercentage = Math.round(ratio * 100)
+                                const transactionsArray = Object.entries(row.Transactions)
+                                    .map(([transaction, amount]) => ({
+                                        name: transaction,
+                                        amount: Number(amount)
+                                    }))
+                                    .sort((a, b) => b.amount - a.amount)
+                                const transactionCount = transactionsArray.length
+                                const averageSpend = transactionCount > 0 ? row.Total / transactionCount : 0
+                                const topTransaction = transactionsArray[0]
+                                const totalAmount = transactionsArray.reduce((sum, entry) => sum + entry.amount, 0)
 
                                 return (
                                     <Dialog key={row.Category}>
@@ -112,42 +121,119 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                 </TableCell>
                                             </TableRow>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-                                            <DialogHeader>
+                                        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+                                            <DialogHeader className="flex-shrink-0">
                                                 <DialogTitle className="text-xl font-bold">
                                                     {row.Category} Transactions
                                                 </DialogTitle>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {Object.entries(row.Transactions).length} transaction{Object.entries(row.Transactions).length !== 1 ? 's' : ''}
+                                                    {transactionCount} transaction{transactionCount !== 1 ? "s" : ""}
                                                 </p>
                                             </DialogHeader>
-                                            <Separator className="my-4" />
-                                            <ScrollArea className="flex-1 pr-4 -mr-4">
-                                                <div className="space-y-0">
-                                                    {Object.entries(row.Transactions)
-                                                        .sort(([, a], [, b]) => b - a)
-                                                        .map(([transaction, amount]) => (
-                                                            <div 
-                                                                key={transaction} 
-                                                                className="flex justify-between items-start gap-4 py-2 hover:bg-accent/50 rounded-lg px-3 -mx-3 transition-colors"
-                                                            >
-                                                                <span className="font-medium text-sm flex-1 leading-relaxed">
-                                                                    {transaction}
-                                                                </span>
-                                                                <span className="text-sm font-semibold tabular-nums whitespace-nowrap">
-                                                                    {formatCurrency(amount)}
-                                                                </span>
-                                                            </div>
-                                                        ))
-                                                    }
+                                            <div className="space-y-6 overflow-y-auto flex-1 pr-2">
+                                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+                                                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            Total Spend
+                                                        </p>
+                                                        <p className="mt-1 text-lg font-semibold">
+                                                            {formatCurrency(row.Total)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+                                                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            Transactions
+                                                        </p>
+                                                        <p className="mt-1 text-lg font-semibold">
+                                                            {transactionCount}
+                                                        </p>
+                                                    </div>
+                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+                                                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            Avg Spend
+                                                        </p>
+                                                        <p className="mt-1 text-lg font-semibold">
+                                                            {formatCurrency(averageSpend)}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </ScrollArea>
-                                            <Separator className="my-4" />
-                                            <div className="flex justify-between items-center pt-2">
-                                                <span className="font-semibold text-base">Total</span>
-                                                <span className="text-lg font-bold tabular-nums">
-                                                    {formatCurrency(Object.values(row.Transactions).reduce((sum, count) => sum + count, 0))}
-                                                </span>
+                                                {budgetTarget && (
+                                                    <div className="rounded-xl border border-border/40 bg-card/40 p-4 shadow-sm">
+                                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div>
+                                                                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                                    Budget Target
+                                                                </p>
+                                                                <p className="mt-1 text-lg font-semibold">
+                                                                    {formatCurrency(budgetTarget)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="w-full sm:w-1/2">
+                                                                <p className="text-xs text-muted-foreground mb-1">
+                                                                    {progressPercentage}% of target used
+                                                                </p>
+                                                                <div className="h-2 w-full rounded-full bg-secondary/50 overflow-hidden">
+                                                                    <div
+                                                                        className={cn(
+                                                                            "h-full rounded-full transition-all",
+                                                                            ratio >= 1 ? "bg-rose-500" :
+                                                                            ratio >= 0.8 ? "bg-amber-500" :
+                                                                            "bg-emerald-500"
+                                                                        )}
+                                                                        style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {topTransaction && (
+                                                    <div className="rounded-xl border border-border/40 bg-card/60 p-4 shadow-sm flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div>
+                                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                                Largest Transaction
+                                                            </p>
+                                                            <p className="mt-1 text-base font-semibold">
+                                                                {topTransaction.name}
+                                                            </p>
+                                                        </div>
+                                                        <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-600">
+                                                            {formatCurrency(topTransaction.amount)}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                        All Transactions
+                                                    </p>
+                                                    <Separator className="mt-2" />
+                                                </div>
+                                                <div className="space-y-3 py-1">
+                                                    {transactionsArray.map((entry, index) => (
+                                                        <div
+                                                            key={entry.name}
+                                                            className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/10 p-3 transition-colors hover:bg-muted/20"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-xs font-semibold text-muted-foreground w-6 flex justify-center">
+                                                                    {index + 1}
+                                                                </span>
+                                                                <p className="text-sm font-medium leading-relaxed">
+                                                                    {entry.name}
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-sm font-semibold tabular-nums whitespace-nowrap">
+                                                                {formatCurrency(entry.amount)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="flex justify-between items-center pt-2">
+                                                    <span className="font-semibold text-base">Total</span>
+                                                    <span className="text-lg font-bold tabular-nums">
+                                                        {formatCurrency(totalAmount)}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </DialogContent>
                                     </Dialog>

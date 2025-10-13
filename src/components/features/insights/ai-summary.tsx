@@ -170,7 +170,7 @@ export function AiSummary({ statement }: AiSummaryProps) {
                                     </Tooltip>
                                 </div>
                                 <CardDescription className="text-base text-gray-600 dark:text-gray-400">
-                                    Intelligent insights for <span className="font-semibold text-gray-800 dark:text-gray-200">{statement.file_name}</span>
+                                    Insights for <span className="font-semibold text-gray-800 dark:text-gray-200">{statement.file_name}</span>
                                 </CardDescription>
                             </div>
                         ) : (
@@ -180,7 +180,7 @@ export function AiSummary({ statement }: AiSummaryProps) {
                                     AI Analysis Ready
                                 </CardTitle>
                                 <CardDescription className="text-base text-gray-600 dark:text-gray-400">
-                                    Generate intelligent insights for <span className="font-semibold">{statement.file_name}</span>
+                                    Generate insights for <span className="font-semibold">{statement.file_name}</span>
                                 </CardDescription>
                             </div>
                         )}
