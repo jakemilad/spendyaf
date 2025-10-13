@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import type { CategoryBudgetMap } from "@/app/types/types"
 import { DbStatement } from "@/app/types/types"
 import { DashboardSidebar } from "@/components/features/dashboard/dashboard-sidebar"
 import { PieChartComponent } from "@/components/charts/pie-chart"
@@ -15,21 +16,52 @@ import { AiSummary } from "@/components/features/insights/ai-summary"
 import { InsightsComponent } from "@/components/features/insights/insights"
 import { motion } from "framer-motion"
 import { fadeInUp } from "@/components/animations/animations"
+import { CATEGORY_BUDGET_EVENT, normalizeCategoryBudgets } from "@/lib/category-budgets"
 
 export function DashboardClient({
-    initialStatements, 
-    userName
+    initialStatements,
+    userName,
+    initialCategoryBudgets,
   }: {
     initialStatements: DbStatement[],
-    userName: string
+    userName: string,
+    initialCategoryBudgets: CategoryBudgetMap
   }) {
-  
+
     const [selectedStatement, setSelectedStatement] = useState<DbStatement | null>(
       initialStatements.length > 0 ? initialStatements[0] : null
     )
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [categoryBudgets, setCategoryBudgets] = useState<CategoryBudgetMap>(() =>
+      normalizeCategoryBudgets(initialCategoryBudgets),
+    )
+
+    useEffect(() => {
+      setCategoryBudgets(normalizeCategoryBudgets(initialCategoryBudgets))
+    }, [initialCategoryBudgets])
+
+    useEffect(() => {
+      const handleBudgetEvent = (event: Event) => {
+        const detail = (event as CustomEvent<CategoryBudgetMap>).detail
+        if (detail) {
+          setCategoryBudgets(normalizeCategoryBudgets(detail))
+        }
+      }
+
+      window.addEventListener(
+        CATEGORY_BUDGET_EVENT,
+        handleBudgetEvent as EventListener,
+      )
+
+      return () => {
+        window.removeEventListener(
+          CATEGORY_BUDGET_EVENT,
+          handleBudgetEvent as EventListener,
+        )
+      }
+    }, [])
 
     return (
       <>
@@ -97,7 +129,10 @@ export function DashboardClient({
                       <div
                         className="bg-card rounded-lg shadow-sm h-[1000px] overflow-y-auto">
                       {selectedStatement && (
-                        <SummaryTable statement={selectedStatement} />
+                        <SummaryTable 
+                          statement={selectedStatement}
+                          categoryBudgets={categoryBudgets}
+                        />
                       )}
                       </div>
                   </div>

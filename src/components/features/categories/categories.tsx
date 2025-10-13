@@ -11,16 +11,18 @@ import { toast } from "sonner";
 import { updateUserCategories, reprocessStatement } from "../../../app/actions";
 import { MotionWrapper } from "../../animations/motion-wrapper";
 import { useRouter } from "next/navigation";
-import { DbStatement } from "@/app/types/types";
+import { CategoryBudgetMap, DbStatement } from "@/app/types/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { CategoryBudgetManager } from "./category-budget-manager";
 
 interface CategoriesProps {
     initialCategories: string[]
     statements: DbStatement[]
+    initialBudgets: CategoryBudgetMap
 }
 
-export default function Categories({ initialCategories, statements }: CategoriesProps) {
+export default function Categories({ initialCategories, statements, initialBudgets }: CategoriesProps) {
     const [categories, setCategories] = useState<string[]>(initialCategories);
     const [newCategory, setNewCategory] = useState<string>('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -207,6 +209,9 @@ export default function Categories({ initialCategories, statements }: Categories
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <MotionWrapper animation="fadeInUp" delay={0.2}>
+            <CategoryBudgetManager categories={categories} initialBudgets={initialBudgets} />
+        </MotionWrapper>
         </>
     )
 }

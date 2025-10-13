@@ -12,10 +12,12 @@ import { DbStatement } from "./types/types";
 import { revalidatePath } from 'next/cache';
 import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
+import { CategoryBudgetMap } from "./types/types";
 import {tempStatements} from "@/components/temp/temp-data"
 import { DEFAULT_CATEGORIES } from "./utils/dicts";
 import { assert } from "console";
 import { stat } from "fs";
+import { normalizeCategoryBudgets } from "@/lib/category-budgets";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -362,6 +364,55 @@ export async function updateUserCategories(categories: string[]) {
     } catch (error) {
         console.error('Error updating user categories:', error);
         return false;
+    }
+}
+
+export async function getCategoryBudgets(): Promise<CategoryBudgetMap> {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) return {};
+
+        const result = await sql`
+            SELECT budgets
+            FROM category_budgets
+            WHERE user_id = ${session?.user?.email}
+            LIMIT 1
+        `;
+
+        if (result.length === 0) return {};
+
+        return normalizeCategoryBudgets(result[0].budgets as Record<string, unknown>);
+    } catch (error) {
+        console.error('Error fetching category budgets:', error);
+        return {};
+    }
+}
+
+export async function saveCategoryBudgets(budgets: CategoryBudgetMap): Promise<CategoryBudgetMap | null> {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) return null;
+
+        const normalized = normalizeCategoryBudgets(budgets as Record<string, unknown>);
+
+        const result = await sql`
+            INSERT INTO category_budgets (user_id, budgets)
+            VALUES (${session?.user?.email}, ${normalized})
+            ON CONFLICT (user_id) DO UPDATE SET
+                budgets = ${normalized},
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING budgets
+        `;
+
+        const persisted = result[0]?.budgets ?? normalized;
+        const sanitized = normalizeCategoryBudgets(persisted as Record<string, unknown>);
+
+        revalidatePath('/dashboard');
+        revalidatePath('/categories');
+        return sanitized;
+    } catch (error) {
+        console.error('Error saving category budgets:', error);
+        return null;
     }
 }
 

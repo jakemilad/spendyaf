@@ -50,3 +50,5 @@ export interface DbStatement {
     data: Statement;
     user_id?: string;
 }
+
+export type CategoryBudgetMap = Record<string, number>;
