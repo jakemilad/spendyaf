@@ -2,10 +2,6 @@
 
 A simple tool to analyze credit card statements with AI. Upload your CSV statements and automatically categorize transactions, view insights, and visualize spending patterns.
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-
 ## Features
 
 ### AI-Powered Analysis
