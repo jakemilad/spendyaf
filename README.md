@@ -1,7 +1,5 @@
 # Spendy AF
 
-> **Broke AF? There's a Reason.**
-
 A simple tool to analyze credit card statements with AI. Upload your CSV statements and automatically categorize transactions, view insights, and visualize spending patterns.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
