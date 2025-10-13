@@ -2,7 +2,7 @@
 
 > **Broke AF? There's a Reason.**
 
-A modern, AI-powered financial expense analyzer that transforms your credit card statements into actionable insights. Upload your CSV statements and let AI automatically categorize transactions, generate insights, and visualize your spending patterns.
+A simple tool to analyze credit card statements with AI. Upload your CSV statements and automatically categorize transactions, view insights, and visualize spending patterns.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
@@ -12,9 +12,9 @@ A modern, AI-powered financial expense analyzer that transforms your credit card
 
 ### AI-Powered Analysis
 
-- **Automatic Categorization**: AI intelligently categorizes transactions into Shopping, Groceries, Travel, Entertainment, and more
-- **Smart Insights**: Get personalized spending insights including daily/weekly averages, biggest transactions, and frequent merchants
-- **AI Summaries**: Generate natural language summaries of your spending patterns with Claude AI
+- **Automatic Categorization**: Categorizes transactions into Shopping, Groceries, Travel, Entertainment, and more
+- **Insights**: View spending insights including daily/weekly averages, biggest transactions, and frequent merchants
+- **AI Summaries**: Generate summaries of spending patterns with Claude AI
 
 ### Interactive Visualizations
 
@@ -52,11 +52,11 @@ A modern, AI-powered financial expense analyzer that transforms your credit card
 
 ### 1. Upload Your Statement
 
-Upload CSV files from your credit card provider. The app automatically parses transactions.
+Upload CSV files from your credit card provider. Automatically parses transactions.
 
 ### 2. AI Categorization
 
-Watch as AI intelligently categorizes each transaction into meaningful categories like:
+AI categorizes each transaction into categories like:
 
 - Shopping
 - Food & Drink
@@ -76,7 +76,7 @@ Explore interactive charts:
 
 ### 4. AI Summaries
 
-Generate personalized AI summaries that highlight:
+Generate AI summaries that show:
 
 - Spending trends
 - Areas of concern
