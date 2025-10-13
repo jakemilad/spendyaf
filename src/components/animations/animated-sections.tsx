@@ -504,7 +504,7 @@ export function HeroSection({ targetPath }: { targetPath: string }) {
             asChild
             className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 rounded-full hover:scale-105 transition-all"
           >
-            <a href="#features">
+            <a href="#start-here">
               See How It Works
             </a>
           </Button>
@@ -608,7 +608,7 @@ export function TransformationDemoSection() {
   ] as const
 
   return (
-    <section className="w-full border-y border-border/60 bg-muted/30 py-16 sm:py-20 md:py-24">
+    <section className="w-full border-y border-border/60 bg-muted/30 py-16 sm:py-20 md:py-24" id="start-here">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
