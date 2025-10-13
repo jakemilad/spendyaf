@@ -12,6 +12,9 @@ import { CategoryBudgetMap, DbStatement } from "@/app/types/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface SummaryTableProps {
     statement: DbStatement;
@@ -23,12 +26,6 @@ const formatCurrency = (value: number) =>
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })}`
-
-const deriveBadgeTone = (ratio: number) => {
-    if (ratio >= 1) return "border-rose-500/40 bg-rose-500/10 text-rose-500"
-    if (ratio >= 0.8) return "border-amber-500/40 bg-amber-500/10 text-amber-500"
-    return "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
-}
 
 export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) {
     const sortedSummary = [...statement.data.summary].sort((a, b) => b.Total - a.Total)
@@ -47,16 +44,16 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[40%] py-3 sm:py-4 pl-2 text-sm sm:text-lg">Category</TableHead>
-                                <TableHead className="w-[30%] text-left pr-2 text-sm sm:text-lg">Largest Transaction</TableHead>
-                                <TableHead className="w-[30%] text-right text-sm sm:text-lg">Total</TableHead>
+                                <TableHead className="w-[25%] py-3 sm:py-4 pl-2 text-sm sm:text-lg">Category</TableHead>
+                                <TableHead className="w-[20%] text-left pr-2 text-sm sm:text-lg">Largest Transaction</TableHead>
+                                <TableHead className="w-[35%] text-left text-sm sm:text-lg">Budget</TableHead>
+                                <TableHead className="w-[20%] text-right text-sm sm:text-lg">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {sortedSummary.map((row) => {
                                 const budgetTarget = budgets[row.Category]
                                 const ratio = budgetTarget ? row.Total / budgetTarget : 0
-                                const badgeTone = deriveBadgeTone(ratio)
                                 const progressPercentage = Math.round(ratio * 100)
 
                                 return (
@@ -70,45 +67,87 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                         {formatCurrency(row.BiggestTransaction.amount)}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="text-right text-sm sm:text-lg">
-                                                    {formatCurrency(row.Total)}
-                                                    {budgetTarget && (
-                                                        <span
-                                                            className={cn(
-                                                                "mt-1 inline-flex items-center justify-end rounded-full border px-2 py-0.5 text-xs font-medium",
-                                                                badgeTone
-                                                            )}
-                                                        >
-                                                            {progressPercentage}%
-                                                            <span className="ml-1 hidden sm:inline">
-                                                                of {formatCurrency(budgetTarget)}
-                                                            </span>
-                                                        </span>
+                                                <TableCell className="text-left">
+                                                    {budgetTarget ? (
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="text-xs font-medium flex items-center gap-1">
+                                                                    {ratio >= 1 ? (
+                                                                        <AlertCircle className="h-3 w-3 text-rose-500" />
+                                                                    ) : ratio >= 0.8 ? (
+                                                                        <TrendingUp className="h-3 w-3 text-amber-500" />
+                                                                    ) : (
+                                                                        <TrendingDown className="h-3 w-3 text-emerald-500" />
+                                                                    )}
+                                                                    <span className={cn(
+                                                                        ratio >= 1 ? "text-rose-500" : 
+                                                                        ratio >= 0.8 ? "text-amber-500" : 
+                                                                        "text-emerald-500"
+                                                                    )}>
+                                                                        {progressPercentage}%
+                                                                    </span>
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {formatCurrency(budgetTarget)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="w-full bg-secondary/50 rounded-full h-2 overflow-hidden">
+                                                                <div
+                                                                    className={cn(
+                                                                        "h-full rounded-full transition-all",
+                                                                        ratio >= 1 ? "bg-rose-500" : 
+                                                                        ratio >= 0.8 ? "bg-amber-500" : 
+                                                                        "bg-emerald-500"
+                                                                    )}
+                                                                    style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground"></span>
                                                     )}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm sm:text-lg font-semibold">
+                                                    {formatCurrency(row.Total)}
                                                 </TableCell>
                                             </TableRow>
                                         </DialogTrigger>
-                                        <DialogContent>
+                                        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
                                             <DialogHeader>
-                                                <DialogTitle className="text-center font-bold text-xl pb-4">
+                                                <DialogTitle className="text-xl font-bold">
                                                     {row.Category} Transactions
                                                 </DialogTitle>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {Object.entries(row.Transactions).length} transaction{Object.entries(row.Transactions).length !== 1 ? 's' : ''}
+                                                </p>
                                             </DialogHeader>
-                                            <div className="space-y-4">
-                                                {Object.entries(row.Transactions).map(([transaction, count]) => (
-                                                    <div key={transaction} className="flex justify-between items-center border-b pb-2">
-                                                        <span className="font-medium">{transaction}</span>
-                                                        <span className="text-muted-foreground">
-                                                            {formatCurrency(count)}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                                <div className="flex justify-end">
-                                                    <span className="text-muted-foreground">Total:</span>
-                                                    <span className="ml-3 font-medium">
-                                                        {formatCurrency(Object.values(row.Transactions).reduce((sum, count) => sum + count, 0))}
-                                                    </span>
+                                            <Separator className="my-4" />
+                                            <ScrollArea className="flex-1 pr-4 -mr-4">
+                                                <div className="space-y-0">
+                                                    {Object.entries(row.Transactions)
+                                                        .sort(([, a], [, b]) => b - a)
+                                                        .map(([transaction, amount]) => (
+                                                            <div 
+                                                                key={transaction} 
+                                                                className="flex justify-between items-start gap-4 py-2 hover:bg-accent/50 rounded-lg px-3 -mx-3 transition-colors"
+                                                            >
+                                                                <span className="font-medium text-sm flex-1 leading-relaxed">
+                                                                    {transaction}
+                                                                </span>
+                                                                <span className="text-sm font-semibold tabular-nums whitespace-nowrap">
+                                                                    {formatCurrency(amount)}
+                                                                </span>
+                                                            </div>
+                                                        ))
+                                                    }
                                                 </div>
+                                            </ScrollArea>
+                                            <Separator className="my-4" />
+                                            <div className="flex justify-between items-center pt-2">
+                                                <span className="font-semibold text-base">Total</span>
+                                                <span className="text-lg font-bold tabular-nums">
+                                                    {formatCurrency(Object.values(row.Transactions).reduce((sum, count) => sum + count, 0))}
+                                                </span>
                                             </div>
                                         </DialogContent>
                                     </Dialog>
@@ -119,7 +158,8 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                             <TableRow>
                                 <TableCell className="text-sm sm:text-lg">Total</TableCell>
                                 <TableCell></TableCell>
-                                <TableCell className="text-right text-sm sm:text-lg">
+                                <TableCell></TableCell>
+                                <TableCell className="text-right text-sm sm:text-lg font-semibold">
                                     {formatCurrency(statement.data.totalSpend ?? 0)}
                                 </TableCell>
                             </TableRow>
