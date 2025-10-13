@@ -82,9 +82,6 @@ export async function retryFetch(
       const errorData = await responseClone.json().catch(() => ({}));
       const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
       
-      // Retry these specific statuses: 
-      // - 503 (Service Unavailable) - temporary issues like AI service errors
-      // - 5xx (Server errors) - internal server issues
       if (response.status === 503 || response.status >= 500) {
         throw new Error(`Server/Service error (${response.status}): ${errorMessage}`);
       }
