@@ -59,7 +59,7 @@ export async function getUserStatements(): Promise<DbStatement[]> {
 
 export async function uploadAndProcessStatement(formData: FormData): Promise<Statement> {
     const startTime = Date.now();
-    console.log('⏱️  Starting optimized statement processing...');
+    console.log('Starting optimized statement processing');
     
     try {
         const session = await getSession();
@@ -91,9 +91,9 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         const cachedMerchantCategories = await getCachedMerchantCategories(userEmail, uniqueMerchants);
         const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
         
-        console.log(`🏪 Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
-        console.log(`📈 Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
-        console.log('🔍 User Categories Available:', userCategories);
+        console.log(`Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
+        console.log(`Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
+        console.log('User Categories Available:', userCategories);
 
         // Parallel processing: Start both AI operations simultaneously
         let userCategoriesPromise: Promise<string[]> | null = null;
@@ -490,4 +490,32 @@ export async function getAICategories(transactions: Transaction[]) {
     const uniqueMerchants = [... new Set(transactions.map(t => t.Merchant))] as string[];
     const categories = await openAICategoriesFromTransactions(uniqueMerchants);
     return categories;
+}
+
+// What i want this to do:
+// merge overrides into the merchant map
+// re run the same logic as upload and process statement uses (summary, totals, insights)
+// persist the rebuilt JSON back to transaction_records.
+export async function applyMerchantOverrides(statement: DbStatement, overrides: Record<string, string>) {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) return false;
+        const statementData = await getStatementById(Number(statement.id));
+        const categories = statementData?.data.categories;
+
+        const updatedCategories = {...categories};
+
+        for (const merchant of Object.keys(categories)) {
+            if (merchant in overrides && overrides[merchant] !== undefined) {
+                updatedCategories[merchant] = overrides[merchant];
+            }
+        }
+
+
+        console.log('statementData', statementData);
+        return statementData;
+    } catch (error) {
+        console.error('Error applying merchant overrides:', error);
+        return false;
+    }
 }
