@@ -191,8 +191,8 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         });
 
         const processingTime = Date.now() - startTime;
-        console.log(`⚡ Processing completed in ${processingTime}ms`);
-        console.log('🎯 Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
+        console.log(`Processing completed in ${processingTime}ms`);
+        console.log('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
         console.log(response)
         return response;
     } catch (error) {
@@ -499,23 +499,108 @@ export async function getAICategories(transactions: Transaction[]) {
 export async function applyMerchantOverrides(statement: DbStatement, overrides: Record<string, string>) {
     try {
         const session = await getSession();
-        if (!session?.user?.email) return false;
+        if (!session?.user?.email) return null;
+
         const statementData = await getStatementById(Number(statement.id));
-        const categories = statementData?.data.categories;
+        if (!statementData?.data?.categories || !statementData?.data?.transactions) {
+            return null;
+        }
 
-        const updatedCategories = {...categories};
-
-        for (const merchant of Object.keys(categories)) {
-            if (merchant in overrides && overrides[merchant] !== undefined) {
-                updatedCategories[merchant] = overrides[merchant];
+        const updatedCategories = { ...statementData.data.categories };
+        for (const [merchant, category] of Object.entries(overrides)) {
+            if (category) {
+                updatedCategories[merchant] = category;
             }
         }
 
+        const summary = summarizeSpendByCategory(statementData.data.transactions, updatedCategories);
+        const totalSpendNumber = statementData.data.transactions.reduce(
+            (sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)),
+            0
+        );
+        const insights = getInsights(statementData.data.transactions, summary);
 
-        console.log('statementData', statementData);
-        return statementData;
+        const updatedStatementData = {
+            ...statementData.data,
+            categories: updatedCategories,
+            summary,
+            totalSpend: Number(totalSpendNumber.toFixed(2)),
+            insights
+        };
+
+        await pool.query(
+            'UPDATE transaction_records SET data = $1 WHERE id = $2',
+            [JSON.stringify(updatedStatementData), statementData.id]
+        );
+        revalidatePath('/dashboard');
+        return updatedStatementData;
     } catch (error) {
         console.error('Error applying merchant overrides:', error);
-        return false;
+        return null;
     }
+}
+
+
+interface MerchantCategoryRow {
+    merchant: string;
+    category: string;
+    totalSpend: number;
+    transactionCount: number;
+    hasOverride: boolean;
+    overrideUpdatedAt: string | null;
+}
+
+export async function getAllMerchantCategories(options?: {
+    searchTerm?: string | null;
+    limit?: number;
+    offset?: number;
+}): Promise<MerchantCategoryRow[]> {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) return [];
+
+        const searchTerm = options?.searchTerm ?? null;
+        const limit = options?.limit ?? 200000;
+        const offset = options?.offset ?? 0;
+
+        const result = await sql`
+            WITH flattened AS (
+                SELECT
+                    tr.user_id,
+                    txn ->> 'Merchant' AS merchant,
+                    (txn ->> 'Amount')::numeric AS amount,
+                    tr.data->'categories'->>(txn ->> 'Merchant') AS ai_category
+                FROM transaction_records tr
+                CROSS JOIN LATERAL jsonb_array_elements(tr.data->'transactions') AS txn
+                WHERE tr.user_id = ${session.user.email}
+            )
+            SELECT
+                f.merchant,
+                COALESCE(mc.category, MAX(f.ai_category)) AS current_category,
+                SUM(f.amount) AS total_spend,
+                COUNT(*) AS transaction_count,
+                CASE WHEN mc.category IS NOT NULL THEN TRUE ELSE FALSE END AS has_override,
+                MAX(mc.updated_at) AS override_updated_at
+            FROM flattened f
+            LEFT JOIN merchant_categories mc
+                ON mc.user_id = f.user_id
+               AND mc.merchant = f.merchant
+            WHERE ${searchTerm}::text IS NULL OR f.merchant ILIKE '%' || ${searchTerm} || '%'
+            GROUP BY f.merchant, mc.category, mc.updated_at
+            ORDER BY total_spend DESC
+            LIMIT ${limit} OFFSET ${offset};
+        `;
+
+        return result.map(row => ({
+            merchant: row.merchant as string,
+            category: row.current_category as string,
+            totalSpend: Number(row.total_spend),
+            transactionCount: Number(row.transaction_count),
+            hasOverride: row.has_override as boolean,
+            overrideUpdatedAt: row.override_updated_at as string | null,
+        }));
+    } catch (error) {
+        console.error('Error fetching all merchant categories:', error);
+        return [];
+    }   
 }
