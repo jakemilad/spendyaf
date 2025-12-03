@@ -18,6 +18,7 @@ import { DEFAULT_CATEGORIES } from "./utils/dicts";
 import { assert } from "console";
 import { stat } from "fs";
 import { normalizeCategoryBudgets } from "@/lib/category-budgets";
+import logger from "@/lib/logger";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -31,7 +32,6 @@ export async function getUserStatements(): Promise<DbStatement[]> {
     try {
         const session = await getSession();
         if (!session) return [];
-
         // const rawStatements: any = tempStatements;
 
         const rawStatements = await sql`
@@ -77,7 +77,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         if (!file.name.endsWith('.csv')) {
             throw new Error('File must be a CSV');
         }
-
+        // buffer the file, process transactions by parsing the file, removing payments recieved and grabbing unique merchants
         const buffer = Buffer.from(await file.arrayBuffer());
         const processedTransactions: Transaction[] = await processCSV(buffer);
         const transactions = processedTransactions.filter(t => !t.Merchant.includes("PAYMENT RECEIVED"))
@@ -89,11 +89,16 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         // Check cache for merchant categories first
         const userEmail = session.user?.email!;
         const cachedMerchantCategories = await getCachedMerchantCategories(userEmail, uniqueMerchants);
+        logger.info(`Cached Merchant Categories: ${JSON.stringify(cachedMerchantCategories, null, 2)}`);
         const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
-        
-        console.log(`Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
-        console.log(`Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
-        console.log('User Categories Available:', userCategories);
+        logger.info(`Uncached Merchants: ${uncachedMerchants.length == 0 ? 'No uncached merchants' : JSON.stringify(uncachedMerchants, null, 2)}`);
+
+
+        logger.info(`User Categories: ${JSON.stringify(userCategories, null, 2)}`);
+        logger.info('________________________________________________________');
+        logger.info(`Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
+        logger.info(`Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
+        logger.info(`User Categories Available: ${JSON.stringify(userCategories, null, 2)}`);
 
         // Parallel processing: Start both AI operations simultaneously
         let userCategoriesPromise: Promise<string[]> | null = null;
@@ -115,16 +120,16 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
                         await cacheMerchantCategories(userEmail, newCategories);
                         return { ...cachedMerchantCategories, ...newCategories };
                     } catch (error) {
-                        console.warn('AI categorization timeout, using fallback categories');
+                        logger.warn('AI categorization timeout, using fallback categories');
                         // Fallback: assign default categories or most common ones
-                        console.warn('🔄 Using fallback categorization for', uncachedMerchants.length, 'merchants');
+                        logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants`);
                         const fallbackCategories: Record<string, string> = {};
                         uncachedMerchants.forEach((merchant, index) => {
                             // Distribute merchants across available categories instead of all to first category
                             const categoryIndex = index % categories.length;
                             fallbackCategories[merchant] = categories[categoryIndex] || 'Other';
                         });
-                        console.log('🏷️  Fallback categories assigned:', fallbackCategories);
+                        logger.info(`Fallback categories assigned: ${fallbackCategories}`);
                         await cacheMerchantCategories(userEmail, fallbackCategories);
                         return { ...cachedMerchantCategories, ...fallbackCategories };
                     }
@@ -140,17 +145,17 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
                         return { ...cachedMerchantCategories, ...newCategories };
                     })
                     .catch(async (error) => {
-                        console.warn('AI categorization timeout, using fallback categories:', error.message);
+                        logger.warn(`AI categorization timeout, using fallback categories: ${error.message}`);
                         // Fallback: assign default categories
-                        console.warn('🔄 Using fallback categorization for', uncachedMerchants.length, 'merchants (existing user)');
+                        logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants (existing user): ${JSON.stringify(uncachedMerchants, null, 2)}`);
                         const fallbackCategories: Record<string, string> = {};
                         uncachedMerchants.forEach((merchant, index) => {
                             // Distribute merchants across available categories instead of all to first category
                             const categoryIndex = index % userCategories.length;
                             fallbackCategories[merchant] = userCategories[categoryIndex] || 'Other';
                         });
-                        console.log('🏷️  Fallback categories assigned (existing user):', fallbackCategories);
-                        console.log('👤 Available user categories:', userCategories);
+                        logger.info(`Fallback categories assigned (existing user): ${JSON.stringify(fallbackCategories, null, 2)}`);
+                        logger.info(`Available user categories: ${JSON.stringify(userCategories, null, 2)}`);
                         await cacheMerchantCategories(userEmail, fallbackCategories);
                         return { ...cachedMerchantCategories, ...fallbackCategories };
                     });
@@ -185,18 +190,18 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
             'INSERT INTO transaction_records (user_id, data, file_name) VALUES ($1, $2, $3)',
             [userEmail, JSON.stringify(response), fileName]
         ).then(() => {
-            console.log('inserted into db');
+            logger.info('inserted into db');
         }).catch(error => {
-            console.error('Database insert error:', error);
+            logger.error(`Database insert error: ${error}`);
         });
 
         const processingTime = Date.now() - startTime;
-        console.log(`Processing completed in ${processingTime}ms`);
-        console.log('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
-        console.log(response)
+        logger.info(`Processing completed in ${processingTime}ms`);
+        logger.info('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
+        logger.info(`Response: ${response}`);
         return response;
     } catch (error) {
-        console.error('Upload error:', error);
+        logger.error(`Upload error: ${JSON.stringify(error, null, 2)}`);
         throw error;
     }
 }
@@ -220,7 +225,7 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
         let userCategories: string[] = await getUserCategories();
 
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
-        const categories = await openAICategories(uniqueMerchants as string[], userCategories);
+        const categories = await openAICategoriesWithTimeout(uniqueMerchants as string[], userCategories);
         // const categories = await claudeCategories(uniqueMerchants as string[], userCategories);
         const summary = summarizeSpendByCategory(transactions, categories as Record<string, string>);
         const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
@@ -603,4 +608,56 @@ export async function getAllMerchantCategories(options?: {
         console.error('Error fetching all merchant categories:', error);
         return [];
     }   
+}
+
+export async function updateMerchantCategory(merchant: string, category: string) {
+    try {
+        const session = await getSession();
+        if (!session?.user?.email) {
+            throw new Error('Unauthorized');
+        }
+
+        const normalizedMerchant = merchant?.trim();
+        const normalizedCategory = category?.trim();
+
+        if (!normalizedMerchant || !normalizedCategory) {
+            throw new Error('Merchant and category are required');
+        }
+
+        await pool.query(
+            `INSERT INTO merchant_categories (user_id, merchant, category)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (user_id, merchant) DO UPDATE SET
+                category = EXCLUDED.category,
+                updated_at = CURRENT_TIMESTAMP`,
+            [session.user.email, normalizedMerchant, normalizedCategory]
+        );
+
+        const statements = await sql`
+            SELECT id, file_name, data, created_at
+            FROM transaction_records
+            WHERE user_id = ${session.user.email}
+              AND (data->'categories') ? ${normalizedMerchant}
+        `;
+
+        let updatedStatements = 0;
+        for (const row of statements) {
+            const statement: DbStatement = {
+                id: row.id.toString(),
+                file_name: row.file_name,
+                created_at: row.created_at,
+                data: row.data
+            };
+
+            const updated = await applyMerchantOverrides(statement, { [normalizedMerchant]: normalizedCategory });
+            if (updated) {
+                updatedStatements += 1;
+            }
+        }
+
+        return { success: true, 'Updated Statements': updatedStatements };
+    } catch (error) {
+        console.error('Error updating merchant category:', error);
+        return { success: false, error: 'Failed to update merchant category' };
+    }
 }

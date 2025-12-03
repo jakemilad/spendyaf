@@ -19,7 +19,7 @@ export async function processCSV(file: Buffer): Promise<Transaction[]> {
                 records.push({
                     Date: parsedDate.getTime(),
                     Merchant: cleanNames(data.Description),
-                    Amount: parseFloat(data.Amount),
+                    Amount: parseFloat(data.Amount)
                 });
             } catch (error) {
                 console.error(`Error parsing date for record: ${data.Date}`, error);

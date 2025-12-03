@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { CategorySummary, DbStatement, Transaction } from "../types/types";
 import pool from "@/lib/db";
 
-const model = "gpt-4o-mini";
+const model = "gpt-5-mini";
 const MAX_SAMPLE_TRANSACTIONS = 50;
 const MAX_SAMPLE_SUMMARY_ROWS = 12;
 
