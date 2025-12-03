@@ -67,7 +67,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         if (!session?.user?.email) {
             throw new Error('Unauthorized access attempt');
         }
-
+        const userEmail = session.user?.email!;
         const file = formData.get('file') as File;
         const fileName = formData.get('fileName') as string || file?.name || 'unknown';
 
@@ -79,15 +79,41 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         }
         // buffer the file, process transactions by parsing the file, removing payments recieved and grabbing unique merchants
         const buffer = Buffer.from(await file.arrayBuffer());
+
+        // process the transactions
         const processedTransactions: Transaction[] = await processCSV(buffer);
         const transactions = processedTransactions.filter(t => !t.Merchant.includes("PAYMENT RECEIVED"))
         const uniqueMerchants: string[] = [... new Set(transactions.map(t => t.Merchant))];
 
-        // Get or create user categories with optimized caching
+        
+        const response = processStatement(userEmail,transactions, uniqueMerchants,fileName);
+
+        // Non-blocking database insert (fire and forget for better response time)
+        pool.query(
+            'INSERT INTO transaction_records (user_id, data, file_name) VALUES ($1, $2, $3)',
+            [userEmail, JSON.stringify(response), fileName]
+        ).then(() => {
+            logger.info('inserted into db');
+        }).catch(error => {
+            logger.error(`Database insert error: ${error}`);
+        });
+
+        const processingTime = Date.now() - startTime;
+        logger.info(`Processing completed in ${processingTime}ms`);
+        logger.info('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
+        logger.info(`Response: ${response}`);
+        return response;
+    } catch (error) {
+        logger.error(`Upload error: ${JSON.stringify(error, null, 2)}`);
+        throw error;
+    }
+}
+
+export async function processStatement(userEmail: string,transactions: Transaction[],uniqueMerchants: string[], fileName: string): Promise<Statement> {
+     // Get or create user categories with optimized caching
         let userCategories: string[] = await getUserCategories();
 
         // Check cache for merchant categories first
-        const userEmail = session.user?.email!;
         const cachedMerchantCategories = await getCachedMerchantCategories(userEmail, uniqueMerchants);
         logger.info(`Cached Merchant Categories: ${JSON.stringify(cachedMerchantCategories, null, 2)}`);
         const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
@@ -185,25 +211,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
             insights
         };
 
-        // Non-blocking database insert (fire and forget for better response time)
-        pool.query(
-            'INSERT INTO transaction_records (user_id, data, file_name) VALUES ($1, $2, $3)',
-            [userEmail, JSON.stringify(response), fileName]
-        ).then(() => {
-            logger.info('inserted into db');
-        }).catch(error => {
-            logger.error(`Database insert error: ${error}`);
-        });
-
-        const processingTime = Date.now() - startTime;
-        logger.info(`Processing completed in ${processingTime}ms`);
-        logger.info('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
-        logger.info(`Response: ${response}`);
         return response;
-    } catch (error) {
-        logger.error(`Upload error: ${JSON.stringify(error, null, 2)}`);
-        throw error;
-    }
 }
 
 
