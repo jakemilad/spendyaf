@@ -3,6 +3,8 @@ import { compareStatements, getAICategories } from "../actions";
 import { Transaction } from "@/app/types/types";  
 import { LoadingOverlay } from "@/components/loading/loading-overlay";
 
+export const dynamic = 'force-dynamic';
+
 const transactions: Transaction[] = [
     {
       "Date": 1709269200000,

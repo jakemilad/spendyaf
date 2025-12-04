@@ -110,7 +110,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
 }
 
 export async function processStatement(userEmail: string,transactions: Transaction[],uniqueMerchants: string[], fileName: string): Promise<Statement> {
-     // Get or create user categories with optimized caching
+         // Get or create user categories with optimized caching
         let userCategories: string[] = await getUserCategories();
 
         // Check cache for merchant categories first

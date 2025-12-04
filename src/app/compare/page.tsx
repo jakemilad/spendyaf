@@ -3,6 +3,8 @@ import { compareStatementAreaChart, compareStatements, getUserStatements } from 
 import { CompareClient } from "@/components/features/compare/compare-client";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ComparePage() {
     const statements = await getUserStatements();
     const {data, months} = await compareStatements(statements);

@@ -5,6 +5,8 @@ import { DashboardClient } from "@/components/features/dashboard/dashboard-clien
 import { DbStatement } from "../types/types"
 import { redirect } from "next/navigation"
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const statements = (await getUserStatements() || []) as DbStatement[]
   const session = await getServerSession(authOptions)

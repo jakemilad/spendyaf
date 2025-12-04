@@ -100,7 +100,6 @@ Return only the JSON object. No narration or markdown.`;
             },
             { role: "user", content: prompt }
         ],
-        temperature: 0.1,
         response_format: { type: "json_object" }
     });
     const content = response.choices[0]?.message?.content;
@@ -213,7 +212,6 @@ Return only the JSON object.`;
             },
             { role: "user", content: prompt }
         ],
-        temperature: 0.1,
         response_format: { type: "json_object" }
     });
 
