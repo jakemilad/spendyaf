@@ -22,12 +22,13 @@ import logger from "@/lib/logger";
 export async function GET(request: Request) {
     try {
         const overrides: Record<string,string> = {
-            'GRANDVIEW LANES': 'Personal',
-            'SALOMON NORTH': 'Shopping',
+            // 'LENA MARKET': 'Groceries',
+            // 'CHIT CHAT BURGER BAR': 'Restaurants'
         }
 
-        const override = await applyAllOverrides('jake.milad@gmail.com', overrides)
-        const res = await reprocessStatementsAfterOverride('jake.milad@gmail.com')
+        const userId = 'jake.milad@gmail.com';
+        const override = await applyAllOverrides(userId, overrides)
+        const res = await reprocessStatementsAfterOverride(userId, overrides)
         return NextResponse.json({override, res});
     } catch (error) {
         logger.error(`Error in override API route: ${JSON.stringify(error, null, 2)}`);
