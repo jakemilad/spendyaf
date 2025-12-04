@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { applyMerchantOverrides, getStatementById } from "@/app/actions";
 import { DbStatement } from "@/app/types/types";
-import { getAllCachedMerchantCategories } from "@/app/utils/override";
+import { applyAllOverrides, applyOverride, getAllCachedMerchantCategories, reprocessStatementsAfterOverride } from "@/app/utils/override";
 import logger from "@/lib/logger";
 
 
@@ -21,8 +21,14 @@ import logger from "@/lib/logger";
 
 export async function GET(request: Request) {
     try {
-        const cached = await getAllCachedMerchantCategories('jake.milad@gmail.com');
-        return NextResponse.json(cached);
+        const overrides: Record<string,string> = {
+            'GRANDVIEW LANES': 'Personal',
+            'SALOMON NORTH': 'Shopping',
+        }
+
+        const override = await applyAllOverrides('jake.milad@gmail.com', overrides)
+        const res = await reprocessStatementsAfterOverride('jake.milad@gmail.com')
+        return NextResponse.json({override, res});
     } catch (error) {
         logger.error(`Error in override API route: ${JSON.stringify(error, null, 2)}`);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

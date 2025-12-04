@@ -93,19 +93,25 @@ export async function applyAllOverrides(userId: string, overrides: Record<string
     }
 }
 
-export async function reprocessStatementsAfterOverride() {
+export async function reprocessStatementsAfterOverride(userId: string) {
     try {
-        const session = await getSession();
-        if (!session?.user?.email) {
+        if (!userId) {
             const message = 'User is required to reprocess statements after overrides';
             logger.warn(message);
             return { success: false, message };
         }
-        const userId = session.user.email;
         const statements = await getUserStatements();
+
+        if (!statements || statements.length == 0) {
+            const message = 'User has no statements'
+            logger.warn(message)
+        }
+
         for (const statement of statements) {
             await updateStatementOverride(userId, statement);
         }
+        logger.info(`Overrides applied to ${statements.length} statements. ${JSON.stringify(statements)}`)
+        return {success: true, message: `Overrides successfully applied for ${statements.length} statements`}
     } catch (error) {
         logger.error(`Error reprocessing statements after overrides: ${JSON.stringify(error, null, 2)}`);
         return { success: false, message: 'Failed to reprocess statements after overrides' };
