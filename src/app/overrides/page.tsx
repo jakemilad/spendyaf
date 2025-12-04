@@ -1,6 +1,6 @@
 import { authOptions } from "../api/auth/auth.config"
 import { getServerSession } from "next-auth"
-import {getMerchantsForDataTable} from '@/app/utils/override'
+import {getMerchantsForDataTable} from './actions'
 import { OverrideClient } from "@/components/override/override-client"
 
 

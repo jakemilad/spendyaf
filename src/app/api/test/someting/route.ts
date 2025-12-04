@@ -1,6 +1,6 @@
 import { Test } from "@/app/utils/openai_api";
 import { NextResponse } from "next/server";
-import { getMerchantsForDataTable } from "@/app/utils/override";
+import { getMerchantsForDataTable } from "@/app/overrides/actions";
 
 
 export async function GET(request: Request) {

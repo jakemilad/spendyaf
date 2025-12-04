@@ -2,6 +2,7 @@ import pool from "@/lib/db";
 import logger from "@/lib/logger";
 import { getSession, getStatementById, processStatement } from "../actions";
 import { DbStatement } from "../types/types";
+import { Override } from "@/components/override/override-table";
 
 export async function getAllCachedMerchantCategories(userId: string): Promise<Record<string, string>> {
     try {
@@ -210,5 +211,31 @@ export async function reprocessStatementsAfterOverride(userId?: string, override
     } catch (error) {
         logger.error(`Error reprocessing statements after overrides: ${JSON.stringify(error, null, 2)}`);
         return { success: false, message: 'Failed to reprocess statements after overrides' };
+    }
+}
+
+
+export async function getMerchantsForDataTable(userId: string): Promise<Override[]> {
+    try {
+        if (!userId) return []
+        const result: any[] = []
+        const res = await pool.query(
+            'SELECT id, merchant, category, created_at, updated_at FROM merchant_categories WHERE user_id = $1',
+            [userId]
+        );
+        res.rows.forEach(row => {
+            result.push({
+                id: row.id,
+                merchant: row.merchant,
+                category: row.category,
+                created_at: row.created_at,
+                updated_at: row.updated_at
+            })  
+        })
+        logger.info(`Fetched ${res.rows.length} cached merchant categories for user: ${userId}`)
+        return result;
+    } catch (error) {
+        logger.error(`Error fetching all cached merchant categories: ${JSON.stringify(error, null, 2)}`);
+        return [] as any[];
     }
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/auth.config";
-import { applyAllOverrides, reprocessStatementsAfterOverride } from "@/app/utils/override";
+import { applyAllOverrides, reprocessStatementsAfterOverride } from "@/app/overrides/actions";
 
 type OverridesPayload = { overrides?: Record<string, string> };
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, message: "Invalid overrides payload" }, { status: 400 });
     }
 
-    const overrideResult = await applyAllOverrides(overrides);
+    const overrideResult = await applyAllOverrides(userId,overrides);
     if (!overrideResult?.success) {
         return NextResponse.json(overrideResult ?? { success: false, message: "Failed to apply overrides" }, { status: 500 });
     }
