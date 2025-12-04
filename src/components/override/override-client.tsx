@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useTransition } from "react";
+import { Override, OverrideDataTable, columns } from "@/components/override/override-table";
 
-export function OverrideClient() {
+export function OverrideClient({merchantData}: {merchantData: Override[]}) {
+    const [tableData, setTableData] = useState<Override[]>(merchantData);
     const [overrides, setOverrides] = useState<Record<string, string>>({});
     const [message, setMessage] = useState<string>("");
     const [isPending, startTransition] = useTransition();
@@ -32,6 +34,7 @@ export function OverrideClient() {
 
     return (
         <div>
+            <OverrideDataTable data={tableData} columns={columns}/>
             <button onClick={handleSubmit} disabled={isPending}>
                 {isPending ? "Saving..." : "Apply Overrides"}
             </button>

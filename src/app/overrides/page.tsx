@@ -1,6 +1,8 @@
 import { authOptions } from "../api/auth/auth.config"
 import { getServerSession } from "next-auth"
-import {getAllCachedMerchantCategories} from './actions'
+import {getMerchantsForDataTable} from '@/app/utils/override'
+import { OverrideClient } from "@/components/override/override-client"
+
 
 
 export default async function Overrides() {
@@ -9,9 +11,11 @@ export default async function Overrides() {
         return <h1>overrides</h1>
     }
     const userId = session.user.email
-    const allMerchants = await getAllCachedMerchantCategories(userId)
+    const allMerchants = await getMerchantsForDataTable(userId)
 
     return (
-        <h1>{JSON.stringify(allMerchants)}</h1>
+        <div>
+            <OverrideClient merchantData={allMerchants} />
+        </div>
     )
 }
