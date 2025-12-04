@@ -27,7 +27,7 @@ export async function GET(request: Request) {
         }
 
         const userId = 'jake.milad@gmail.com';
-        const override = await applyAllOverrides(overrides)
+        const override = await applyAllOverrides(userId, overrides)
         const res = await reprocessStatementsAfterOverride(userId, overrides)
         return NextResponse.json({override, res});
     } catch (error) {
