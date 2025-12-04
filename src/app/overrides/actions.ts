@@ -48,10 +48,8 @@ export async function applyOverride(userId: string, merchant: string, category: 
     }
 }
 
-export async function applyAllOverrides(overrides: Record<string, string>) {
+export async function applyAllOverrides(userId: string, overrides: Record<string, string>) {
     try {
-        const session = await getSession();
-        const userId = session?.user?.email
         if (!userId) {
             const message = 'User is required to apply overrides';
             logger.warn(message);
