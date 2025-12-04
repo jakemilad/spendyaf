@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { applyMerchantOverrides, getStatementById } from "@/app/actions";
 import { DbStatement } from "@/app/types/types";
-import { applyAllOverrides, applyOverride, getAllCachedMerchantCategories, reprocessStatementsAfterOverride } from "@/app/utils/override";
+import { applyAllOverrides, applyOverride, getAllCachedMerchantCategories, reprocessStatementsAfterOverride } from "@/app/overrides/actions";
 import logger from "@/lib/logger";
 
 
