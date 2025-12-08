@@ -1,14 +1,16 @@
 'use client'
 
-import { useState, useTransition } from "react";
 import { Override, OverrideDataTable, columns } from "@/components/override/override-table";
 
-export function OverrideClient({merchantData}: {merchantData: Override[]}) {
-    const [tableData, setTableData] = useState<Override[]>(merchantData);
+interface OverrideClientProps {
+  merchantData: Override[];
+  userCategories: string[];
+}
 
+export function OverrideClient({ merchantData, userCategories }: OverrideClientProps) {
     return (
         <div>
-            <OverrideDataTable data={tableData} columns={columns}/>
+            <OverrideDataTable data={merchantData} columns={columns} userCategories={userCategories} />
         </div>
     );
 }

@@ -14,6 +14,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 interface SummaryTableProps {
     statement: DbStatement;
@@ -34,13 +37,27 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
         <div className="h-full w-full">
             <Card className="h-full">
                 <CardContent className="h-full p-3 sm:p-6 overflow-x-auto">
+                    <div className="flex justify-between items-baseline mb-4">
+                        <div>
+                            <h2 className="text-left font-bold text-lg dark:text-white">
+                                {statement.data.fileName} Statement Summary
+                            </h2>
+                            <p className="text-left font-bold text-sm text-muted-foreground">
+                                Categorized transactions powered by AI
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                        >
+                            <Link href="/overrides" target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Make changes
+                            </Link>
+                        </Button>
+                    </div>
                     <Table className="h-full">
-                        <TableCaption className="text-left -mt-1 font-bold text-sm sm:text-lg caption-top dark:text-white -mb-2">
-                            {statement.data.fileName} Statement Summary
-                        </TableCaption>
-                        <TableCaption className="text-left font-bold text-xs sm:text-sm mb-4 caption-top text-muted-foreground">
-                            Categorized transactions powered by AI
-                        </TableCaption>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
                                 <TableHead className="w-[25%] text-left text-base">Category</TableHead>
