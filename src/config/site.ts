@@ -14,6 +14,10 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
+      title: "Overrides",
+      href: "/overrides",
+    },
+    {
       title: "Upload",
       href: "/upload-statement",
     },
@@ -24,6 +28,6 @@ export const siteConfig = {
     {
       title: "Categories",
       href: "/categories",
-    }
+    },
   ],
 }

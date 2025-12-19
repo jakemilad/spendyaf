@@ -36,26 +36,27 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
     return (
         <div className="h-full w-full">
             <Card className="h-full">
-                <CardContent className="h-full p-3 sm:p-6 overflow-x-auto">
-                    <div className="flex justify-between items-baseline mb-4">
-                        <div>
+                <CardContent className="h-full p-3 sm:p-4 overflow-x-auto">
+                    <div className="mb-4 space-y-1">
+                        <div className="flex items-center justify-between gap-4">
                             <h2 className="text-left font-bold text-lg dark:text-white">
                                 {statement.data.fileName} Statement Summary
                             </h2>
-                            <p className="text-left font-bold text-sm text-muted-foreground">
-                                Categorized transactions powered by AI
-                            </p>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="h-auto p-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                            >
+                                <Link href="/overrides" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-normal">
+                                    <ExternalLink className="h-3 w-3" />
+                                    Make changes
+                                </Link>
+                            </Button>
                         </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            asChild
-                        >
-                            <Link href="/overrides" target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                Make changes
-                            </Link>
-                        </Button>
+                        <p className="text-left font-bold text-sm text-muted-foreground">
+                            Categorized transactions powered by AI
+                        </p>
                     </div>
                     <Table className="h-full">
                         <TableHeader>

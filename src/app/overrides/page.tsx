@@ -21,7 +21,7 @@ export default async function Overrides() {
 
     return (
         <div className="container mx-auto py-10 px-4 md:px-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-2">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Merchant Overrides</h1>
                     <p className="text-muted-foreground mt-1">

@@ -9,8 +9,6 @@ interface OverrideClientProps {
 
 export function OverrideClient({ merchantData, userCategories }: OverrideClientProps) {
     return (
-        <div>
-            <OverrideDataTable data={merchantData} columns={columns} userCategories={userCategories} />
-        </div>
+        <OverrideDataTable data={merchantData} columns={columns} userCategories={userCategories} />
     );
 }
