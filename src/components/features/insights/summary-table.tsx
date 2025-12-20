@@ -58,7 +58,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                             Categorized transactions powered by AI
                         </p>
                     </div>
-                    <Table className="h-full">
+                    <Table>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
                                 <TableHead className="w-[25%] text-left text-base">Category</TableHead>
