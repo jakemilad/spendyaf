@@ -2,6 +2,7 @@ import Link from "next/link";
 import { compareStatementAreaChart, compareStatements, getUserStatements } from "../actions";
 import { CompareClient } from "@/components/features/compare/compare-client";
 import { Button } from "@/components/ui/button";
+import logger from "@/lib/logger"
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,9 @@ export default async function ComparePage() {
     const statements = await getUserStatements();
     const {data, months} = await compareStatements(statements);
     const areaChartData = await compareStatementAreaChart(statements);
-    
+    logger.info(`Statements: ${statements}`)
+    logger.info(`Data: ${data}`)
+    logger.info(`Months: ${months}`)
     return(
         <div className="min-h-screen bg-background">
             {statements.length > 0 ? (

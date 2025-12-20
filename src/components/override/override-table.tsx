@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { TooltipTrigger, TooltipProvider, Tooltip, TooltipContent } from "@/components/ui/tooltip"
-import { ArrowUpDown, Save, Search } from "lucide-react"
+import { ArrowUpDown, Save, Search, X } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
@@ -54,7 +54,46 @@ export type Override = {
   updated_at: string
 }
 
-// Editable Cell Component
+const CategoryHeaderFilter = ({ column, table }: { column: any; table: any }) => {
+  const userCategories = table.options.meta?.userCategories || []
+  const filterValue = column.getFilterValue() as string
+
+  return (
+    <div className="flex items-center gap-2">
+      <Select
+        value={filterValue ?? "all"}
+        onValueChange={(value) => column.setFilterValue(value === "all" ? undefined : value)}
+      >
+        <SelectTrigger
+          className={`h-8 w-full ${
+            column.getIsFiltered() ? "bg-orange-400/50 border-orange-800 dark:bg-yellow-50/50 dark:border-yellow-200 text-white dark:text-white" : ""
+          }`}
+        >
+          <SelectValue placeholder="Category" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Categories</SelectItem>
+          {userCategories.map((cat: string) => (
+            <SelectItem key={cat} value={cat}>
+              {cat}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {column.getIsFiltered() && (
+        <Button
+          variant="ghost"
+          onClick={() => column.setFilterValue(undefined)}
+          className="h-8 w-8 p-0"
+        >
+          <span className="sr-only">Reset</span>
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  )
+}
+
 const EditableCategoryCell = ({
   getValue,
   row,
@@ -86,7 +125,7 @@ const EditableCategoryCell = ({
   return (
     <Select value={value} onValueChange={handleValueChange}>
       <SelectTrigger
-        className={`h-10 min-w-[100px]${
+        className={`h-8 w-full ${
           value !== initialValue ? "bg-orange-400/50 border-orange-800 dark:bg-yellow-50/50 dark:border-yellow-200" : ""
         }`}
       >
@@ -111,21 +150,21 @@ export const columns: ColumnDef<Override>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ml-4"
         >
           Merchant
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
-    cell: ({ row }) => <div className="font-medium ml-4">{row.getValue("merchant")}</div>,
-    size: 400,
+    cell: ({ row }) => <div className="font-medium">{row.getValue("merchant")}</div>,
+    size: 270,
   },
   {
     accessorKey: "category",
-    header: () => <div className="pl-2">Category</div>,
-    cell: (props) => <div className="pl-2"><EditableCategoryCell {...props} /></div>,
-    size: 300,
-    maxSize: 400,
+    header: (props) => <div className="px-2"><CategoryHeaderFilter {...props}/></div>,
+    cell: (props) => <div className="px-2"><EditableCategoryCell {...props} /></div>,
+    size: 270,
   },
   {
     accessorKey: "created_at",
@@ -146,7 +185,7 @@ export const columns: ColumnDef<Override>[] = [
     cell: ({ row }) => {
       const date = new Date(row.getValue("created_at"))
       return (
-        <div className="text-right">
+        <div className="text-right font-medium">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -160,36 +199,42 @@ export const columns: ColumnDef<Override>[] = [
         </div>
       )
     },
+    size: 116,
   },
   {
     accessorKey: "updated_at",
     header: ({ column }) => {
       return (
+        <div className="text-right">
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 hover:bg-transparent"
         >
           Updated
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
+        </div>
       )
     },
     cell: ({ row }) => {
       const date = new Date(row.getValue("updated_at"))
       return (
+        <div className="text-right font-medium">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-muted-foreground ml-4">
+              <span className="text-muted-foreground">
                 {formatDistanceToNow(date, { addSuffix: true })}
               </span>
             </TooltipTrigger>
             <TooltipContent>{format(date, "PPP p")}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        </div>
       )
     },
-    maxSize: 300,
+    size: 116,
   },
 ]
 
@@ -289,7 +334,7 @@ export function OverrideDataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="w-auto" style={{ width: header.getSize() }}>
+                    <TableHead key={header.id} className="w-auto" style={{ width: `${header.getSize()}%` }}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -310,7 +355,7 @@ export function OverrideDataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="w-auto" style={{ width: cell.column.getSize() }}>
+                    <TableCell key={cell.id} className="w-auto" style={{ width: `${cell.column.getSize()}%` }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
