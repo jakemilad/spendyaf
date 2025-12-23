@@ -94,7 +94,7 @@ export function Nav() {
                                 <Button
                                     key={item.href}
                                     variant={pathname === item.href ? "secondary" : "ghost"}
-                                    className="text-md font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    className="text-sm font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     asChild
                                 >
                                     <Link 

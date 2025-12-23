@@ -118,10 +118,10 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
 
     return (
         <div className="h-full flex flex-col overflow-y-auto bg-background/50">
-            <div className={cn("space-y-4 py-2", isCollapsed && "hidden")}>
+            <div className={cn("space-y-2 py-2", isCollapsed && "hidden")}>
                 <div className="px-3 py-2">
                     <div className="flex justify-between items-center mb-4 px-4">
-                        <h2 className="text-lg font-semibold tracking-tight">
+                        <h2 className="text-md font-semibold tracking-tight">
                             Hi, {firstName}
                         </h2>
                         <Button 
@@ -139,7 +139,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                 key={item.name}
                                 href={item.href}
                                 className={cn(
-                                    "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                                    "flex items-center rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
                                     pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                                 )}
                             >
@@ -151,7 +151,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                 </div>
                 <div className="px-3">
                     <div className="space-y-1">
-                        <h2 className="px-4 text-lg font-semibold tracking-tight">Statements</h2>
+                        <h2 className="px-4 text-md font-semibold tracking-tight">Statements</h2>
                         <div className="mt-4 space-y-2">
                             {statements.map((statement) => (
                                 <Card 
@@ -162,9 +162,9 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                     )}
                                     onClick={() => onStatementSelect(statement)}
                                 >
-                                    <CardHeader>
+                                    <CardHeader className="p-5 py-4">
                                         <div className="flex justify-between items-center">
-                                            <CardTitle className="text-base">{statement.file_name}</CardTitle>
+                                            <CardTitle className="text-sm">{statement.file_name}</CardTitle>
                                             <div onClick={(e) => e.stopPropagation()} className="flex gap-2">
                                                 <Sheet>
                                                     <SheetTrigger>
@@ -237,7 +237,7 @@ export function DashboardSidebar({ statements, selectedStatement, onStatementSel
                                             </div>
                                         </div>
                                         <CardDescription>
-                                            {format(new Date(statement.created_at), 'MMM d, yyyy')}
+                                            <span className="text-xs text-muted-foreground">{format(new Date(statement.created_at), 'MMM d, yyyy')}</span>
                                         </CardDescription>
                                     </CardHeader>
                                 </Card>

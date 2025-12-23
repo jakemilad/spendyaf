@@ -93,8 +93,8 @@ export function PieChartComponent({ statement }: PieChartProps) {
             <ChartStyle id={id} config={chartConfig} />
             <CardHeader className='flex-row items-start space-y-0 pb-0'>
                 <div>
-                    <CardTitle>Category Percentage Spend</CardTitle>
-                    <CardDescription className="mt-2">{statement.data.fileName}</CardDescription>
+                    <CardTitle className="text-md">Category Percentage Spend</CardTitle>
+                    <CardDescription className="mt-2 text-sm">{statement.data.fileName}</CardDescription>
                 </div>
                 <Select value={activeCategory} onValueChange={setActiveCategory}>
                     <SelectTrigger
@@ -126,14 +126,14 @@ export function PieChartComponent({ statement }: PieChartProps) {
                 <ChartContainer
                     id={id}
                     config={chartConfig}
-                    className='mx-auto aspect-square w-full max-w-[300px]'
+                    className='mx-auto aspect-square w-full max-w-[240px]'
                 >
                     <PieChart>
                         <ChartTooltip
                             cursor={false}
                             content={<ChartTooltipContent hideLabel />}
                         />
-                        <Pie data={chartData} dataKey="percentage" nameKey="category" activeIndex={activeIndex} innerRadius={60} strokeWidth={5}
+                        <Pie data={chartData} dataKey="percentage" nameKey="category" activeIndex={activeIndex} innerRadius={50} strokeWidth={5}
                         activeShape={({
                             outerRadius = 0,
                             ...props
