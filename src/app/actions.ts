@@ -449,7 +449,7 @@ export async function compareStatements(statements: DbStatement[]): Promise<{ da
                     const categoryData = statement.data.summary.find(
                         (item: CategorySummary) => item.Category === category
                     );
-                    dataPoint[monthName] = categoryData ? categoryData.Total : 0;
+                    dataPoint[monthName] = categoryData ? Math.max(0, categoryData.Total) : 0;
                 });
 
                 return dataPoint;

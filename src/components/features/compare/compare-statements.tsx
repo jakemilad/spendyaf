@@ -32,12 +32,12 @@ const COLORS = [
 ];
 
 export default function CompareStatements({ data, months }: CompareStatementsProps) {
-    const [selectedMonths, setSelectedMonths] = useState<Set<string>>(new Set(months));
+    const [selectedMonths, setSelectedMonths] = useState<Set<string>>(new Set(months.slice(0, 5)));
     const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
         new Set(data.map(item => item.category))
     );
     const [showFilters, setShowFilters] = useState(false);
-
+    
     const categories = useMemo(() => data.map(item => item.category), [data]);
 
     const filteredData = useMemo(() => {

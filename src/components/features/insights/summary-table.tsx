@@ -10,7 +10,7 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-import { CategoryBudgetMap, DbStatement } from "@/app/types/types";
+import { CategoryBudgetMap, DbStatement, CategorySummary } from "@/app/types/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
     const sortedSummary = [...statement.data.summary].sort((a, b) => b.Total - a.Total)
     const budgets = categoryBudgets ?? statement.data.budgets ?? {}
 
-    const renderBudgetProgress = (row: any, isCompact: boolean = false) => {
+    const renderBudgetProgress = (row: CategorySummary, isCompact: boolean = false) => {
         const budgetTarget = budgets[row.Category]
         if (!budgetTarget) return isCompact ? <span className="text-xs text-muted-foreground"></span> : null;
 
@@ -86,7 +86,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
         )
     }
 
-    const renderDetails = (row: any) => {
+    const renderDetails = (row: CategorySummary) => {
         const budgetTarget = budgets[row.Category]
         const ratio = budgetTarget ? row.Total / budgetTarget : 0
         const progressPercentage = Math.round(ratio * 100)
