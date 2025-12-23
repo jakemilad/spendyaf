@@ -199,7 +199,7 @@ export async function processStatement(userEmail: string,transactions: Transacti
         assert(finalUserCategories.length > 0, 'No user categories found');
 
         const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
-        const totalSpend = transactions.reduce((sum, transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
+        const totalSpend = transactions.reduce((sum, transaction) => sum + Number(transaction.Amount), 0).toFixed(2);
         const insights = getInsights(transactions, summary);
 
         const response = {
@@ -236,7 +236,7 @@ export async function reprocessStatement(statementId: string): Promise<boolean> 
         const categories = await openAICategoriesWithTimeout(uniqueMerchants as string[], userCategories);
         // const categories = await claudeCategories(uniqueMerchants as string[], userCategories);
         const summary = summarizeSpendByCategory(transactions, categories as Record<string, string>);
-        const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)), 0).toFixed(2);
+        const totalSpend = transactions.reduce((sum: number, transaction: Transaction) => sum + Number(transaction.Amount), 0).toFixed(2);
         const insights = getInsights(transactions, summary);
 
         const updatedData = {
@@ -528,7 +528,7 @@ export async function applyMerchantOverrides(statement: DbStatement, overrides: 
 
         const summary = summarizeSpendByCategory(statementData.data.transactions, updatedCategories);
         const totalSpendNumber = statementData.data.transactions.reduce(
-            (sum: number, transaction: Transaction) => sum + Math.abs(Number(transaction.Amount)),
+            (sum: number, transaction: Transaction) => sum + Number(transaction.Amount),
             0
         );
         const insights = getInsights(statementData.data.transactions, summary);
