@@ -517,7 +517,7 @@ export function CleanLanding({ targetPath }: { targetPath: string }) {
       <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="flex flex-col items-center w-full max-w-6xl mx-auto gap-8">
+      <div className="flex flex-col items-center w-full max-w-[1800px] mx-auto gap-8">
         
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -525,10 +525,6 @@ export function CleanLanding({ targetPath }: { targetPath: string }) {
             transition={{ duration: 0.8 }}
             className="text-center space-y-4 z-10 mb-2"
         >
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50 border text-xs font-medium text-muted-foreground mb-4">
-                <Sparkles className="h-3 w-3 text-primary" />
-                <span>Personal Finance, Simplified</span>
-             </div>
              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tighter mb-4 sm:mb-6 px-2">
                 <span className="bg-gradient-to-r from-primary via-primary to-yellow-600 dark:from-primary dark:via-cyan-400 dark:to-primary bg-clip-text text-transparent">
                     Broke AF?
@@ -536,16 +532,13 @@ export function CleanLanding({ targetPath }: { targetPath: string }) {
                 <br />
                 <span className="text-foreground">There's a Reason.</span>
              </h1>
-             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-                Your statement says you spent $4,000 this month. But on what? This app uses AI to figure that out.
-             </p>
         </motion.div>
 
         <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative w-full aspect-[4/5] md:aspect-[16/10] lg:aspect-[16/9] bg-card border rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[800px] group"
+            className="relative w-full aspect-[4/5] md:aspect-[16/10] lg:aspect-[16/9] bg-card border rounded-4xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[2000px] group"
         >
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             
