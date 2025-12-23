@@ -127,7 +127,7 @@ export function DashboardClient({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="col-span-1 md:col-span-2 lg:col-span-2">
                       <div
-                        className="bg-card rounded-lg shadow-sm h-[1000px] overflow-y-auto">
+                        className="bg-card rounded-lg shadow-sm h-[940px] overflow-y-auto">
                       {selectedStatement && (
                         <SummaryTable 
                           statement={selectedStatement}
@@ -142,7 +142,7 @@ export function DashboardClient({
                           <PieChartComponent statement={selectedStatement} />
                         )}
                       </div>
-                      <div className="bg-card rounded-lg shadow-sm h-[620px] overflow-y-auto">
+                      <div className="bg-card rounded-lg shadow-sm h-[560px] overflow-y-auto">
                         {selectedStatement && (
                           <InsightsComponent statement={selectedStatement} />
                         )}

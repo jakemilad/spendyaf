@@ -37,9 +37,9 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
         <div className="h-full w-full">
             <Card className="h-full">
                 <CardContent className="h-full p-3 sm:p-4 overflow-x-auto">
-                    <div className="mb-4 space-y-1">
-                        <div className="flex items-center justify-between gap-4">
-                            <h2 className="text-left font-bold text-lg dark:text-white">
+                    <div className="mb-3 space-y-0.5">
+                        <div className="flex items-center justify-between gap-3">
+                            <h2 className="text-left font-bold text-base dark:text-white">
                                 {statement.data.fileName} Statement Summary
                             </h2>
                             <Button
@@ -54,17 +54,17 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                 </Link>
                             </Button>
                         </div>
-                        <p className="text-left font-bold text-sm text-muted-foreground">
+                        <p className="text-left font-bold text-xs text-muted-foreground">
                             Categorized transactions powered by AI
                         </p>
                     </div>
                     <Table>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[25%] text-left text-base">Category</TableHead>
-                                <TableHead className="w-[25%] text-left text-base">Largest Transaction</TableHead>
-                                <TableHead className="w-[30%] text-left text-base">Budget</TableHead>
-                                <TableHead className="w-[20%] text-right text-base">Total</TableHead>
+                                <TableHead className="w-[25%] text-left text-sm">Category</TableHead>
+                                <TableHead className="w-[25%] text-left text-sm">Largest Transaction</TableHead>
+                                <TableHead className="w-[30%] text-left text-sm">Budget</TableHead>
+                                <TableHead className="w-[20%] text-right text-sm">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -87,24 +87,24 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                     <Dialog key={row.Category}>
                                         <DialogTrigger asChild>
                                             <TableRow className="cursor-pointer hover:bg-accent/50">
-                                                <TableCell className="text-left font-medium text-sm sm:text-lg py-3 sm:py-4">{row.Category}</TableCell>
-                                                <TableCell className="text-left text-sm sm:text-lg">
+                                                <TableCell className="text-left font-medium text-sm py-2 sm:py-3">{row.Category}</TableCell>
+                                                <TableCell className="text-left text-sm">
                                                     {row.BiggestTransaction.merchant.split(' ').slice(0, 2).join(' ')}
-                                                    <span className="text-xs sm:text-sm text-muted-foreground block mt-1">
+                                                    <span className="text-xs text-muted-foreground block mt-0.5">
                                                         {formatCurrency(row.BiggestTransaction.amount)}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="text-left">
                                                     {budgetTarget ? (
-                                                        <div className="space-y-1.5">
+                                                        <div className="space-y-1">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-xs font-medium flex items-center gap-1">
                                                                     {ratio >= 1 ? (
-                                                                        <AlertCircle className="h-3 w-3 text-rose-500" />
+                                                                        <AlertCircle className="h-2.5 w-2.5 text-rose-500" />
                                                                     ) : ratio >= 0.8 ? (
-                                                                        <TrendingUp className="h-3 w-3 text-amber-500" />
+                                                                        <TrendingUp className="h-2.5 w-2.5 text-amber-500" />
                                                                     ) : (
-                                                                        <TrendingDown className="h-3 w-3 text-emerald-500" />
+                                                                        <TrendingDown className="h-2.5 w-2.5 text-emerald-500" />
                                                                     )}
                                                                     <span className={cn(
                                                                         ratio >= 1 ? "text-rose-500" : 
@@ -118,7 +118,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                                     {formatCurrency(budgetTarget)}
                                                                 </span>
                                                             </div>
-                                                            <div className="w-full bg-secondary/50 rounded-full h-2 overflow-hidden">
+                                                            <div className="w-full bg-secondary/50 rounded-full h-1.5 overflow-hidden">
                                                                 <div
                                                                     className={cn(
                                                                         "h-full rounded-full transition-all",
@@ -134,55 +134,55 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                         <span className="text-xs text-muted-foreground"></span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-right text-sm sm:text-lg font-semibold">
+                                                <TableCell className="text-right text-sm font-semibold">
                                                     {formatCurrency(row.Total)}
                                                 </TableCell>
                                             </TableRow>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+                                        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
                                             <DialogHeader className="flex-shrink-0">
-                                                <DialogTitle className="text-xl font-bold">
+                                                <DialogTitle className="text-lg font-bold">
                                                     {row.Category} Transactions
                                                 </DialogTitle>
-                                                <p className="text-sm text-muted-foreground">
+                                                <p className="text-xs text-muted-foreground">
                                                     {transactionCount} transaction{transactionCount !== 1 ? "s" : ""}
                                                 </p>
                                             </DialogHeader>
-                                            <div className="space-y-6 overflow-y-auto flex-1 pr-2">
-                                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+                                            <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+                                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                                                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                                             Total Spend
                                                         </p>
-                                                        <p className="mt-1 text-lg font-semibold">
+                                                        <p className="mt-1 text-base font-semibold">
                                                             {formatCurrency(row.Total)}
                                                         </p>
                                                     </div>
-                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                                                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                                             Transactions
                                                         </p>
-                                                        <p className="mt-1 text-lg font-semibold">
+                                                        <p className="mt-1 text-base font-semibold">
                                                             {transactionCount}
                                                         </p>
                                                     </div>
-                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-4">
+                                                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                                                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                                             Avg Spend
                                                         </p>
-                                                        <p className="mt-1 text-lg font-semibold">
+                                                        <p className="mt-1 text-base font-semibold">
                                                             {formatCurrency(averageSpend)}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 {budgetTarget && (
-                                                    <div className="rounded-xl border border-border/40 bg-card/40 p-4 shadow-sm">
-                                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div className="rounded-lg border border-border/40 bg-card/40 p-3 shadow-sm">
+                                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                                             <div>
                                                                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                                                     Budget Target
                                                                 </p>
-                                                                <p className="mt-1 text-lg font-semibold">
+                                                                <p className="mt-0.5 text-base font-semibold">
                                                                     {formatCurrency(budgetTarget)}
                                                                 </p>
                                                             </div>
@@ -190,7 +190,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                                 <p className="text-xs text-muted-foreground mb-1">
                                                                     {progressPercentage}% of target used
                                                                 </p>
-                                                                <div className="h-2 w-full rounded-full bg-secondary/50 overflow-hidden">
+                                                                <div className="h-1.5 w-full rounded-full bg-secondary/50 overflow-hidden">
                                                                     <div
                                                                         className={cn(
                                                                             "h-full rounded-full transition-all",
@@ -206,16 +206,16 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                     </div>
                                                 )}
                                                 {topTransaction && (
-                                                    <div className="rounded-xl border border-border/40 bg-card/60 p-4 shadow-sm flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div className="rounded-lg border border-border/40 bg-card/60 p-3 shadow-sm flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                                                         <div>
                                                             <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                                                 Largest Transaction
                                                             </p>
-                                                            <p className="mt-1 text-base font-semibold">
+                                                            <p className="mt-0.5 text-sm font-semibold">
                                                                 {topTransaction.name}
                                                             </p>
                                                         </div>
-                                                        <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-600">
+                                                        <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
                                                             {formatCurrency(topTransaction.amount)}
                                                         </span>
                                                     </div>
@@ -224,31 +224,31 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                     <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                                         All Transactions
                                                     </p>
-                                                    <Separator className="mt-2" />
+                                                    <Separator className="mt-1.5" />
                                                 </div>
-                                                <div className="space-y-3 py-1">
+                                                <div className="space-y-2 py-1">
                                                     {transactionsArray.map((entry, index) => (
                                                         <div
                                                             key={entry.name}
-                                                            className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/10 p-3 transition-colors hover:bg-muted/20"
+                                                            className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/10 p-2.5 transition-colors hover:bg-muted/20"
                                                         >
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-xs font-semibold text-muted-foreground w-6 flex justify-center">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <span className="text-xs font-semibold text-muted-foreground w-5 flex justify-center">
                                                                     {index + 1}
                                                                 </span>
-                                                                <p className="text-sm font-medium leading-relaxed">
+                                                                <p className="text-xs font-medium leading-relaxed">
                                                                     {entry.name}
                                                                 </p>
                                                             </div>
-                                                            <span className="text-sm font-semibold tabular-nums whitespace-nowrap">
+                                                            <span className="text-xs font-semibold tabular-nums whitespace-nowrap">
                                                                 {formatCurrency(entry.amount)}
                                                             </span>
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="flex justify-between items-center pt-2">
-                                                    <span className="font-semibold text-base">Total</span>
-                                                    <span className="text-lg font-bold tabular-nums">
+                                                <div className="flex justify-between items-center pt-1.5">
+                                                    <span className="font-semibold text-sm">Total</span>
+                                                    <span className="text-base font-bold tabular-nums">
                                                         {formatCurrency(totalAmount)}
                                                     </span>
                                                 </div>
@@ -261,7 +261,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                         <TableFooter>
                             <TableRow>
                                 <TableCell colSpan={3}></TableCell>
-                                <TableCell className="text-right text-sm sm:text-lg font-semibold">
+                                <TableCell className="text-right text-sm font-semibold">
                                     Total: {formatCurrency(statement.data.totalSpend ?? 0)}
                                 </TableCell>
                             </TableRow>
