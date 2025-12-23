@@ -35,11 +35,11 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
 
     return (
         <div className="h-full w-full">
-            <Card className="h-full">
-                <CardContent className="h-full p-3 sm:p-4 overflow-x-auto">
-                    <div className="mb-3 space-y-0.5">
+            <Card className="h-full flex flex-col">
+                <CardContent className="flex-1 flex flex-col p-3 sm:p-4 overflow-hidden">
+                    <div className="flex-shrink-0 mb-4 space-y-1">
                         <div className="flex items-center justify-between gap-3">
-                            <h2 className="text-left font-bold text-base dark:text-white">
+                            <h2 className="text-left font-bold text-lg dark:text-white">
                                 {statement.data.fileName} Statement Summary
                             </h2>
                             <Button
@@ -54,17 +54,18 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                 </Link>
                             </Button>
                         </div>
-                        <p className="text-left font-bold text-xs text-muted-foreground">
+                        <p className="text-left font-bold text-sm text-muted-foreground">
                             Categorized transactions powered by AI
                         </p>
                     </div>
+                    <div className="flex-1 overflow-auto min-h-0">
                     <Table>
                         <TableHeader>
                             <TableRow className="border-b border-border/50 hover:bg-transparent">
-                                <TableHead className="w-[25%] text-left text-sm">Category</TableHead>
-                                <TableHead className="w-[25%] text-left text-sm">Largest Transaction</TableHead>
-                                <TableHead className="w-[30%] text-left text-sm">Budget</TableHead>
-                                <TableHead className="w-[20%] text-right text-sm">Total</TableHead>
+                                <TableHead className="w-[25%] text-left text-base">Category</TableHead>
+                                <TableHead className="w-[25%] text-left text-base">Largest Transaction</TableHead>
+                                <TableHead className="w-[30%] text-left text-base">Budget</TableHead>
+                                <TableHead className="w-[20%] text-right text-base">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -87,24 +88,24 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                     <Dialog key={row.Category}>
                                         <DialogTrigger asChild>
                                             <TableRow className="cursor-pointer hover:bg-accent/50">
-                                                <TableCell className="text-left font-medium text-sm py-2 sm:py-3">{row.Category}</TableCell>
-                                                <TableCell className="text-left text-sm">
+                                                <TableCell className="text-left font-medium text-base py-3 sm:py-4">{row.Category}</TableCell>
+                                                <TableCell className="text-left text-base py-3 sm:py-4">
                                                     {row.BiggestTransaction.merchant.split(' ').slice(0, 2).join(' ')}
-                                                    <span className="text-xs text-muted-foreground block mt-0.5">
+                                                    <span className="text-sm text-muted-foreground block mt-1">
                                                         {formatCurrency(row.BiggestTransaction.amount)}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="text-left">
+                                                <TableCell className="text-left py-3 sm:py-4">
                                                     {budgetTarget ? (
-                                                        <div className="space-y-1">
+                                                        <div className="space-y-1.5">
                                                             <div className="flex items-center justify-between gap-2">
-                                                                <span className="text-xs font-medium flex items-center gap-1">
+                                                                <span className="text-sm font-medium flex items-center gap-1">
                                                                     {ratio >= 1 ? (
-                                                                        <AlertCircle className="h-2.5 w-2.5 text-rose-500" />
+                                                                        <AlertCircle className="h-3 w-3 text-rose-500" />
                                                                     ) : ratio >= 0.8 ? (
-                                                                        <TrendingUp className="h-2.5 w-2.5 text-amber-500" />
+                                                                        <TrendingUp className="h-3 w-3 text-amber-500" />
                                                                     ) : (
-                                                                        <TrendingDown className="h-2.5 w-2.5 text-emerald-500" />
+                                                                        <TrendingDown className="h-3 w-3 text-emerald-500" />
                                                                     )}
                                                                     <span className={cn(
                                                                         ratio >= 1 ? "text-rose-500" : 
@@ -114,11 +115,11 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                                         {progressPercentage}%
                                                                     </span>
                                                                 </span>
-                                                                <span className="text-xs text-muted-foreground">
+                                                                <span className="text-sm text-muted-foreground">
                                                                     {formatCurrency(budgetTarget)}
                                                                 </span>
                                                             </div>
-                                                            <div className="w-full bg-secondary/50 rounded-full h-1.5 overflow-hidden">
+                                                            <div className="w-full bg-secondary/50 rounded-full h-2 overflow-hidden">
                                                                 <div
                                                                     className={cn(
                                                                         "h-full rounded-full transition-all",
@@ -134,7 +135,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                         <span className="text-xs text-muted-foreground"></span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-right text-sm font-semibold">
+                                                <TableCell className="text-right text-base font-semibold py-3 sm:py-4">
                                                     {formatCurrency(row.Total)}
                                                 </TableCell>
                                             </TableRow>
@@ -260,13 +261,14 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                         </TableBody>
                         <TableFooter>
                             <TableRow>
-                                <TableCell colSpan={3}></TableCell>
-                                <TableCell className="text-right text-sm font-semibold">
+                                <TableCell colSpan={3} className="py-3 sm:py-4"></TableCell>
+                                <TableCell className="text-right text-base font-semibold py-3 sm:py-4">
                                     Total: {formatCurrency(statement.data.totalSpend ?? 0)}
                                 </TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>
