@@ -38,8 +38,10 @@ const formatCurrency = (value: number) =>
 
 export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) {
     const [isProMode, setIsProMode] = useState(false);
-    const sortedSummary = [...statement.data.summary].sort((a, b) => b.Total - a.Total)
-    const budgets = categoryBudgets ?? statement.data.budgets ?? {}
+    const sortedSummary = Array.isArray(statement.data?.summary) 
+        ? [...statement.data.summary].sort((a, b) => b.Total - a.Total)
+        : [];
+    const budgets = categoryBudgets ?? statement.data?.budgets ?? {}
 
     const renderBudgetProgress = (row: CategorySummary, isCompact: boolean = false) => {
         const budgetTarget = budgets[row.Category]
@@ -217,7 +219,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                     <div className="flex-shrink-0 mb-4 space-y-1">
                         <div className="flex items-center justify-between gap-3">
                             <h2 className="text-left font-bold text-lg dark:text-white">
-                                {statement.data.fileName} Statement Summary
+                                {statement.data?.fileName || 'Unknown'} Statement Summary
                             </h2>
                             <div className="flex items-center gap-2">
                                 <Button
@@ -307,7 +309,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                     <div className="flex items-center justify-between p-6 pb-4 border-b shrink-0">
                         <div>
                             <DialogTitle className="text-xl font-bold">
-                                {statement.data.fileName} - Extended Summary
+                                {statement.data?.fileName || 'Unknown'} - Extended Summary
                             </DialogTitle>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Detailed breakdown of spending by category

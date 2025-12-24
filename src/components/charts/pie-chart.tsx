@@ -33,17 +33,19 @@ interface PieChartProps {
 export function PieChartComponent({ statement }: PieChartProps) {
     const id = 'pie-interactive'
     
+    const summary = Array.isArray(statement.data?.summary) ? statement.data.summary : [];
+    
     const sortedCategories = React.useMemo(() => {
-        return [...statement.data.summary]
+        return [...summary]
             .sort((a, b) => b.Total - a.Total)
             .map(item => item.Category)
-    }, [statement.data.summary])
+    }, [summary])
 
     const [activeCategory, setActiveCategory] = useState(sortedCategories[0])
     
     const activeIndex = React.useMemo(() => 
-        statement.data.summary.findIndex(item => item.Category === activeCategory), 
-        [activeCategory, statement.data.summary]
+        summary.findIndex(item => item.Category === activeCategory), 
+        [activeCategory, summary]
     )
 
     const COLORS = [
@@ -70,17 +72,17 @@ export function PieChartComponent({ statement }: PieChartProps) {
       ];
 
     const calculatePercentage = (total: number) => {
-        return ((total / (statement.data.totalSpend || 0)) * 100).toFixed(2);
+        return ((total / (statement.data?.totalSpend || 0)) * 100).toFixed(2);
     };
 
-    const chartData = statement.data.summary.map((item, index) => ({
+    const chartData = summary.map((item, index) => ({
         category: item.Category.toLowerCase(),
         percentage: parseFloat(calculatePercentage(item.Total)),
         total: item.Total,
         fill: COLORS[index]
     }));
 
-    const chartConfig: ChartConfig = statement.data.summary.reduce((acc, item, index) => ({
+    const chartConfig: ChartConfig = summary.reduce((acc, item, index) => ({
         ...acc,
         [item.Category.toLowerCase()]: {
             label: `${item.Category} (${calculatePercentage(item.Total)}%)`,
@@ -94,7 +96,7 @@ export function PieChartComponent({ statement }: PieChartProps) {
             <CardHeader className='flex-row items-start space-y-0 pb-0'>
                 <div>
                     <CardTitle className="text-md">Category Percentage Spend</CardTitle>
-                    <CardDescription className="mt-2 text-sm">{statement.data.fileName}</CardDescription>
+                    <CardDescription className="mt-2 text-sm">{statement.data?.fileName || 'Unknown'}</CardDescription>
                 </div>
                 <Select value={activeCategory} onValueChange={setActiveCategory}>
                     <SelectTrigger
@@ -159,7 +161,7 @@ export function PieChartComponent({ statement }: PieChartProps) {
                                                 dominantBaseline="middle"
                                             >
                                                 <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-xl font-bold">
-                                                    {`$${statement.data.totalSpend?.toLocaleString()}`}
+                                                    {`$${(statement.data?.totalSpend || 0).toLocaleString()}`}
                                                 </tspan>
                                                 <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
                                                     Total Spend

@@ -48,7 +48,11 @@ export async function getUserStatements(): Promise<DbStatement[]> {
             data: row.data
         }));
 
-        const sortedStatements = statements.sort((a, b) => b.data.transactions[0].Date - a.data.transactions[0].Date);
+        const sortedStatements = statements.sort((a, b) => {
+            const aDate = a.data?.transactions?.[0]?.Date || 0;
+            const bDate = b.data?.transactions?.[0]?.Date || 0;
+            return bDate - aDate;
+        });
 
         return sortedStatements;
     } catch (error) {
@@ -86,7 +90,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         const uniqueMerchants: string[] = [... new Set(transactions.map(t => t.Merchant))];
 
         
-        const response = processStatement(userEmail,transactions, uniqueMerchants,fileName);
+        const response = await processStatement(userEmail,transactions, uniqueMerchants,fileName);
 
         // Non-blocking database insert (fire and forget for better response time)
         pool.query(
@@ -101,7 +105,7 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
         const processingTime = Date.now() - startTime;
         logger.info(`Processing completed in ${processingTime}ms`);
         logger.info('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
-        logger.info(`Response: ${response}`);
+        logger.info(`Response: ${JSON.stringify(response, null, 2)}`);
         return response;
     } catch (error) {
         logger.error(`Upload error: ${JSON.stringify(error, null, 2)}`);
@@ -446,7 +450,8 @@ export async function compareStatements(statements: DbStatement[]): Promise<{ da
                 
                 statements?.forEach(statement => {
                     const monthName = statement.file_name.split('.')[0];
-                    const categoryData = statement.data.summary.find(
+                    const summary = Array.isArray(statement.data?.summary) ? statement.data.summary : [];
+                    const categoryData = summary.find(
                         (item: CategorySummary) => item.Category === category
                     );
                     dataPoint[monthName] = categoryData ? Math.max(0, categoryData.Total) : 0;
@@ -469,21 +474,28 @@ export async function compareStatementAreaChart(statements: DbStatement[]) {
     const averageSpendChartData = sortedStatements.map(statement => {
         return {
             date: statement.file_name,
-            weeklyAverage: statement.data.insights.averageSpend.weekly,
+            weeklyAverage: statement.data?.insights?.averageSpend?.weekly || 0,
         }
     });
 
     const totalSpendChartData = sortedStatements.map(statement => {
         return {
             date: statement.file_name,
-            totalSpend: statement.data.totalSpend,
+            totalSpend: statement.data?.totalSpend || 0,
         }
     });
 
     const spendingVolatilityChartData = sortedStatements.map(s => {
-        const amount = s.data.transactions.map(t => t.Amount);
+        const transactions = Array.isArray(s.data?.transactions) ? s.data.transactions : [];
+        if (transactions.length === 0) {
+            return {
+                date: s.file_name,
+                spendVol: 0
+            }
+        }
+        const amount = transactions.map(t => t.Amount);
         const mean = amount.reduce((a,b) => a+b, 0) / amount.length;
-        const variance = amount.reduce((sum, amount)=> sum + Math.pow(amount - mean, 2))
+        const variance = amount.reduce((sum, amount)=> sum + Math.pow(amount - mean, 2), 0) / amount.length;
         const stdDev = Math.sqrt(variance)
 
         return {

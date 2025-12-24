@@ -42,6 +42,7 @@ interface TransactionsChartProps {
 
 
 export default function TransactionsChart({statement}: TransactionsChartProps) {
+    const transactions = Array.isArray(statement.data?.transactions) ? statement.data.transactions : [];
     const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("allTransactions")
     const [selectedDate, setSelectedDate] = React.useState<string | null>(null)
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -67,7 +68,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
 
     const transactionsByDate = React.useMemo(() => {
       const grouped = new Map();
-      statement.data.transactions.forEach(transaction => {
+      transactions.forEach(transaction => {
         const date = formatTimeStamp(transaction.Date);
         if(!grouped.has(date)) {
           grouped.set(date, [])
@@ -75,7 +76,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
         grouped.get(date).push(transaction)
       })
       return grouped;
-    }, [statement.data.transactions])
+    }, [transactions])
 
     const handleBarClick = (data: any) => {
       const date = data.date
@@ -87,7 +88,11 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
     const chartData = React.useMemo(() => {
         const dailyTotals = new Map<string, number>();
         
-        const dates = statement.data.transactions.map(t => new Date(t.Date));
+        if (transactions.length === 0) {
+            return [];
+        }
+        
+        const dates = transactions.map(t => new Date(t.Date));
         const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
         const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
         
@@ -97,7 +102,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
             currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        statement.data.transactions.forEach(item => {
+        transactions.forEach(item => {
             const date = formatTimeStamp(item.Date);
             const amount = item.Amount > 0 ? item.Amount : item.Amount * -1;
             dailyTotals.set(date, (dailyTotals.get(date) || 0) + amount);
@@ -109,16 +114,16 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
                 allTransactions: amount
             }))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }, [statement.data.transactions]);
+    }, [transactions]);
 
     return (
       <>
         <Card>
             <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
                 <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-                    <CardTitle>{statement.data.fileName} Time Series</CardTitle>
+                    <CardTitle>{statement.data?.fileName || 'Unknown'} Time Series</CardTitle>
                     <CardDescription>
-                        Total transactions over time for {statement.data.fileName}
+                        Total transactions over time for {statement.data?.fileName || 'Unknown'}
                     </CardDescription>
                 </div>
                 <div className="flex">

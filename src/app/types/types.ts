@@ -2,11 +2,14 @@ export interface Transaction {
     Date: number;
     Merchant: string;
     Amount: number;
+    AccRec?: number;
+    NetSpend?: number;
 }
 
 export interface CategorySummary {
     Category: string;
     Total: number;
+    NetTotal?: number;
     Transactions: Record<string, number> | {[merchant: string]: number};
     BiggestTransaction: {merchant: string, amount: number};
 }
@@ -42,6 +45,7 @@ export interface Statement {
     totalSpend?: number;
     insights?: any;
     budgets?: CategoryBudgetMap;
+    netTotal?: number;
 }
 
 export interface DbStatement {

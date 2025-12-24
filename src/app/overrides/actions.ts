@@ -3,6 +3,10 @@ import logger from "@/lib/logger";
 import { getSession, getStatementById, processStatement } from "../actions";
 import { DbStatement } from "../types/types";
 import { Override } from "@/components/override/override-table";
+import { Transaction } from "../types/types";
+import { get } from "http";
+import { retryFetch } from "@/lib/retry";
+import { summarizeSpendByCategory } from "../utils/dataProcessing";
 
 export async function getAllCachedMerchantCategories(userId: string): Promise<Record<string, string>> {
     try {
@@ -101,9 +105,9 @@ export async function updateStatementOverride(userId: string, statement: DbState
             logger.warn(message);
             return { success: false, message };
         }
-        const transactions = statement?.data.transactions;
+        const transactions = Array.isArray(statement?.data?.transactions) ? statement.data.transactions : [];
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
-        const response = await processStatement(userId, transactions, uniqueMerchants, statement.data.fileName);
+        const response = await processStatement(userId, transactions, uniqueMerchants, statement.data?.fileName || 'Unknown');
         const statementId = statement.id;
         await pool.query(
             `UPDATE transaction_records SET data = $1 WHERE id = $2`,
@@ -238,4 +242,175 @@ export async function getMerchantsForDataTable(userId: string): Promise<Override
         logger.error(`Error fetching all cached merchant categories: ${JSON.stringify(error, null, 2)}`);
         return [] as any[];
     }
+}
+
+// ACCOUNTS RECIEVABLES 
+// GOAL: Be able to modify the total spend attribute for any given statement by grabbing a list of transactions for that month and 
+// entering how much you may have recieved for that transaction if it was for someone else. Then, recalculate the total spend for that statement. 
+
+export async function grabAllTransactionsForStatement(statementId: number) {
+    try {
+        const statement = await getStatementById(Number(statementId));
+        if (!statement) {
+            return { success: false, message: 'Statement not found' };
+        }
+        logger.info(`Statement: ${JSON.stringify(statement, null, 2)}`);
+        const transactions = Array.isArray(statement.data?.transactions) ? statement.data.transactions : [];
+        return { success: true, transactions };
+    } catch (error) {
+        logger.error(`Error grabbing all transactions for statement: ${JSON.stringify(error, null, 2)}`);
+        return { success: false, message: 'Failed to grab all transactions for statement' };
+    }
+}
+
+export async function updateTransasctionAccRec(statementId: number, transactionInput: Transaction, accRecAmount: number) {
+    try {
+        if(!statementId || !transactionInput || accRecAmount < 0) {
+            return {
+                success: false,
+                message: 'Invalid statement ID, transaction index, or acc rec amount'
+            }
+        }
+        const session = await getSession();
+        if(!session) {
+            return {
+                success: false,
+                message: 'Unauthorized'
+            }
+        }
+        const statement = await getStatementById(Number(statementId));
+        if(!statement) {
+            return {
+                success: false,
+                message: 'Statement not found'
+            }
+        }
+        const transactions = Array.isArray(statement.data?.transactions) ? statement.data.transactions : [];
+        const transactionIdx = transactions.findIndex(
+            (t: Transaction) =>
+                t.Date === transactionInput.Date &&
+                t.Merchant === transactionInput.Merchant &&
+                t.Amount === transactionInput.Amount
+        );
+        if (transactionIdx >= transactions.length) {
+            return {
+                success: false,
+                message: 'Transaction index out of bounds'
+            }
+        }
+        if (transactionIdx === -1) {
+            logger.warn(
+                `Transaction not found: ${transactions[transactionIdx].Merchant} on ${new Date(transactions[transactionIdx].Date).toLocaleDateString()}`
+            );
+            return {
+                success: false,
+                message: 'Transaction not found - it may have been modified or deleted'
+            };
+        }
+        const transaction = transactions[transactionIdx];
+        if (accRecAmount > transaction.Amount) {
+            return {
+                success: false,
+                message: 'Acc rec amount cannot be greater than transaction amount'
+            }
+        }
+        transactions[transactionIdx].AccRec = accRecAmount;
+
+        const updatedData = recalculateStatementTotals(statement.data);
+
+        await pool.query(
+            'UPDATE transaction_records SET data = $1 WHERE id = $2 AND user_id = $3',
+            [JSON.stringify(updatedData), statementId, session?.user?.email]
+        );
+
+        logger.info(`Updated transaction ${transactionIdx} with acc rec amount ${accRecAmount} for statement ${statementId}`);
+        return { success: true, message: 'Transaction updated successfully' };
+    } catch (error) {
+        logger.error(`Error updating acc rec for transaction: ${JSON.stringify(error, null, 2)}`);
+        return { success: false, message: 'Failed to update acc rec for transaction' };
+    }
+}
+
+function recalculateStatementTotals(statementData: DbStatement) {
+    const transactions = statementData.data.transactions;
+
+    let grossTotal = 0;
+    let netTotal = 0;
+
+    transactions.forEach((t: Transaction) => {
+        grossTotal += t.Amount;
+        netTotal += t.Amount - (t.AccRec || 0);
+    });
+
+    const categoriesMap = statementData.data.categories;
+    const updatedSummary = summarizeSpendByCategoryWithNet(transactions, categoriesMap);
+
+    return {
+        ...statementData,
+        totalSpend: grossTotal,
+        netTotal: netTotal,
+        summary: updatedSummary
+    }
+}
+
+function summarizeSpendByCategoryWithNet(
+    transactions: Transaction[], 
+    categoriesMap: Record<string, string>
+): any[] {
+    const summary: Record<string, any> = {};
+    const transactionCounts: Record<string, Record<string, number>> = {};
+    
+    for (const transaction of transactions) {
+        const category = categoriesMap[transaction.Merchant] || 'unknown';
+        
+        if (!(category in summary)) {
+            summary[category] = {
+                total: 0,
+                netTotal: 0,
+                transactions: {},
+                biggestTransaction: { merchant: '', amount: 0 },
+            };
+            transactionCounts[category] = {};
+        }
+        
+        transactionCounts[category][transaction.Merchant] = 
+            (transactionCounts[category][transaction.Merchant] || 0) + 1;
+        
+        const amount = Number(transaction.Amount) || 0;
+        summary[category].total += amount;
+        
+        const netAmount = amount - (transaction.AccRec ?? 0);
+        summary[category].netTotal += netAmount;
+        
+        if (amount > summary[category].biggestTransaction.amount) {
+            summary[category].biggestTransaction = { 
+                merchant: transaction.Merchant, 
+                amount: amount 
+            };
+        }
+
+        const baseAmount = summary[category].transactions[transaction.Merchant] || 0;
+        summary[category].transactions[transaction.Merchant] = baseAmount + amount;
+    }
+
+    return Object.entries(summary).map(([category, data]: [string, any]) => {
+        const formattedTransactions: Record<string, number> = {};
+        
+        Object.entries(data.transactions).forEach(([merchant, amount]: [string, any]) => {
+            const count = transactionCounts[category][merchant];
+            const key = count > 1 ? `${merchant} (${count})` : merchant;
+            formattedTransactions[key] = Number(amount.toFixed(2));
+        });
+
+        return {
+            Category: category,
+            Total: Number(data.total.toFixed(2)),
+            NetTotal: Number(data.netTotal.toFixed(2)),
+            Transactions: formattedTransactions,
+            BiggestTransaction: {
+                merchant: data.biggestTransaction.merchant,
+                amount: Number(data.biggestTransaction.amount.toFixed(2))
+            }
+        };
+    });
 }

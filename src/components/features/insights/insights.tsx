@@ -3,14 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ArrowUpDown, CreditCard, Calendar, ShoppingBag } from "lucide-react"
 
 export function InsightsComponent({ statement }: { statement: DbStatement }) {
-  const insights = statement.data.insights
+  const insights = statement.data?.insights
+
+  if (!insights) {
+    return (
+      <Card className="flex flex-col h-full">
+        <CardHeader>
+          <CardTitle className="text-md">Monthly Insights</CardTitle>
+          <CardDescription>No insights available</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
 
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div>
           <CardTitle className="text-md">Monthly Insights</CardTitle>
-          <CardDescription className="mt-2 text-sm">{statement.data.fileName}</CardDescription>
+          <CardDescription className="mt-2 text-sm">{statement.data?.fileName || 'Unknown'}</CardDescription>
         </div>
       </CardHeader>
       <div className="p-1 sm:p-3 flex-1">

@@ -116,12 +116,14 @@ Return only the JSON object. No narration or markdown.`;
 }
 
 export async function openAISummary(statement: DbStatement, message: boolean) {
-    const summary = trimSummary(statement.data.summary);
-    const transactions = trimTransactions(statement.data.transactions);
-    const insights = statement.data.insights;
-    const categories = statement.data.categories;
-    const totalSummaryRows = statement.data.summary.length;
-    const totalTransactions = statement.data.transactions.length;
+    const rawSummary = Array.isArray(statement.data?.summary) ? statement.data.summary : [];
+    const rawTransactions = Array.isArray(statement.data?.transactions) ? statement.data.transactions : [];
+    const summary = trimSummary(rawSummary);
+    const transactions = trimTransactions(rawTransactions);
+    const insights = statement.data?.insights;
+    const categories = statement.data?.categories;
+    const totalSummaryRows = rawSummary.length;
+    const totalTransactions = rawTransactions.length;
     
     const extra = `Based on previous feedback, please provide a more focused analysis, the user is requesting the summary again:
     - Be more critical of spending patterns
