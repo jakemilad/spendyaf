@@ -10,11 +10,11 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-import { CategoryBudgetMap, DbStatement, CategorySummary } from "@/app/types/types";
+import { CategoryBudgetMap, DbStatement, CategorySummary, Transaction } from "@/app/types/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, AlertCircle, Maximize2, ExternalLink } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, Maximize2, ExternalLink, DollarSign } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -24,6 +24,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { updateTransasctionAccRec } from "@/app/overrides/actions";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";  
 
 interface SummaryTableProps {
     statement: DbStatement;
@@ -38,16 +43,28 @@ const formatCurrency = (value: number) =>
 
 export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) {
     const [isProMode, setIsProMode] = useState(false);
+    const [updatingMerchant, setUpdatingMerchant] = useState<string | null>(null);
+    const [accRecInputs, setAccRecInputs] = useState<Record<string, string>>({});
+    const [showAccRecInputs, setShowAccRecInputs] = useState(false);
+    
     const sortedSummary = Array.isArray(statement.data?.summary) 
-        ? [...statement.data.summary].sort((a, b) => b.Total - a.Total)
+        ? [...statement.data.summary].sort((a, b) => {
+            const aTotal = a.NetTotal ?? a.Total;
+            const bTotal = b.NetTotal ?? b.Total;
+            return bTotal - aTotal;
+        })
         : [];
     const budgets = categoryBudgets ?? statement.data?.budgets ?? {}
+
+    const netTotalSpend = statement.data?.netTotal ?? statement.data.totalSpend ?? 0;
+    const hasAccRecTransactions = statement.data?.transactions?.some(t => (t.AccRec ?? 0) > 0) ?? false;
 
     const renderBudgetProgress = (row: CategorySummary, isCompact: boolean = false) => {
         const budgetTarget = budgets[row.Category]
         if (!budgetTarget) return isCompact ? <span className="text-xs text-muted-foreground"></span> : null;
-
-        const ratio = row.Total / budgetTarget
+        
+        const effectiveTotal = row.NetTotal ?? row.Total;
+        const ratio = effectiveTotal / budgetTarget
         const progressPercentage = Math.round(ratio * 100)
         
         return (
@@ -90,29 +107,52 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
 
     const renderDetails = (row: CategorySummary) => {
         const budgetTarget = budgets[row.Category]
-        const ratio = budgetTarget ? row.Total / budgetTarget : 0
+        const effectiveTotal = row.NetTotal ?? row.Total;
+        const ratio = budgetTarget ? effectiveTotal / budgetTarget : 0
         const progressPercentage = Math.round(ratio * 100)
+        
         const transactionsArray = Object.entries(row.Transactions)
-            .map(([transaction, amount]) => ({
-                name: transaction,
-                amount: Number(amount)
-            }))
-            .sort((a, b) => b.amount - a.amount)
+            .map(([transaction, amount]) => {
+                const fullTransaction = statement.data.transactions.find(
+                    t => t.Merchant === transaction && Math.abs(t.Amount - Number(amount)) < 0.01
+                );
+                
+                return {
+                    name: transaction,
+                    amount: Number(amount),
+                    fullTransaction
+                };
+            })
+            .sort((a, b) => {
+                const aNet = a.fullTransaction?.NetSpend ?? a.amount;
+                const bNet = b.fullTransaction?.NetSpend ?? b.amount;
+                return bNet - aNet;
+            });
+            
         const transactionCount = transactionsArray.length
-        const averageSpend = transactionCount > 0 ? row.Total / transactionCount : 0
+        const averageSpend = transactionCount > 0 ? effectiveTotal / transactionCount : 0
         const topTransaction = transactionsArray[0]
-        const totalAmount = transactionsArray.reduce((sum, entry) => sum + entry.amount, 0)
+        
+        const totalAmount = transactionsArray.reduce((sum, entry) => {
+            const netSpend = entry.fullTransaction?.NetSpend ?? entry.amount;
+            return sum + netSpend;
+        }, 0);
 
         return (
             <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Total Spend
+                            {effectiveTotal !== row.Total ? 'Net Spend' : 'Total Spend'}
                         </p>
                         <p className="mt-1 text-base font-semibold">
-                            {formatCurrency(row.Total)}
+                            {formatCurrency(effectiveTotal)}
                         </p>
+                        {effectiveTotal !== row.Total && (
+                            <p className="text-xs text-muted-foreground line-through">
+                                {formatCurrency(row.Total)}
+                            </p>
+                        )}
                     </div>
                     <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -172,37 +212,137 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                             </p>
                         </div>
                         <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
-                            {formatCurrency(topTransaction.amount)}
+                            {formatCurrency(topTransaction.fullTransaction?.NetSpend ?? topTransaction.amount)}
                         </span>
                     </div>
                 )}
                 <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                        All Transactions
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            All Transactions
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <Checkbox 
+                                id="show-accrec" 
+                                checked={showAccRecInputs}
+                                onCheckedChange={(checked) => setShowAccRecInputs(checked === true)}
+                            />
+                            <Label 
+                                htmlFor="show-accrec" 
+                                className="text-xs text-muted-foreground cursor-pointer"
+                            >
+                                Edit amounts
+                            </Label>
+                        </div>
+                    </div>
                     <Separator className="mt-1.5" />
                 </div>
                 <div className="space-y-2 py-1 max-h-[300px] overflow-y-auto pr-2">
-                    {transactionsArray.map((entry, index) => (
-                        <div
-                            key={entry.name}
-                            className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/10 p-2.5 transition-colors hover:bg-muted/20"
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <span className="text-xs font-semibold text-muted-foreground w-5 flex justify-center">
-                                    {index + 1}
-                                </span>
-                                <p className="text-xs font-medium leading-relaxed">
-                                    {entry.name}
-                                </p>
+                    {transactionsArray.map((entry, index) => {
+                        const tx = entry.fullTransaction;
+                        const inputKey = `${entry.name}-${tx?.Date}`;
+                        const currentAccRec = tx?.AccRec ?? 0;
+                        const netSpend = tx?.NetSpend ?? entry.amount;
+                        
+                        return (
+                            <div
+                                key={inputKey}
+                                className="rounded-lg border border-border/40 bg-muted/10 p-3 transition-colors hover:bg-muted/20"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                        <span className="text-xs font-semibold text-muted-foreground w-5 flex-shrink-0 flex justify-center mt-0.5">
+                                            {index + 1}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium leading-relaxed truncate">
+                                                {entry.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Amount: {formatCurrency(entry.amount)}
+                                            </p>
+                                            {tx?.Date && (
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    {new Date(tx.Date).toLocaleDateString()}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {showAccRecInputs ? (
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <div className="flex flex-col items-end gap-1">
+                                                <label htmlFor={inputKey} className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                                                    Acc Rec
+                                                </label>
+                                                <div className="flex items-center gap-1">
+                                                    <DollarSign className="h-3 w-3 text-muted-foreground" />
+                                                    <Input
+                                                        id={inputKey}
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        max={entry.amount}
+                                                        placeholder="0.00"
+                                                        value={accRecInputs[inputKey] ?? currentAccRec}
+                                                        onChange={(e) => {
+                                                            setAccRecInputs(prev => ({
+                                                                ...prev,
+                                                                [inputKey]: e.target.value
+                                                            }));
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            const value = parseFloat(e.target.value) || 0;
+                                                            if (value !== currentAccRec && tx) {
+                                                                handleAccRecUpdate(
+                                                                    entry.name,
+                                                                    entry.amount,
+                                                                    tx.Date,
+                                                                    value
+                                                                );
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.currentTarget.blur();
+                                                            }
+                                                        }}
+                                                        disabled={updatingMerchant === entry.name || !tx}
+                                                        className="w-20 h-7 text-xs"
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-col items-end gap-1 min-w-[80px]">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                                                    Net Spend
+                                                </span>
+                                                <span className={cn(
+                                                    "text-xs font-semibold tabular-nums",
+                                                    netSpend !== entry.amount ? "text-emerald-600" : ""
+                                                )}>
+                                                    {formatCurrency(netSpend)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="text-xs font-semibold tabular-nums">
+                                                {formatCurrency(netSpend)}
+                                            </span>
+                                            {currentAccRec > 0 && (
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    Money In: {formatCurrency(currentAccRec)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <span className="text-xs font-semibold tabular-nums whitespace-nowrap">
-                                {formatCurrency(entry.amount)}
-                            </span>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
-                <div className="flex justify-between items-center pt-1.5">
+                <div className="flex justify-between items-center pt-1.5 border-t">
                     <span className="font-semibold text-sm">Total</span>
                     <span className="text-base font-bold tabular-nums">
                         {formatCurrency(totalAmount)}
@@ -210,6 +350,40 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                 </div>
             </div>
         )
+    }
+
+    const handleAccRecUpdate = async (
+        merchant: string,
+        amount: number,
+        date: number,
+        accRecAmount: number
+    ) => {
+        setUpdatingMerchant(merchant);
+        try {
+            const transaction: Transaction = {
+                Date: date,
+                Amount: amount,
+                Merchant: merchant
+            }
+            const result = await updateTransasctionAccRec(Number(statement.id), transaction, accRecAmount);
+            if (result.success) {
+                toast.success(`Updated ${merchant}`, {
+                    description: `Money in: ${formatCurrency(accRecAmount)}, Net: ${formatCurrency(amount - accRecAmount)}`
+                });
+                // Reload to show updated totals
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                toast.error(`Failed to update ${merchant}`, {
+                    description: result.message
+                });
+            }
+        } catch (error) {
+            toast.error(`Error updating ${merchant}`, {
+                description: error instanceof Error ? error.message : 'Unknown error'
+            });
+        } finally {
+            setUpdatingMerchant(null);
+        }
     }
 
     return (
@@ -259,43 +433,72 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sortedSummary.map((row) => (
-                                <Dialog key={row.Category}>
-                                    <DialogTrigger asChild>
-                                        <TableRow className="cursor-pointer hover:bg-accent/50">
-                                            <TableCell className="text-left font-medium text-base py-3 sm:py-4">{row.Category}</TableCell>
-                                            <TableCell className="text-left text-base py-3 sm:py-4">
-                                                {row.BiggestTransaction.merchant.split(' ').slice(0, 2).join(' ')}
-                                                <span className="text-sm text-muted-foreground block mt-1">
-                                                    {formatCurrency(row.BiggestTransaction.amount)}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="text-left py-3 sm:py-4">
-                                                {renderBudgetProgress(row, true)}
-                                            </TableCell>
-                                            <TableCell className="text-right text-base font-semibold py-3 sm:py-4">
-                                                {formatCurrency(row.Total)}
-                                            </TableCell>
-                                        </TableRow>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-                                        <DialogHeader className="flex-shrink-0">
-                                            <DialogTitle className="text-lg font-bold">
-                                                {row.Category} Transactions
-                                            </DialogTitle>
-                                        </DialogHeader>
-                                        <div className="overflow-y-auto flex-1 pr-2">
-                                            {renderDetails(row)}
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            ))}
+                            {sortedSummary.map((row) => {
+                                const displayTotal = row.NetTotal ?? row.Total;
+                                const hasNetTotal = row.NetTotal !== undefined && row.NetTotal !== row.Total;
+                                
+                                return (
+                                    <Dialog key={row.Category}>
+                                        <DialogTrigger asChild>
+                                            <TableRow className="cursor-pointer hover:bg-accent/50">
+                                                <TableCell className="text-left font-medium text-base py-3 sm:py-4">{row.Category}</TableCell>
+                                                <TableCell className="text-left text-base py-3 sm:py-4">
+                                                    {row.BiggestTransaction.merchant.split(' ').slice(0, 2).join(' ')}
+                                                    <span className="text-sm text-muted-foreground block mt-1">
+                                                        {formatCurrency(row.BiggestTransaction.amount)}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-left py-3 sm:py-4">
+                                                    {renderBudgetProgress(row, true)}
+                                                </TableCell>
+                                                <TableCell className="text-right py-3 sm:py-4">
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                        <span className="text-base font-semibold">
+                                                            {formatCurrency(displayTotal)}
+                                                        </span>
+                                                        {hasNetTotal && (
+                                                            <span className="text-xs text-muted-foreground line-through">
+                                                                {formatCurrency(row.Total)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+                                            <DialogHeader className="flex-shrink-0">
+                                                <DialogTitle className="text-lg font-bold">
+                                                    {row.Category} Transactions
+                                                </DialogTitle>
+                                            </DialogHeader>
+                                            <div className="overflow-y-auto flex-1 pr-2">
+                                                {renderDetails(row)}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                );
+                            })}
                         </TableBody>
                         <TableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="py-3 sm:py-4"></TableCell>
-                                <TableCell className="text-right text-base font-semibold py-3 sm:py-4">
-                                    Total: {formatCurrency(statement.data.totalSpend ?? 0)}
+                                <TableCell colSpan={3} className="py-3 sm:py-4">
+                                    {hasAccRecTransactions && (
+                                        <span className="text-xs text-muted-foreground italic">
+                                            * Net spend reflects accountable receivables
+                                        </span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-right py-3 sm:py-4">
+                                    <div className="flex flex-col items-end gap-0.5">
+                                        <span className="text-base font-semibold">
+                                            Total: {formatCurrency(netTotalSpend)}
+                                        </span>
+                                        {hasAccRecTransactions && netTotalSpend !== (statement.data.totalSpend ?? 0) && (
+                                            <span className="text-xs text-muted-foreground line-through">
+                                                {formatCurrency(statement.data.totalSpend ?? 0)}
+                                            </span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         </TableFooter>
@@ -330,41 +533,60 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                         
                         <div className="flex-1 overflow-y-auto p-6 pt-2">
                             <Accordion type="single" collapsible className="w-full space-y-2">
-                                {sortedSummary.map((row) => (
-                                    <AccordionItem value={row.Category} key={row.Category} className="border rounded-lg px-2 data-[state=open]:bg-muted/10">
-                                        <AccordionTrigger className="hover:no-underline py-3 px-2">
-                                            <div className="flex-1 grid grid-cols-12 gap-4 text-left items-center">
-                                                <div className="col-span-3 font-medium text-base">
-                                                    {row.Category}
-                                                </div>
-                                                <div className="col-span-3 text-sm">
-                                                    <div className="font-medium truncate">
-                                                        {row.BiggestTransaction.merchant}
+                                {sortedSummary.map((row) => {
+                                    const displayTotal = row.NetTotal ?? row.Total;
+                                    const hasNetTotal = row.NetTotal !== undefined && row.NetTotal !== row.Total;
+                                    
+                                    return (
+                                        <AccordionItem value={row.Category} key={row.Category} className="border rounded-lg px-2 data-[state=open]:bg-muted/10">
+                                            <AccordionTrigger className="hover:no-underline py-3 px-2">
+                                                <div className="flex-1 grid grid-cols-12 gap-4 text-left items-center">
+                                                    <div className="col-span-3 font-medium text-base">
+                                                        {row.Category}
                                                     </div>
-                                                    <div className="text-muted-foreground">
-                                                        {formatCurrency(row.BiggestTransaction.amount)}
+                                                    <div className="col-span-3 text-sm">
+                                                        <div className="font-medium truncate">
+                                                            {row.BiggestTransaction.merchant}
+                                                        </div>
+                                                        <div className="text-muted-foreground">
+                                                            {formatCurrency(row.BiggestTransaction.amount)}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-span-4">
+                                                        {renderBudgetProgress(row, false)}
+                                                    </div>
+                                                    <div className="col-span-2 text-right">
+                                                        <div className="font-semibold text-base">
+                                                            {formatCurrency(displayTotal)}
+                                                        </div>
+                                                        {hasNetTotal && (
+                                                            <div className="text-xs text-muted-foreground line-through">
+                                                                {formatCurrency(row.Total)}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="col-span-4">
-                                                    {renderBudgetProgress(row, false)}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="px-2 pb-4">
+                                                <div className="pt-2 border-t mt-2">
+                                                    {renderDetails(row)}
                                                 </div>
-                                                <div className="col-span-2 text-right font-semibold text-base">
-                                                    {formatCurrency(row.Total)}
-                                                </div>
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent className="px-2 pb-4">
-                                            <div className="pt-2 border-t mt-2">
-                                                {renderDetails(row)}
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    );
+                                })}
                             </Accordion>
                             <div className="flex justify-end mt-6 px-4">
                                 <div className="text-right">
-                                    <p className="text-sm text-muted-foreground">Total Spend</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(statement.data.totalSpend ?? 0)}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {hasAccRecTransactions ? 'Net Total Spend' : 'Total Spend'}
+                                    </p>
+                                    <p className="text-2xl font-bold">{formatCurrency(netTotalSpend)}</p>
+                                    {hasAccRecTransactions && netTotalSpend !== (statement.data.totalSpend ?? 0) && (
+                                        <p className="text-sm text-muted-foreground line-through mt-1">
+                                            {formatCurrency(statement.data.totalSpend ?? 0)}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>

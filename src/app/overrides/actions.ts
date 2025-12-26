@@ -1,12 +1,10 @@
+'use server'
 import pool from "@/lib/db";
 import logger from "@/lib/logger";
 import { getSession, getStatementById, processStatement } from "../actions";
 import { DbStatement } from "../types/types";
 import { Override } from "@/components/override/override-table";
-import { Transaction } from "../types/types";
-import { get } from "http";
-import { retryFetch } from "@/lib/retry";
-import { summarizeSpendByCategory } from "../utils/dataProcessing";
+import { Transaction, Statement } from "../types/types";
 
 export async function getAllCachedMerchantCategories(userId: string): Promise<Record<string, string>> {
     try {
@@ -271,6 +269,7 @@ export async function updateTransasctionAccRec(statementId: number, transactionI
                 message: 'Invalid statement ID, transaction index, or acc rec amount'
             }
         }
+        logger.info(`Updating transaction ${transactionInput.Merchant} with acc rec amount ${accRecAmount} for statement ${statementId}`);
         const session = await getSession();
         if(!session) {
             return {
@@ -278,20 +277,26 @@ export async function updateTransasctionAccRec(statementId: number, transactionI
                 message: 'Unauthorized'
             }
         }
-        const statement = await getStatementById(Number(statementId));
-        if(!statement) {
+        const statementResult = await getStatementById(Number(statementId));
+        if(!statementResult) {
             return {
                 success: false,
                 message: 'Statement not found'
             }
         }
-        const transactions = Array.isArray(statement.data?.transactions) ? statement.data.transactions : [];
+        const statement = statementResult.data;
+        const transactions = Array.isArray(statement.transactions) ? statement.transactions : [];
+        const merchants = [...new Set(statement.transactions.map((t: Transaction) => t.Merchant))];
+        logger.info(`Merchants: ${JSON.stringify(merchants, null, 2)}`);
+
         const transactionIdx = transactions.findIndex(
             (t: Transaction) =>
-                t.Date === transactionInput.Date &&
-                t.Merchant === transactionInput.Merchant &&
-                t.Amount === transactionInput.Amount
+                t.Date == transactionInput.Date &&
+                t.Amount == transactionInput.Amount &&
+                t.Merchant == transactionInput.Merchant
         );
+        logger.info(`transactionIdx: ${transactionIdx}`);
+        logger.info(`transaction object ${JSON.stringify(transactions[transactionIdx], null, 2) } for merchant ${transactionInput.Merchant}`)
         if (transactionIdx >= transactions.length) {
             return {
                 success: false,
@@ -299,50 +304,80 @@ export async function updateTransasctionAccRec(statementId: number, transactionI
             }
         }
         if (transactionIdx === -1) {
-            logger.warn(
-                `Transaction not found: ${transactions[transactionIdx].Merchant} on ${new Date(transactions[transactionIdx].Date).toLocaleDateString()}`
-            );
+            logger.warn(`Transaction not found: ${transactionInput.Merchant}`);
             return {
                 success: false,
                 message: 'Transaction not found - it may have been modified or deleted'
             };
         }
         const transaction = transactions[transactionIdx];
+        const previousAccRec = transaction.AccRec || 0;
+        
         if (accRecAmount > transaction.Amount) {
             return {
                 success: false,
                 message: 'Acc rec amount cannot be greater than transaction amount'
             }
         }
+        
         transactions[transactionIdx].AccRec = accRecAmount;
-
-        const updatedData = recalculateStatementTotals(statement.data);
+        transactions[transactionIdx].NetSpend = transactions[transactionIdx].Amount - accRecAmount;
+        const updatedStatementData = recalculateStatementTotals(statement);
 
         await pool.query(
             'UPDATE transaction_records SET data = $1 WHERE id = $2 AND user_id = $3',
-            [JSON.stringify(updatedData), statementId, session?.user?.email]
+            [JSON.stringify(updatedStatementData), statementId, session?.user?.email]
         );
-
-        logger.info(`Updated transaction ${transactionIdx} with acc rec amount ${accRecAmount} for statement ${statementId}`);
-        return { success: true, message: 'Transaction updated successfully' };
+        
+        const updateDetails = {
+            statementId,
+            statementFileName: statement.file_name,
+            transactionIndex: transactionIdx,
+            merchant: transaction.Merchant,
+            transactionAmount: transaction.Amount,
+            transactionDate: new Date(transaction.Date).toLocaleDateString(),
+            previousAccRec,
+            newAccRec: accRecAmount,
+            accRecChange: accRecAmount - previousAccRec,
+            updatedTotals: {
+                grossTotal: updatedStatementData.totalSpend,
+                netTotal: updatedStatementData.netTotal
+            }
+        };
+        
+        logger.info(`Updated: ${updateDetails.merchant} - AccRec: $${previousAccRec} → $${accRecAmount} (${accRecAmount > previousAccRec ? '+' : ''}${updateDetails.accRecChange}) | Net Total: $${updateDetails.updatedTotals.netTotal}`);
+        return { 
+            success: true, 
+            message: 'Transaction updated successfully',
+            details: updateDetails
+        };
     } catch (error) {
-        logger.error(`Error updating acc rec for transaction: ${JSON.stringify(error, null, 2)}`);
+        logger.error(`Error updating acc rec for transaction: ${error instanceof Error ? error.message : String(error)}`);
+        if (error instanceof Error && error.stack) {
+            logger.error(error.stack);
+        }
         return { success: false, message: 'Failed to update acc rec for transaction' };
     }
 }
 
-function recalculateStatementTotals(statementData: DbStatement) {
-    const transactions = statementData.data.transactions;
-
+function recalculateStatementTotals(statementData: Statement): Statement {
+    if (!statementData) {
+        logger.error(`Statement data is missing or invalid`);
+        throw new Error('Statement data is missing or invalid');
+    }
+    
+    const transactions = statementData.transactions;
     let grossTotal = 0;
     let netTotal = 0;
 
-    transactions.forEach((t: Transaction) => {
-        grossTotal += t.Amount;
-        netTotal += t.Amount - (t.AccRec || 0);
-    });
+    if (transactions && Array.isArray(transactions)) {
+        transactions.forEach((t: Transaction) => {
+            grossTotal += t.Amount;
+            netTotal += t.Amount - (t.AccRec || 0);
+        });
+    }
 
-    const categoriesMap = statementData.data.categories;
+    const categoriesMap = statementData.categories;
     const updatedSummary = summarizeSpendByCategoryWithNet(transactions, categoriesMap);
 
     return {
@@ -350,7 +385,7 @@ function recalculateStatementTotals(statementData: DbStatement) {
         totalSpend: grossTotal,
         netTotal: netTotal,
         summary: updatedSummary
-    }
+    };
 }
 
 function summarizeSpendByCategoryWithNet(
