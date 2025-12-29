@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -14,7 +15,7 @@ import { CategoryBudgetMap, DbStatement, CategorySummary, Transaction } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, AlertCircle, Maximize2, ExternalLink, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, Maximize2, ExternalLink, DollarSign, Save, X, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -41,23 +42,88 @@ const formatCurrency = (value: number) =>
         maximumFractionDigits: 2,
     })}`
 
-export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) {
+export function SummaryTable({ statement: initialStatement, categoryBudgets }: SummaryTableProps) {
+    const router = useRouter();
+    const [currentStatement, setCurrentStatement] = useState<DbStatement>(initialStatement);
     const [isProMode, setIsProMode] = useState(false);
-    const [updatingMerchant, setUpdatingMerchant] = useState<string | null>(null);
-    const [accRecInputs, setAccRecInputs] = useState<Record<string, string>>({});
+    const [pendingChanges, setPendingChanges] = useState<Record<string, number>>({});
+    const [isSaving, setIsSaving] = useState(false);
     const [showAccRecInputs, setShowAccRecInputs] = useState(false);
     
-    const sortedSummary = Array.isArray(statement.data?.summary) 
-        ? [...statement.data.summary].sort((a, b) => {
+    useEffect(() => {
+        setCurrentStatement(initialStatement);
+    }, [initialStatement]);
+
+    const sortedSummary = Array.isArray(currentStatement.data?.summary) 
+        ? [...currentStatement.data.summary].sort((a, b) => {
             const aTotal = a.NetTotal ?? a.Total;
             const bTotal = b.NetTotal ?? b.Total;
             return bTotal - aTotal;
         })
         : [];
-    const budgets = categoryBudgets ?? statement.data?.budgets ?? {}
+    const budgets = categoryBudgets ?? currentStatement.data?.budgets ?? {}
 
-    const netTotalSpend = statement.data?.netTotal ?? statement.data.totalSpend ?? 0;
-    const hasAccRecTransactions = statement.data?.transactions?.some(t => (t.AccRec ?? 0) > 0) ?? false;
+    const netTotalSpend = currentStatement.data?.netTotal ?? currentStatement.data.totalSpend ?? 0;
+    const hasAccRecTransactions = currentStatement.data?.transactions?.some(t => (t.AccRec ?? 0) > 0) ?? false;
+
+    const hasPendingChanges = Object.keys(pendingChanges).length > 0;
+
+    const handleSaveChanges = async () => {
+        setIsSaving(true);
+        let successCount = 0;
+        let lastUpdatedStatement: any = null;
+
+        try {
+            for (const [key, newAccRec] of Object.entries(pendingChanges)) {
+                const lastIndex = key.lastIndexOf('-');
+                const amountIndex = key.lastIndexOf('-', lastIndex - 1);
+                const dateIndex = key.lastIndexOf('-', amountIndex - 1);
+                
+                const merchant = key.substring(0, dateIndex);
+                const date = Number(key.substring(dateIndex + 1, amountIndex));
+                const amount = Number(key.substring(amountIndex + 1, lastIndex));
+                
+                const transaction: Transaction = {
+                    Date: date,
+                    Amount: amount,
+                    Merchant: merchant
+                };
+
+                const result = await updateTransasctionAccRec(Number(currentStatement.id), transaction, newAccRec);
+                
+                if (result.success) {
+                    successCount++;
+                    if (result.updatedStatement) {
+                        lastUpdatedStatement = result.updatedStatement;
+                    }
+                }
+            }
+
+            if (successCount > 0) {
+                toast.success(`Saved ${successCount} update${successCount !== 1 ? 's' : ''}`);
+                setPendingChanges({});
+                if (lastUpdatedStatement) {
+                    setCurrentStatement(prev => ({
+                        ...prev,
+                        data: lastUpdatedStatement
+                    }));
+                }
+                router.refresh();
+            } else {
+                toast.error("Failed to save changes");
+            }
+        } catch (error) {
+            toast.error("Error saving changes");
+            console.error(error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCancelChanges = () => {
+        setPendingChanges({});
+        setShowAccRecInputs(false);
+    };
 
     const renderBudgetProgress = (row: CategorySummary, isCompact: boolean = false) => {
         const budgetTarget = budgets[row.Category]
@@ -111,14 +177,12 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
         const ratio = budgetTarget ? effectiveTotal / budgetTarget : 0
         const progressPercentage = Math.round(ratio * 100)
         
-        // Filter and sort transactions for this category directly from the source
-        // This allows us to work with individual transactions rather than aggregated merchant totals
-        const transactionsArray = (statement.data.transactions || [])
+        const transactionsArray = (currentStatement.data.transactions || [])
             .filter(t => {
-                const cat = statement.data.categories[t.Merchant] || 'unknown';
+                const cat = currentStatement.data.categories[t.Merchant] || 'unknown';
                 return cat === row.Category;
             })
-            .sort((a, b) => b.Date - a.Date); // Sort by date descending
+            .sort((a, b) => b.Date - a.Date); // descending
             
         const transactionCount = transactionsArray.length
         const averageSpend = transactionCount > 0 ? effectiveTotal / transactionCount : 0
@@ -129,7 +193,6 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
             return sum + netSpend;
         }, 0);
 
-        // Group transactions by merchant to find repeated ones
         const merchantGroups = transactionsArray.reduce((acc, t) => {
             const current = acc[t.Merchant] || { count: 0, total: 0, name: t.Merchant };
             current.count += 1;
@@ -242,23 +305,52 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                     )}
 
                     <div className="pt-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between min-h-[28px]">
                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                                 All Transactions
                             </p>
-                            <div className="flex items-center gap-1.5">
-                                <Checkbox 
-                                    id="show-accrec" 
-                                    checked={showAccRecInputs}
-                                    onCheckedChange={(checked) => setShowAccRecInputs(checked === true)}
-                                    className="h-3.5 w-3.5"
-                                />
-                                <Label 
-                                    htmlFor="show-accrec" 
-                                    className="text-[10px] text-muted-foreground cursor-pointer font-medium"
-                                >
-                                    Edit
-                                </Label>
+                            <div className="flex items-center gap-2">
+                                {hasPendingChanges ? (
+                                    <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-5 duration-200">
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={handleCancelChanges}
+                                            className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                            disabled={isSaving}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleSaveChanges}
+                                            disabled={isSaving}
+                                            className="h-6 px-2.5 text-[10px] gap-1.5 font-medium bg-emerald-600 hover:bg-emerald-700 text-white border-transparent"
+                                        >
+                                            {isSaving ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                                <Save className="h-3 w-3" />
+                                            )}
+                                            Save Changes
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5">
+                                        <Checkbox 
+                                            id="show-accrec" 
+                                            checked={showAccRecInputs}
+                                            onCheckedChange={(checked) => setShowAccRecInputs(checked === true)}
+                                            className="h-3.5 w-3.5"
+                                        />
+                                        <Label 
+                                            htmlFor="show-accrec" 
+                                            className="text-[10px] text-muted-foreground cursor-pointer font-medium"
+                                        >
+                                            Edit
+                                        </Label>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <Separator className="mt-1" />
@@ -270,14 +362,19 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
 
                     {transactionsArray.map((tx, index) => {
                         const inputKey = `${tx.Merchant}-${tx.Date}-${tx.Amount}-${index}`;
-                        const currentAccRec = tx.AccRec ?? 0;
-                        const netSpend = tx.NetSpend ?? tx.Amount;
+                        const pendingVal = pendingChanges[inputKey];
+                        const currentAccRec = pendingVal !== undefined ? pendingVal : (tx.AccRec ?? 0);
+                        const netSpend = tx.Amount - currentAccRec;
                         const hasAdjustment = currentAccRec > 0;
+                        const isModified = pendingVal !== undefined && pendingVal !== (tx.AccRec ?? 0);
                         
                         return (
                             <div
                                 key={inputKey}
-                                className="group rounded-lg border border-border/40 bg-muted/10 p-3 transition-all hover:bg-muted/30"
+                                className={cn(
+                                    "group rounded-lg border p-3 transition-all",
+                                    isModified ? "bg-emerald-500/5 border-emerald-500/30" : "bg-muted/10 border-border/40 hover:bg-muted/30"
+                                )}
                             >
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -297,7 +394,10 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                     </div>
                                     
                                     {showAccRecInputs ? (
-                                        <div className="flex items-center gap-3 flex-shrink-0 bg-background/50 p-1.5 rounded-md border border-border/40">
+                                        <div className={cn(
+                                            "flex items-center gap-3 flex-shrink-0 p-1.5 rounded-md border",
+                                            isModified ? "bg-white dark:bg-black border-emerald-500/30" : "bg-background/50 border-border/40"
+                                        )}>
                                             <div className="flex items-center gap-2">
                                                 <label htmlFor={inputKey} className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                                                     Money In
@@ -311,30 +411,16 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                         min="0"
                                                         max={tx.Amount}
                                                         placeholder="0.00"
-                                                        value={accRecInputs[inputKey] ?? currentAccRec}
+                                                        value={currentAccRec === 0 ? "" : currentAccRec}
                                                         onChange={(e) => {
-                                                            setAccRecInputs(prev => ({
+                                                            const val = parseFloat(e.target.value);
+                                                            setPendingChanges(prev => ({
                                                                 ...prev,
-                                                                [inputKey]: e.target.value
+                                                                [inputKey]: isNaN(val) ? 0 : val
                                                             }));
                                                         }}
-                                                        onBlur={(e) => {
-                                                            const value = parseFloat(e.target.value) || 0;
-                                                            if (value !== currentAccRec) {
-                                                                handleAccRecUpdate(
-                                                                    tx.Merchant,
-                                                                    tx.Amount,
-                                                                    tx.Date,
-                                                                    value
-                                                                );
-                                                            }
-                                                        }}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                e.currentTarget.blur();
-                                                            }
-                                                        }}
-                                                        disabled={updatingMerchant === tx.Merchant}
+                                                        onFocus={(e) => e.target.select()}
+                                                        disabled={isSaving}
                                                         className="w-24 h-8 pl-5 text-xs font-medium bg-background"
                                                     />
                                                 </div>
@@ -389,40 +475,6 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
         )
     }
 
-    const handleAccRecUpdate = async (
-        merchant: string,
-        amount: number,
-        date: number,
-        accRecAmount: number
-    ) => {
-        setUpdatingMerchant(merchant);
-        try {
-            const transaction: Transaction = {
-                Date: date,
-                Amount: amount,
-                Merchant: merchant
-            }
-            const result = await updateTransasctionAccRec(Number(statement.id), transaction, accRecAmount);
-            if (result.success) {
-                toast.success(`Updated ${merchant}`, {
-                    description: `Money in: ${formatCurrency(accRecAmount)}, Net: ${formatCurrency(amount - accRecAmount)}`
-                });
-                // Reload to show updated totals
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                toast.error(`Failed to update ${merchant}`, {
-                    description: result.message
-                });
-            }
-        } catch (error) {
-            toast.error(`Error updating ${merchant}`, {
-                description: error instanceof Error ? error.message : 'Unknown error'
-            });
-        } finally {
-            setUpdatingMerchant(null);
-        }
-    }
-
     return (
         <div className="h-full w-full">
             <Card className="h-full flex flex-col">
@@ -430,7 +482,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                     <div className="flex-shrink-0 mb-4 space-y-1">
                         <div className="flex items-center justify-between gap-3">
                             <h2 className="text-left font-bold text-lg dark:text-white">
-                                {statement.data?.fileName || 'Unknown'} Statement Summary
+                                {currentStatement.data?.fileName || 'Unknown'} Statement Summary
                             </h2>
                             <div className="flex items-center gap-2">
                                 <Button
@@ -530,9 +582,9 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                         <span className="text-base font-semibold">
                                             Total: {formatCurrency(netTotalSpend)}
                                         </span>
-                                        {hasAccRecTransactions && netTotalSpend !== (statement.data.totalSpend ?? 0) && (
+                                        {hasAccRecTransactions && netTotalSpend !== (currentStatement.data.totalSpend ?? 0) && (
                                             <span className="text-xs text-muted-foreground line-through">
-                                                {formatCurrency(statement.data.totalSpend ?? 0)}
+                                                {formatCurrency(currentStatement.data.totalSpend ?? 0)}
                                             </span>
                                         )}
                                     </div>
@@ -549,7 +601,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                     <div className="flex items-center justify-between p-6 pb-4 border-b shrink-0">
                         <div>
                             <DialogTitle className="text-xl font-bold">
-                                {statement.data?.fileName || 'Unknown'} - Extended Summary
+                                {currentStatement.data?.fileName || 'Unknown'} - Extended Summary
                             </DialogTitle>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Detailed breakdown of spending by category
@@ -619,9 +671,9 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                         {hasAccRecTransactions ? 'Net Total Spend' : 'Total Spend'}
                                     </p>
                                     <p className="text-2xl font-bold">{formatCurrency(netTotalSpend)}</p>
-                                    {hasAccRecTransactions && netTotalSpend !== (statement.data.totalSpend ?? 0) && (
+                                    {hasAccRecTransactions && netTotalSpend !== (currentStatement.data.totalSpend ?? 0) && (
                                         <p className="text-sm text-muted-foreground line-through mt-1">
-                                            {formatCurrency(statement.data.totalSpend ?? 0)}
+                                            {formatCurrency(currentStatement.data.totalSpend ?? 0)}
                                         </p>
                                     )}
                                 </div>

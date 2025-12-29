@@ -349,7 +349,8 @@ export async function updateTransasctionAccRec(statementId: number, transactionI
         return { 
             success: true, 
             message: 'Transaction updated successfully',
-            details: updateDetails
+            details: updateDetails,
+            updatedStatement: updatedStatementData
         };
     } catch (error) {
         logger.error(`Error updating acc rec for transaction: ${error instanceof Error ? error.message : String(error)}`);
