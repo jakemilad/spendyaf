@@ -111,81 +111,79 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
         const ratio = budgetTarget ? effectiveTotal / budgetTarget : 0
         const progressPercentage = Math.round(ratio * 100)
         
-        const transactionsArray = Object.entries(row.Transactions)
-            .map(([transaction, amount]) => {
-                const fullTransaction = statement.data.transactions.find(
-                    t => t.Merchant === transaction && Math.abs(t.Amount - Number(amount)) < 0.01
-                );
-                
-                return {
-                    name: transaction,
-                    amount: Number(amount),
-                    fullTransaction
-                };
+        // Filter and sort transactions for this category directly from the source
+        // This allows us to work with individual transactions rather than aggregated merchant totals
+        const transactionsArray = (statement.data.transactions || [])
+            .filter(t => {
+                const cat = statement.data.categories[t.Merchant] || 'unknown';
+                return cat === row.Category;
             })
-            .sort((a, b) => {
-                const aNet = a.fullTransaction?.NetSpend ?? a.amount;
-                const bNet = b.fullTransaction?.NetSpend ?? b.amount;
-                return bNet - aNet;
-            });
+            .sort((a, b) => b.Date - a.Date); // Sort by date descending
             
         const transactionCount = transactionsArray.length
         const averageSpend = transactionCount > 0 ? effectiveTotal / transactionCount : 0
-        const topTransaction = transactionsArray[0]
+        const topTransaction = [...transactionsArray].sort((a, b) => (b.NetSpend ?? b.Amount) - (a.NetSpend ?? a.Amount))[0];
         
-        const totalAmount = transactionsArray.reduce((sum, entry) => {
-            const netSpend = entry.fullTransaction?.NetSpend ?? entry.amount;
+        const totalAmount = transactionsArray.reduce((sum, t) => {
+            const netSpend = t.NetSpend ?? t.Amount;
             return sum + netSpend;
         }, 0);
 
+        // Group transactions by merchant to find repeated ones
+        const merchantGroups = transactionsArray.reduce((acc, t) => {
+            const current = acc[t.Merchant] || { count: 0, total: 0, name: t.Merchant };
+            current.count += 1;
+            current.total += (t.NetSpend ?? t.Amount);
+            acc[t.Merchant] = current;
+            return acc;
+        }, {} as Record<string, { count: number, total: number, name: string }>);
+
+        const repeatedMerchants = Object.values(merchantGroups)
+            .filter(g => g.count > 1)
+            .sort((a, b) => b.total - a.total);
+
         return (
-            <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            {effectiveTotal !== row.Total ? 'Net Spend' : 'Total Spend'}
-                        </p>
-                        <p className="mt-1 text-base font-semibold">
-                            {formatCurrency(effectiveTotal)}
-                        </p>
-                        {effectiveTotal !== row.Total && (
-                            <p className="text-xs text-muted-foreground line-through">
-                                {formatCurrency(row.Total)}
+            <div className="flex flex-col h-full overflow-hidden space-y-3 pt-1">
+                <div className="flex-shrink-0 space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-md border border-border/40 bg-muted/20 p-2 text-center">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {effectiveTotal !== row.Total ? 'Net' : 'Total'}
                             </p>
-                        )}
-                    </div>
-                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Transactions
-                        </p>
-                        <p className="mt-1 text-base font-semibold">
-                            {transactionCount}
-                        </p>
-                    </div>
-                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Avg Spend
-                        </p>
-                        <p className="mt-1 text-base font-semibold">
-                            {formatCurrency(averageSpend)}
-                        </p>
-                    </div>
-                </div>
-                {budgetTarget && (
-                    <div className="rounded-lg border border-border/40 bg-card/40 p-3 shadow-sm">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                    Budget Target
+                            <p className="text-sm font-semibold">
+                                {formatCurrency(effectiveTotal)}
+                            </p>
+                            {effectiveTotal !== row.Total && (
+                                <p className="text-[10px] text-muted-foreground line-through">
+                                    {formatCurrency(row.Total)}
                                 </p>
-                                <p className="mt-0.5 text-base font-semibold">
-                                    {formatCurrency(budgetTarget)}
-                                </p>
-                            </div>
-                            <div className="w-full sm:w-1/2">
-                                <p className="text-xs text-muted-foreground mb-1">
-                                    {progressPercentage}% of target used
-                                </p>
+                            )}
+                        </div>
+                        <div className="rounded-md border border-border/40 bg-muted/20 p-2 text-center">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                Transactions
+                            </p>
+                            <p className="text-sm font-semibold">
+                                {transactionCount}
+                            </p>
+                        </div>
+                        <div className="rounded-md border border-border/40 bg-muted/20 p-2 text-center">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                Avg
+                            </p>
+                            <p className="text-sm font-semibold">
+                                {formatCurrency(averageSpend)}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {budgetTarget && (
+                            <div className="rounded-md border border-border/40 bg-card/40 p-2 shadow-sm flex flex-col justify-center">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Budget</span>
+                                    <span className="text-xs font-semibold">{formatCurrency(budgetTarget)}</span>
+                                </div>
                                 <div className="h-1.5 w-full rounded-full bg-secondary/50 overflow-hidden">
                                     <div
                                         className={cn(
@@ -198,91 +196,120 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                     />
                                 </div>
                             </div>
-                        </div>
+                        )}
+                        {topTransaction && (
+                            <div className={cn(
+                                "rounded-md border border-border/40 bg-card/60 p-2 shadow-sm flex items-center justify-between gap-2",
+                                !budgetTarget && "col-span-2"
+                            )}>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Largest</p>
+                                    <p className="text-xs font-medium truncate">{topTransaction.Merchant}</p>
+                                </div>
+                                <span className="flex-shrink-0 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+                                    {formatCurrency(topTransaction.NetSpend ?? topTransaction.Amount)}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                )}
-                {topTransaction && (
-                    <div className="rounded-lg border border-border/40 bg-card/60 p-3 shadow-sm flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                Largest Transaction
+
+                    {repeatedMerchants.length > 0 && (
+                        <div className="space-y-1.5">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                Frequent Merchants
                             </p>
-                            <p className="mt-0.5 text-sm font-semibold">
-                                {topTransaction.name}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {repeatedMerchants.map((merchant) => (
+                                    <div 
+                                        key={merchant.name} 
+                                        className="flex flex-col rounded-md border border-border/40 bg-card/40 p-2"
+                                    >
+                                        <div className="flex justify-between items-start gap-1">
+                                            <p className="text-xs font-medium truncate flex-1">
+                                                {merchant.name}
+                                            </p>
+                                            <span className="text-[11px] text-muted-foreground bg-muted/50 px-1 rounded">
+                                                {merchant.count}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs font-bold tabular-nums mt-0.5">
+                                            {formatCurrency(merchant.total)}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="pt-1">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                All Transactions
                             </p>
+                            <div className="flex items-center gap-1.5">
+                                <Checkbox 
+                                    id="show-accrec" 
+                                    checked={showAccRecInputs}
+                                    onCheckedChange={(checked) => setShowAccRecInputs(checked === true)}
+                                    className="h-3.5 w-3.5"
+                                />
+                                <Label 
+                                    htmlFor="show-accrec" 
+                                    className="text-[10px] text-muted-foreground cursor-pointer font-medium"
+                                >
+                                    Edit
+                                </Label>
+                            </div>
                         </div>
-                        <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
-                            {formatCurrency(topTransaction.fullTransaction?.NetSpend ?? topTransaction.amount)}
-                        </span>
+                        <Separator className="mt-1" />
                     </div>
-                )}
-                <div>
-                    <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            All Transactions
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Checkbox 
-                                id="show-accrec" 
-                                checked={showAccRecInputs}
-                                onCheckedChange={(checked) => setShowAccRecInputs(checked === true)}
-                            />
-                            <Label 
-                                htmlFor="show-accrec" 
-                                className="text-xs text-muted-foreground cursor-pointer"
-                            >
-                                Edit amounts
-                            </Label>
-                        </div>
-                    </div>
-                    <Separator className="mt-1.5" />
                 </div>
-                <div className="space-y-2 py-1 max-h-[300px] overflow-y-auto pr-2">
-                    {transactionsArray.map((entry, index) => {
-                        const tx = entry.fullTransaction;
-                        const inputKey = `${entry.name}-${tx?.Date}`;
-                        const currentAccRec = tx?.AccRec ?? 0;
-                        const netSpend = tx?.NetSpend ?? entry.amount;
+
+                <div className="flex-1 min-h-0 overflow-y-auto pr-2 -mr-2">
+                    <div className="space-y-2 pb-2">
+
+                    {transactionsArray.map((tx, index) => {
+                        const inputKey = `${tx.Merchant}-${tx.Date}-${tx.Amount}-${index}`;
+                        const currentAccRec = tx.AccRec ?? 0;
+                        const netSpend = tx.NetSpend ?? tx.Amount;
+                        const hasAdjustment = currentAccRec > 0;
                         
                         return (
                             <div
                                 key={inputKey}
-                                className="rounded-lg border border-border/40 bg-muted/10 p-3 transition-colors hover:bg-muted/20"
+                                className="group rounded-lg border border-border/40 bg-muted/10 p-3 transition-all hover:bg-muted/30"
                             >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                                        <span className="text-xs font-semibold text-muted-foreground w-5 flex-shrink-0 flex justify-center mt-0.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <span className="text-xs font-medium text-muted-foreground/50 w-5 flex-shrink-0 flex justify-center">
                                             {index + 1}
                                         </span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-medium leading-relaxed truncate">
-                                                {entry.name}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Amount: {formatCurrency(entry.amount)}
-                                            </p>
-                                            {tx?.Date && (
-                                                <p className="text-[10px] text-muted-foreground">
-                                                    {new Date(tx.Date).toLocaleDateString()}
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <p className="text-sm font-semibold truncate leading-none">
+                                                    {tx.Merchant}
                                                 </p>
-                                            )}
+                                                <span className="text-[10px] text-muted-foreground font-medium px-1.5 py-0.5 rounded-full bg-background/50 border border-border/50">
+                                                    {new Date(tx.Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     
                                     {showAccRecInputs ? (
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            <div className="flex flex-col items-end gap-1">
-                                                <label htmlFor={inputKey} className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                                                    Acc Rec
+                                        <div className="flex items-center gap-3 flex-shrink-0 bg-background/50 p-1.5 rounded-md border border-border/40">
+                                            <div className="flex items-center gap-2">
+                                                <label htmlFor={inputKey} className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                    Money In
                                                 </label>
-                                                <div className="flex items-center gap-1">
-                                                    <DollarSign className="h-3 w-3 text-muted-foreground" />
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                                                     <Input
                                                         id={inputKey}
                                                         type="number"
                                                         step="0.01"
                                                         min="0"
-                                                        max={entry.amount}
+                                                        max={tx.Amount}
                                                         placeholder="0.00"
                                                         value={accRecInputs[inputKey] ?? currentAccRec}
                                                         onChange={(e) => {
@@ -293,10 +320,10 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                         }}
                                                         onBlur={(e) => {
                                                             const value = parseFloat(e.target.value) || 0;
-                                                            if (value !== currentAccRec && tx) {
+                                                            if (value !== currentAccRec) {
                                                                 handleAccRecUpdate(
-                                                                    entry.name,
-                                                                    entry.amount,
+                                                                    tx.Merchant,
+                                                                    tx.Amount,
                                                                     tx.Date,
                                                                     value
                                                                 );
@@ -307,44 +334,54 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                                 e.currentTarget.blur();
                                                             }
                                                         }}
-                                                        disabled={updatingMerchant === entry.name || !tx}
-                                                        className="w-20 h-7 text-xs"
+                                                        disabled={updatingMerchant === tx.Merchant}
+                                                        className="w-24 h-8 pl-5 text-xs font-medium bg-background"
                                                     />
                                                 </div>
                                             </div>
-                                            
-                                            <div className="flex flex-col items-end gap-1 min-w-[80px]">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                                                    Net Spend
+                                            <Separator orientation="vertical" className="h-6" />
+                                            <div className="flex flex-col items-end min-w-[80px] px-1">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                                    Net
                                                 </span>
                                                 <span className={cn(
-                                                    "text-xs font-semibold tabular-nums",
-                                                    netSpend !== entry.amount ? "text-emerald-600" : ""
+                                                    "text-sm font-bold tabular-nums leading-none",
+                                                    netSpend !== tx.Amount ? "text-emerald-600" : ""
                                                 )}>
                                                     {formatCurrency(netSpend)}
                                                 </span>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className="text-xs font-semibold tabular-nums">
+                                        <div className="flex items-center justify-end gap-3 text-right">
+                                            {hasAdjustment && (
+                                                <>
+                                                    <span className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">
+                                                        {formatCurrency(tx.Amount)}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
+                                                        <DollarSign className="h-3 w-3" />
+                                                        {formatCurrency(currentAccRec).replace('$', '')} in
+                                                    </span>
+                                                </>
+                                            )}
+                                            <span className={cn(
+                                                "text-base font-bold tabular-nums min-w-[80px]",
+                                                hasAdjustment ? "text-emerald-600" : ""
+                                            )}>
                                                 {formatCurrency(netSpend)}
                                             </span>
-                                            {currentAccRec > 0 && (
-                                                <span className="text-[10px] text-muted-foreground">
-                                                    Money In: {formatCurrency(currentAccRec)}
-                                                </span>
-                                            )}
                                         </div>
                                     )}
                                 </div>
                             </div>
                         );
                     })}
+                    </div>
                 </div>
-                <div className="flex justify-between items-center pt-1.5 border-t">
+                <div className="flex-shrink-0 flex justify-between items-center pt-2 border-t mt-auto">
                     <span className="font-semibold text-sm">Total</span>
-                    <span className="text-base font-bold tabular-nums">
+                    <span className="text-xl font-bold tabular-nums">
                         {formatCurrency(totalAmount)}
                     </span>
                 </div>
@@ -465,7 +502,7 @@ export function SummaryTable({ statement, categoryBudgets }: SummaryTableProps) 
                                                 </TableCell>
                                             </TableRow>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+                                        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
                                             <DialogHeader className="flex-shrink-0">
                                                 <DialogTitle className="text-lg font-bold">
                                                     {row.Category} Transactions
