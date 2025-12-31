@@ -5,6 +5,7 @@ import { getSession, getStatementById, processStatement } from "../actions";
 import { DbStatement } from "../types/types";
 import { Override } from "@/components/override/override-table";
 import { Transaction, Statement } from "../types/types";
+import { getInsights } from "../utils/dataProcessing";
 
 export async function getAllCachedMerchantCategories(userId: string): Promise<Record<string, string>> {
     try {
@@ -385,12 +386,16 @@ function recalculateStatementTotals(statementData: Statement): Statement {
 
     const categoriesMap = statementData.categories;
     const updatedSummary = summarizeSpendByCategoryWithNet(transactions, categoriesMap);
+    
+    // Recalculate insights with updated net totals
+    const updatedInsights = getInsights(transactions, updatedSummary);
 
     return {
         ...statementData,
         totalSpend: grossTotal,
         netTotal: netTotal,
-        summary: updatedSummary
+        summary: updatedSummary,
+        insights: updatedInsights
     };
 }
 

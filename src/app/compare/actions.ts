@@ -54,9 +54,10 @@ export async function compareStatementAreaChart(statements: DbStatement[]) {
     });
 
     const totalSpendChartData = sortedStatements.map(statement => {
+        const netTotal = statement.data?.netTotal ?? statement.data?.totalSpend ?? 0;
         return {
             date: statement.file_name,
-            totalSpend: statement.data?.totalSpend || 0,
+            totalSpend: netTotal,
         }
     });
 
@@ -68,9 +69,9 @@ export async function compareStatementAreaChart(statements: DbStatement[]) {
                 spendVol: 0
             }
         }
-        const amount = transactions.map(t => t.Amount);
-        const mean = amount.reduce((a,b) => a+b, 0) / amount.length;
-        const variance = amount.reduce((sum, amount)=> sum + Math.pow(amount - mean, 2), 0) / amount.length;
+        const amounts = transactions.map(t => t.NetSpend ?? (t.Amount - (t.AccRec || 0)));
+        const mean = amounts.reduce((a,b) => a+b, 0) / amounts.length;
+        const variance = amounts.reduce((sum, amount)=> sum + Math.pow(amount - mean, 2), 0) / amounts.length;
         const stdDev = Math.sqrt(variance)
 
         return {

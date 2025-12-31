@@ -71,7 +71,7 @@ export function getInsights(transactions: Transaction[], categorySummary: Catego
         let biggestSpend = 0;
 
         for(const category of categorySummary) {
-            const curr = category.Total;
+            const curr = category.NetTotal || category.Total;
             if(curr > biggestSpend) {
                 biggestSpend = curr;
                 biggestCategory = category.Category;
@@ -88,7 +88,7 @@ export function getInsights(transactions: Transaction[], categorySummary: Catego
         let biggestSpend = 0;
 
         for(const transaction of transactions) {
-            const netSpend = transaction.Amount - (transaction.AccRec || 0);
+            const netSpend = transaction.NetSpend ?? (transaction.Amount - (transaction.AccRec || 0));
             if(netSpend > biggestSpend) {
                 biggestSpend = netSpend;
                 biggestTransaction = transaction.Merchant;
@@ -119,7 +119,9 @@ export function getInsights(transactions: Transaction[], categorySummary: Catego
             totalAmount += frequency;
         }
 
-        totalAmount = transactions.filter(t => t.Merchant === mostFrequentMerchant).reduce((sum, t) => sum + t.Amount, 0);
+        totalAmount = transactions
+            .filter(t => t.Merchant === mostFrequentMerchant)
+            .reduce((sum, t) => sum + (t.NetSpend ?? (t.Amount - (t.AccRec || 0))), 0);
 
         return {
             merchant: mostFrequentMerchant,
@@ -135,7 +137,10 @@ export function getInsights(transactions: Transaction[], categorySummary: Catego
         const firstDate = Math.min(...dates);
         const lastDate = Math.max(...dates);
 
-        const totalSpend = transactions.reduce((sum, t) => sum + (t.Amount - (t.AccRec || 0)), 0);
+        // Use NetSpend if available, otherwise calculate it
+        const totalSpend = transactions.reduce((sum, t) => 
+            sum + (t.NetSpend ?? (t.Amount - (t.AccRec || 0))), 0
+        );
 
         const daysDiff = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)) + 1;
         const weeksDiff = Math.ceil(daysDiff / 7);

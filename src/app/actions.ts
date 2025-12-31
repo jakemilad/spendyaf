@@ -13,10 +13,7 @@ import { revalidatePath } from 'next/cache';
 import { getInsights } from "./utils/dataProcessing";
 import { Statement } from "./types/types";
 import { CategoryBudgetMap } from "./types/types";
-import {tempStatements} from "@/components/temp/temp-data"
-import { DEFAULT_CATEGORIES } from "./utils/dicts";
 import { assert } from "console";
-import { stat } from "fs";
 import { normalizeCategoryBudgets } from "@/lib/category-budgets";
 import logger from "@/lib/logger";
 
@@ -176,11 +173,9 @@ export async function processStatement(userEmail: string,transactions: Transacti
                     })
                     .catch(async (error) => {
                         logger.warn(`AI categorization timeout, using fallback categories: ${error.message}`);
-                        // Fallback: assign default categories
                         logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants (existing user): ${JSON.stringify(uncachedMerchants, null, 2)}`);
                         const fallbackCategories: Record<string, string> = {};
                         uncachedMerchants.forEach((merchant, index) => {
-                            // Distribute merchants across available categories instead of all to first category
                             const categoryIndex = index % userCategories.length;
                             fallbackCategories[merchant] = userCategories[categoryIndex] || 'Other';
                         });
@@ -205,6 +200,10 @@ export async function processStatement(userEmail: string,transactions: Transacti
         const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
         const totalSpend = transactions.reduce((sum, transaction) => sum + Number(transaction.Amount), 0).toFixed(2);
         const insights = getInsights(transactions, summary);
+        
+        const netTotal = transactions.reduce((sum, transaction) => 
+            sum + (transaction.NetSpend ?? (Number(transaction.Amount) - (transaction.AccRec || 0))), 0
+        );
 
         const response = {
             summary,
@@ -212,6 +211,7 @@ export async function processStatement(userEmail: string,transactions: Transacti
             transactions,
             fileName,
             totalSpend: Number(totalSpend),
+            netTotal: Number(netTotal.toFixed(2)),
             insights
         };
 
