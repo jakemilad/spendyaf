@@ -23,7 +23,13 @@ export async function compareStatements(statements: DbStatement[]): Promise<{ da
                     const categoryData = summary.find(
                         (item: CategorySummary) => item.Category === category
                     );
-                    dataPoint[monthName] = categoryData ? Math.max(0, categoryData.Total) : 0;
+                    let dataValue = 0;
+                    if (categoryData?.NetTotal) {
+                        dataValue = Math.max(0, categoryData.NetTotal);
+                    } else if (categoryData?.Total) {
+                        dataValue = Math.max(0, categoryData.Total);
+                    }
+                    dataPoint[monthName] = dataValue;
                 });
 
                 return dataPoint;

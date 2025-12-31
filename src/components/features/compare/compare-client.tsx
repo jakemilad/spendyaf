@@ -1,7 +1,5 @@
 'use client';
 
-import { DbStatement } from "@/app/types/types";
-import { useState } from "react";
 import CompareStatements from "@/components/features/compare/compare-statements";
 import AreaChartCompare from "@/components/features/compare/area-chart-compare";
 

@@ -11,9 +11,9 @@ export default async function ComparePage() {
     const statements = await getUserStatements();
     const {data, months} = await compareStatements(statements);
     const areaChartData = await compareStatementAreaChart(statements);
-    logger.info(`Statements: ${statements}`)
-    logger.info(`Data: ${data}`)
-    logger.info(`Months: ${months}`)
+    logger.info(`Statements: ${JSON.stringify(statements)}`)
+    logger.info(`Data: ${JSON.stringify(data)}`)
+    logger.info(`Months: ${JSON.stringify(months)}`)
     return(
         <div className="min-h-screen bg-background">
             {statements.length > 0 ? (

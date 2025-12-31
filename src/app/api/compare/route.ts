@@ -1,4 +1,6 @@
-import { compareStatementAreaChart, compareStatements, getUserStatements } from "@/app/actions";
+import { compareStatementAreaChart } from "@/app/compare/actions";
+import { compareStatements } from "@/app/compare/actions";
+import { getUserStatements } from "@/app/actions";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
