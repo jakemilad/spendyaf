@@ -46,7 +46,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
     const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("allTransactions")
     const [selectedDate, setSelectedDate] = React.useState<string | null>(null)
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-    const [selectedTransactions, setSelectedTransactions] = React.useState<Array<{Amount: number, Merchant: string}>>([])
+    const [selectedTransactions, setSelectedTransactions] = React.useState<Array<{Amount: number, Merchant: string, AccRec?: number}>>([])
 
     const formatTimeStamp = (timestamp: number): string => {
         return new Date(timestamp).toLocaleDateString("en-CA", {
@@ -104,7 +104,8 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
         
         transactions.forEach(item => {
             const date = formatTimeStamp(item.Date);
-            const amount = item.Amount > 0 ? item.Amount : item.Amount * -1;
+            const netSpend = item.Amount - (item.AccRec || 0);
+            const amount = Math.abs(netSpend);
             dailyTotals.set(date, (dailyTotals.get(date) || 0) + amount);
         });
 
@@ -140,7 +141,7 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
                                 {chartConfig[chart].label}
                             </span>
                             <span className="text-lg font-bold leading-none sm:text-3xl">
-                                ${statement.data.totalSpend}
+                                ${statement.data.netTotal ? statement.data.netTotal.toFixed(2) : statement.data.totalSpend?.toFixed(2) || 0}
                             </span>
                         </button>
                     )
@@ -207,16 +208,32 @@ export default function TransactionsChart({statement}: TransactionsChartProps) {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              {selectedTransactions.map((transaction, index) => (
-                <div key={index} className="flex justify-between items-center border-b pb-2">
-                  <span className="font-medium">{transaction.Merchant}</span>
-                  <span className="text-muted-foreground">${transaction.Amount}</span>
-                </div>
-              ))}
+              {selectedTransactions.map((transaction, index) => {
+                const netSpend = transaction.Amount - (transaction.AccRec || 0);
+                const hasAccRec = (transaction.AccRec || 0) > 0;
+                return (
+                  <div key={index} className="flex justify-between items-center border-b pb-2">
+                    <span className="font-medium">{transaction.Merchant}</span>
+                    <div className="flex items-center gap-2">
+                      {hasAccRec && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          ${Math.abs(transaction.Amount).toFixed(2)}
+                        </span>
+                      )}
+                      <span className={hasAccRec ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
+                        ${Math.abs(netSpend).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
               <div className="flex justify-end">
                 <span className="text-muted-foreground">Total:</span>
                 <span className="ml-3 font-medium">
-                  ${selectedTransactions.reduce((acc, curr) => acc + curr.Amount, 0).toFixed(2)}
+                  ${selectedTransactions.reduce((acc, curr) => {
+                    const netSpend = curr.Amount - (curr.AccRec || 0);
+                    return acc + Math.abs(netSpend);
+                  }, 0).toFixed(2)}
                 </span>
               </div>
             </div>
