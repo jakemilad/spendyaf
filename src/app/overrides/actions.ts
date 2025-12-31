@@ -263,7 +263,7 @@ export async function grabAllTransactionsForStatement(statementId: number) {
 
 export async function updateTransasctionAccRec(statementId: number, transactionInput: Transaction, accRecAmount: number) {
     try {
-        if(!statementId || !transactionInput || accRecAmount < 0) {
+        if(!statementId || !transactionInput) {
             return {
                 success: false,
                 message: 'Invalid statement ID, transaction index, or acc rec amount'
@@ -291,32 +291,37 @@ export async function updateTransasctionAccRec(statementId: number, transactionI
 
         const transactionIdx = transactions.findIndex(
             (t: Transaction) =>
-                t.Date == transactionInput.Date &&
-                t.Amount == transactionInput.Amount &&
-                t.Merchant == transactionInput.Merchant
+                t.Date === transactionInput.Date &&
+                t.Amount === transactionInput.Amount &&
+                t.Merchant === transactionInput.Merchant
         );
-        logger.info(`transactionIdx: ${transactionIdx}`);
-        logger.info(`transaction object ${JSON.stringify(transactions[transactionIdx], null, 2) } for merchant ${transactionInput.Merchant}`)
-        if (transactionIdx >= transactions.length) {
-            return {
-                success: false,
-                message: 'Transaction index out of bounds'
-            }
-        }
+        
         if (transactionIdx === -1) {
             logger.warn(`Transaction not found: ${transactionInput.Merchant}`);
+            logger.warn(`Looking for: Date=${transactionInput.Date}, Amount=${transactionInput.Amount}, Merchant=${transactionInput.Merchant}`);
+            logger.warn(`Available transactions: ${JSON.stringify(transactions.map((t: Transaction) => ({ Date: t.Date, Amount: t.Amount, Merchant: t.Merchant })), null, 2)}`);
             return {
                 success: false,
                 message: 'Transaction not found - it may have been modified or deleted'
             };
         }
+        
         const transaction = transactions[transactionIdx];
         const previousAccRec = transaction.AccRec || 0;
         
-        if (accRecAmount > transaction.Amount) {
+        logger.info(`Found transaction at index ${transactionIdx}: ${JSON.stringify(transaction, null, 2)}`);
+
+        if (Math.abs(accRecAmount) > Math.abs(transaction.Amount)) {
             return {
                 success: false,
-                message: 'Acc rec amount cannot be greater than transaction amount'
+                message: 'Acc rec amount cannot exceed transaction amount'
+            }
+        }
+
+        if ((accRecAmount > 0 && transaction.Amount < 0) || (accRecAmount < 0 && transaction.Amount > 0)) {
+            return {
+                success: false,
+                message: 'Acc rec must have the same sign as the transaction (both positive for purchases, both negative for refunds)'
             }
         }
         

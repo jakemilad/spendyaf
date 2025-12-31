@@ -75,13 +75,15 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
 
         try {
             for (const [key, newAccRec] of Object.entries(pendingChanges)) {
-                const lastIndex = key.lastIndexOf('-');
-                const amountIndex = key.lastIndexOf('-', lastIndex - 1);
-                const dateIndex = key.lastIndexOf('-', amountIndex - 1);
+                const parts = key.split('|');
+                if (parts.length !== 4) {
+                    console.error(`Invalid key format: ${key}`);
+                    continue;
+                }
                 
-                const merchant = key.substring(0, dateIndex);
-                const date = Number(key.substring(dateIndex + 1, amountIndex));
-                const amount = Number(key.substring(amountIndex + 1, lastIndex));
+                const merchant = parts[0];
+                const date = Number(parts[1]);
+                const amount = Number(parts[2]);
                 
                 const transaction: Transaction = {
                     Date: date,
@@ -361,7 +363,7 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
                     <div className="space-y-2 pb-2">
 
                     {transactionsArray.map((tx, index) => {
-                        const inputKey = `${tx.Merchant}-${tx.Date}-${tx.Amount}-${index}`;
+                        const inputKey = `${tx.Merchant}|${tx.Date}|${tx.Amount}|${index}`;
                         const pendingVal = pendingChanges[inputKey];
                         const currentAccRec = pendingVal !== undefined ? pendingVal : (tx.AccRec ?? 0);
                         const netSpend = tx.Amount - currentAccRec;
@@ -408,8 +410,8 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
                                                         id={inputKey}
                                                         type="number"
                                                         step="0.01"
-                                                        min="0"
-                                                        max={tx.Amount}
+                                                        min={tx.Amount < 0 ? tx.Amount : 0}
+                                                        max={tx.Amount < 0 ? 0 : tx.Amount}
                                                         placeholder="0.00"
                                                         value={currentAccRec === 0 ? "" : currentAccRec}
                                                         onChange={(e) => {
