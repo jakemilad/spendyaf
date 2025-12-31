@@ -29,10 +29,17 @@ export function DashboardClient({
   }) {
 
     const [selectedStatement, setSelectedStatement] = useState<DbStatement | null>(
+      localStorage.getItem('selectedStatement') ? JSON.parse(localStorage.getItem('selectedStatement') || '') : 
       initialStatements.length > 0 ? initialStatements[0] : null
     )
 
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
+      localStorage.getItem('isSidebarCollapsed') ? JSON.parse(localStorage.getItem('isSidebarCollapsed') || '') : false
+    )
+
+    useEffect(() => {
+      localStorage.setItem('isSidebarCollapsed', JSON.stringify(isSidebarCollapsed))
+    }, [isSidebarCollapsed])
     const [isLoading, setIsLoading] = useState(false)
     const [categoryBudgets, setCategoryBudgets] = useState<CategoryBudgetMap>(() =>
       normalizeCategoryBudgets(initialCategoryBudgets),
@@ -79,7 +86,12 @@ export function DashboardClient({
             <DashboardSidebar 
               statements={initialStatements}
               selectedStatement={selectedStatement}
-              onStatementSelect={setSelectedStatement}
+              onStatementSelect={(statement) => {
+                setSelectedStatement(statement)
+                if (statement) {
+                  localStorage.setItem('selectedStatement', JSON.stringify(statement))
+                }
+              }}
               userName={userName}
               isCollapsed={isSidebarCollapsed}
               onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -111,7 +123,12 @@ export function DashboardClient({
               <DashboardSidebar 
                 statements={initialStatements}
                 selectedStatement={selectedStatement}
-                onStatementSelect={setSelectedStatement}
+                onStatementSelect={(statement) => {
+                  setSelectedStatement(statement)
+                  if (statement) {
+                    localStorage.setItem('selectedStatement', JSON.stringify(statement))
+                  }
+                }}
                 userName={userName}
                 isCollapsed={isSidebarCollapsed}
                 onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
