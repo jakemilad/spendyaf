@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { compareStatementAreaChart, compareStatements, getUserStatements } from "../actions";
+import { compareStatements, compareStatementAreaChart } from "./actions";
 import { CompareClient } from "@/components/features/compare/compare-client";
 import { Button } from "@/components/ui/button";
 import logger from "@/lib/logger"
+import { getUserStatements } from "@/app/actions";
 
 export const dynamic = 'force-dynamic';
 

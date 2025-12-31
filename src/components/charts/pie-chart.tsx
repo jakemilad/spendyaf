@@ -160,11 +160,11 @@ export function PieChartComponent({ statement }: PieChartProps) {
                                                 textAnchor="middle"
                                                 dominantBaseline="middle"
                                             >
-                                                <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-xl font-bold">
-                                                    {`$${(statement.data?.totalSpend || 0).toLocaleString()}`}
+                                                <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-bold">
+                                                    {`$${(statement.data?.netTotal || statement.data?.totalSpend || 0).toLocaleString()}`}
                                                 </tspan>
                                                 <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
-                                                    Total Spend
+                                                    Net Spend
                                                 </tspan>
                                             </text>
                                         )

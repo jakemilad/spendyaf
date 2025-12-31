@@ -88,9 +88,9 @@ export function getInsights(transactions: Transaction[], categorySummary: Catego
         let biggestSpend = 0;
 
         for(const transaction of transactions) {
-            const curr = transaction.Amount;
-            if(curr > biggestSpend) {
-                biggestSpend = curr;
+            const netSpend = transaction.Amount - (transaction.AccRec || 0);
+            if(netSpend > biggestSpend) {
+                biggestSpend = netSpend;
                 biggestTransaction = transaction.Merchant;
             }
         }
@@ -135,7 +135,7 @@ export function getInsights(transactions: Transaction[], categorySummary: Catego
         const firstDate = Math.min(...dates);
         const lastDate = Math.max(...dates);
 
-        const totalSpend = transactions.reduce((sum, t) => sum + t.Amount, 0);
+        const totalSpend = transactions.reduce((sum, t) => sum + (t.Amount - (t.AccRec || 0)), 0);
 
         const daysDiff = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)) + 1;
         const weeksDiff = Math.ceil(daysDiff / 7);
