@@ -29,13 +29,32 @@ export function DashboardClient({
   }) {
 
     const [selectedStatement, setSelectedStatement] = useState<DbStatement | null>(
-      localStorage.getItem('selectedStatement') ? JSON.parse(localStorage.getItem('selectedStatement') || '') : 
       initialStatements.length > 0 ? initialStatements[0] : null
     )
 
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
-      localStorage.getItem('isSidebarCollapsed') ? JSON.parse(localStorage.getItem('isSidebarCollapsed') || '') : false
-    )
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
+    useEffect(() => {
+      const stored = localStorage.getItem('selectedStatement')
+      if (stored) {
+        try {
+          setSelectedStatement(JSON.parse(stored))
+        } catch (e) {
+          console.error('Failed to parse selectedStatement from localStorage', e)
+        }
+      }
+    }, [])
+
+    useEffect(() => {
+      const stored = localStorage.getItem('isSidebarCollapsed')
+      if (stored) {
+        try {
+          setIsSidebarCollapsed(JSON.parse(stored))
+        } catch (e) {
+          console.error('Failed to parse isSidebarCollapsed from localStorage', e)
+        }
+      }
+    }, [])
 
     useEffect(() => {
       localStorage.setItem('isSidebarCollapsed', JSON.stringify(isSidebarCollapsed))
