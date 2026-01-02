@@ -1,21 +1,21 @@
 "use server"
 import { neon } from "@neondatabase/serverless";
 import { getServerSession, Session } from "next-auth";
-import { authOptions } from "./api/auth/auth.config";
-import { processCSV, summarizeSpendByCategory } from "./utils/dataProcessing";
-import { openAICategoriesFromTransactions, openAISummary, getCachedMerchantCategories, cacheMerchantCategories, openAICategoriesWithTimeout, openAICategories } from "./utils/openai_api";
-import { Transaction } from "./types/types";
-import { CategorySummary } from "./types/types";
+import { authOptions } from "@/app/api/auth/auth.config";
+import { processCSV, summarizeSpendByCategory } from "@/app/utils/dataProcessing";
+import { openAICategoriesFromTransactions, openAISummary, getCachedMerchantCategories, cacheMerchantCategories, openAICategoriesWithTimeout, openAICategories } from "@/app/utils/openai_api";
+// import { openAICategories as claudeCategories } from "./utils/claude";
+import { Transaction } from "@/app/types/types";
+import { CategorySummary } from "@/app/types/types";
 import pool from "@/lib/db";
-import { DbStatement } from "./types/types";
+import { DbStatement } from "@/app/types/types";
 import { revalidatePath } from 'next/cache';
-import { getInsights } from "./utils/dataProcessing";
-import { Statement } from "./types/types";
-import { CategoryBudgetMap } from "./types/types";
+import { getInsights } from "@/app/utils/dataProcessing";
+import { Statement } from "@/app/types/types";
+import { CategoryBudgetMap } from "@/app/types/types";
+import { assert } from "console";
 import { normalizeCategoryBudgets } from "@/lib/category-budgets";
 import logger from "@/lib/logger";
-import { DEFAULT_CATEGORIES } from "./utils/dicts";
-import { getAllCachedMerchantCategories } from "./overrides/actions";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -88,25 +88,24 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
 
 
         let userCategories: string[] = await getUserCategories();
-        if (userCategories.length === 0) {
-            userCategories = DEFAULT_CATEGORIES;
-        }
+        const cachedMerchantCategories = await getCachedMerchantCategories(userEmail, uniqueMerchants);
 
-        const response = await processStatement(userEmail,userCategories,transactions,uniqueMerchants,fileName);
+        const response = await processStatement(userEmail,transactions,uniqueMerchants,fileName);
 
         // Non-blocking database insert (fire and forget for better response time)
         pool.query(
             'INSERT INTO transaction_records (user_id, data, file_name) VALUES ($1, $2, $3)',
             [userEmail, JSON.stringify(response), fileName]
         ).then(() => {
-            logger.info('Inserted into db');
+            logger.info('inserted into db');
         }).catch(error => {
-            logger.error(`Database insert error: ${JSON.stringify(error, null, 2)}`);
+            logger.error(`Database insert error: ${error}`);
         });
 
         const processingTime = Date.now() - startTime;
         logger.info(`Processing completed in ${processingTime}ms`);
-        logger.info(`Response created`);
+        logger.info('Optimizations applied: Parallel AI processing, merchant caching, timeout protection');
+        logger.info(`Response: ${JSON.stringify(response, null, 2)}`);
         return response;
     } catch (error) {
         logger.error(`Upload error: ${JSON.stringify(error, null, 2)}`);
@@ -114,186 +113,113 @@ export async function uploadAndProcessStatement(formData: FormData): Promise<Sta
     }
 }
 
-export async function processStatement(userEmail: string, userCategories: string[], transactions: Transaction[], uniqueMerchants: string[],  fileName: string): Promise<Statement> {
-    const cachedMerchantCategories = await getAllCachedMerchantCategories(userEmail);
-    logger.info(`________________________________________________________`);
-    logger.info(`Processing Statement for user ${userEmail}, Total unique merchants of ${uniqueMerchants.length}`);
-    logger.info(`User categories: ${JSON.stringify(userCategories, null, 2)}`);
-    logger.info(`Cached merchants: ${Object.keys(cachedMerchantCategories).length}`)
+export async function processStatement(userEmail: string,transactions: Transaction[],uniqueMerchants: string[], fileName: string): Promise<Statement> {
+         // Get or create user categories with optimized caching
+        let userCategories: string[] = await getUserCategories();
 
-    const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
+        // Check cache for merchant categories first
+        const cachedMerchantCategories = await getCachedMerchantCategories(userEmail, uniqueMerchants);
+        logger.info(`Cached Merchant Categories: ${JSON.stringify(cachedMerchantCategories, null, 2)}`);
+        const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
+        logger.info(`Uncached Merchants: ${uncachedMerchants.length == 0 ? 'No uncached merchants' : JSON.stringify(uncachedMerchants, null, 2)}`);
 
-    logger.info(`uncached merchants that will call AI: ${JSON.stringify(uncachedMerchants, null, 2)}`);
-    if(uncachedMerchants.length > 0) {
-        logger.info(`uncached merchants that will call AI: ${JSON.stringify(uncachedMerchants, null, 2)}`);
-    }
 
-    let merchantCategoryMap: Record<string, string> = { ...cachedMerchantCategories };
+        logger.info(`User Categories: ${JSON.stringify(userCategories, null, 2)}`);
+        logger.info('________________________________________________________');
+        logger.info(`Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
+        logger.info(`Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
+        logger.info(`User Categories Available: ${JSON.stringify(userCategories, null, 2)}`);
 
-    if(uncachedMerchants.length > 0) {
-        try {
-            logger.info(`Calling AI to categorize `)
-            const newMerchantMapping = await openAICategoriesWithTimeout(uncachedMerchants, userCategories, 16000);
+        // Parallel processing: Start both AI operations simultaneously
+        let userCategoriesPromise: Promise<string[]> | null = null;
+        let merchantCategoriesPromise: Promise<Record<string, string>>;
 
-            logger.info(`AI categorization success, caching new merchant mapping`)
-            logger.info(`New merchant mapping: ${JSON.stringify(newMerchantMapping, null, 2)}`)
+        if (userCategories.length === 0) {
+            // category generation in parallel
+            userCategoriesPromise = openAICategoriesFromTransactions(uniqueMerchants)
+                .then(async (categories) => {
+                    await updateUserCategories(categories);
+                    return categories;
+                });
 
-            await cacheMerchantCategories(userEmail, newMerchantMapping);
-            merchantCategoryMap = { ...merchantCategoryMap, ...newMerchantMapping };  
-        } catch (error) {
-            logger.warn('AI categorization timeout or error, using fallback');
-            logger.warn(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            
-            const fallbackMappings: Record<string, string> = {};
-            uncachedMerchants.forEach((merchant, index) => {
-                const categoryIndex = index % userCategories.length;
-                fallbackMappings[merchant] = userCategories[categoryIndex];
+            // fallback categories for merchant categorization with timeout
+            merchantCategoriesPromise = userCategoriesPromise.then(async (categories) => {
+                if (uncachedMerchants.length > 0) {
+                    try {
+                        const newCategories = await openAICategoriesWithTimeout(uncachedMerchants, categories, 8000);
+                        await cacheMerchantCategories(userEmail, newCategories);
+                        return { ...cachedMerchantCategories, ...newCategories };
+                    } catch (error) {
+                        logger.warn('AI categorization timeout, using fallback categories');
+                        // Fallback: assign default categories or most common ones
+                        logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants`);
+                        const fallbackCategories: Record<string, string> = {};
+                        uncachedMerchants.forEach((merchant, index) => {
+                            // Distribute merchants across available categories instead of all to first category
+                            const categoryIndex = index % categories.length;
+                            fallbackCategories[merchant] = categories[categoryIndex] || 'Other';
+                        });
+                        logger.info(`Fallback categories assigned: ${fallbackCategories}`);
+                        await cacheMerchantCategories(userEmail, fallbackCategories);
+                        return { ...cachedMerchantCategories, ...fallbackCategories };
+                    }
+                }
+                return cachedMerchantCategories;
             });
-            
-            logger.info(`Fallback mappings assigned`);
-            
-            await cacheMerchantCategories(userEmail, fallbackMappings);
-            
-            merchantCategoryMap = { ...cachedMerchantCategories, ...fallbackMappings };
+        } else {
+            // Use existing categories - only categorize uncached merchants with timeout
+            if (uncachedMerchants.length > 0) {
+                merchantCategoriesPromise = openAICategoriesWithTimeout(uncachedMerchants, userCategories, 8000)
+                    .then(async (newCategories) => {
+                        await cacheMerchantCategories(userEmail, newCategories);
+                        return { ...cachedMerchantCategories, ...newCategories };
+                    })
+                    .catch(async (error) => {
+                        logger.warn(`AI categorization timeout, using fallback categories: ${error.message}`);
+                        logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants (existing user): ${JSON.stringify(uncachedMerchants, null, 2)}`);
+                        const fallbackCategories: Record<string, string> = {};
+                        uncachedMerchants.forEach((merchant, index) => {
+                            const categoryIndex = index % userCategories.length;
+                            fallbackCategories[merchant] = userCategories[categoryIndex] || 'Other';
+                        });
+                        logger.info(`Fallback categories assigned (existing user): ${JSON.stringify(fallbackCategories, null, 2)}`);
+                        logger.info(`Available user categories: ${JSON.stringify(userCategories, null, 2)}`);
+                        await cacheMerchantCategories(userEmail, fallbackCategories);
+                        return { ...cachedMerchantCategories, ...fallbackCategories };
+                    });
+            } else {
+                merchantCategoriesPromise = Promise.resolve(cachedMerchantCategories);
+            }
         }
-    }
 
-    logger.info(`Merchant category map of size ${Object.keys(merchantCategoryMap).length} created`);
+        // Await both operations (they run in parallel when possible)
+        const [finalUserCategories, categories] = await Promise.all([
+            userCategoriesPromise || Promise.resolve(userCategories),
+            merchantCategoriesPromise
+        ]);
 
-    const summary: CategorySummary[] = summarizeSpendByCategory(transactions, merchantCategoryMap);
-    const totalSpend = transactions.reduce((sum, transaction) => sum + Number(transaction.Amount), 0).toFixed(2);
-    const netTotal = transactions.reduce((sum, transaction) => 
-        sum + (transaction.NetSpend ?? (Number(transaction.Amount) - (transaction.AccRec || 0))), 0
-    );
-    const insights = getInsights(transactions, summary);
+        assert(finalUserCategories.length > 0, 'No user categories found');
 
-    const response: Statement = {
-        summary,
-        categories: merchantCategoryMap,
-        transactions,
-        fileName,
-        totalSpend: Number(totalSpend),
-        netTotal: Number(netTotal.toFixed(2)),
-        insights
-    };
-    logger.info(`Done processing statement`);
-    return response;
-}
-
-// export async function processStatement(userEmail: string, userCategories: string[],cachedMerchantCategories: Record<string, string>,transactions: Transaction[],uniqueMerchants: string[], fileName: string): Promise<Statement> {
-//          // Get or create user categories with optimized caching
-//         logger.info(`Cached Merchant Categories: ${JSON.stringify(cachedMerchantCategories, null, 2)}`);
-//         const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
-//         logger.info(`Uncached Merchants: ${uncachedMerchants.length == 0 ? 'No uncached merchants' : JSON.stringify(uncachedMerchants, null, 2)}`);
-//         logger.info(`User Categories: ${JSON.stringify(userCategories, null, 2)}`);
-//         logger.info('________________________________________________________');
-//         logger.info(`Merchant Analysis: ${uniqueMerchants.length} total, ${Object.keys(cachedMerchantCategories).length} cached, ${uncachedMerchants.length} need AI processing`);
-//         logger.info(`Cache Hit Rate: ${((Object.keys(cachedMerchantCategories).length / uniqueMerchants.length) * 100).toFixed(1)}%`);
-//         logger.info(`User Categories Available: ${JSON.stringify(userCategories, null, 2)}`);
-
-//         // Parallel processing: Start both AI operations simultaneously
-//         let userCategoriesPromise: Promise<string[]> | null = null;
-//         let merchantCategoriesPromise: Promise<Record<string, string>>;
-
-//         if (userCategories.length === 0) {
-//             userCategoriesPromise = (async () => {
-//                 const categories = await openAICategoriesFromTransactions(uniqueMerchants);
-//                 await updateUserCategories(categories);
-//                 return categories;
-//             })();
-//         }
-
-//         merchantCategoriesPromise = (async () => {
-//             const categories = await userCategoriesPromise;
-            
-//         })
-
-//         if (userCategories.length > 0) {
-//             // category generation in parallel
-//             userCategoriesPromise = openAICategoriesFromTransactions(uniqueMerchants)
-//                 .then(async (categories) => {
-//                     await updateUserCategories(categories);
-//                     return categories;
-//                 });
-
-//             // fallback categories for merchant categorization with timeout
-//             merchantCategoriesPromise = userCategoriesPromise.then(async (categories) => {
-//                 if (uncachedMerchants.length > 0) {
-//                     try {
-//                         const newCategories = await openAICategoriesWithTimeout(uncachedMerchants, categories, 8000);
-//                         await cacheMerchantCategories(userEmail, newCategories);
-//                         return { ...cachedMerchantCategories, ...newCategories };
-//                     } catch (error) {
-//                         logger.warn('AI categorization timeout, using fallback categories');
-//                         // Fallback: assign default categories or most common ones
-//                         logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants`);
-//                         const fallbackCategories: Record<string, string> = {};
-//                         uncachedMerchants.forEach((merchant, index) => {
-//                             // Distribute merchants across available categories instead of all to first category
-//                             const categoryIndex = index % categories.length;
-//                             fallbackCategories[merchant] = categories[categoryIndex] || 'Other';
-//                         });
-//                         logger.info(`Fallback categories assigned: ${fallbackCategories}`);
-//                         await cacheMerchantCategories(userEmail, fallbackCategories);
-//                         return { ...cachedMerchantCategories, ...fallbackCategories };
-//                     }
-//                 }
-//                 return cachedMerchantCategories;
-//             });
-//         } else {
-//             // Use existing categories - only categorize uncached merchants with timeout
-//             if (uncachedMerchants.length > 0) {
-//                 merchantCategoriesPromise = openAICategoriesWithTimeout(uncachedMerchants, userCategories, 8000)
-//                     .then(async (newCategories) => {
-//                         await cacheMerchantCategories(userEmail, newCategories);
-//                         return { ...cachedMerchantCategories, ...newCategories };
-//                     })
-//                     .catch(async (error) => {
-//                         logger.warn(`AI categorization timeout, using fallback categories: ${error.message}`);
-//                         logger.warn(`Using fallback categorization for ${uncachedMerchants.length} merchants (existing user): ${JSON.stringify(uncachedMerchants, null, 2)}`);
-//                         const fallbackCategories: Record<string, string> = {};
-//                         uncachedMerchants.forEach((merchant, index) => {
-//                             const categoryIndex = index % userCategories.length;
-//                             fallbackCategories[merchant] = userCategories[categoryIndex] || 'Other';
-//                         });
-//                         logger.info(`Fallback categories assigned (existing user): ${JSON.stringify(fallbackCategories, null, 2)}`);
-//                         logger.info(`Available user categories: ${JSON.stringify(userCategories, null, 2)}`);
-//                         await cacheMerchantCategories(userEmail, fallbackCategories);
-//                         return { ...cachedMerchantCategories, ...fallbackCategories };
-//                     });
-//             } else {
-//                 merchantCategoriesPromise = Promise.resolve(cachedMerchantCategories);
-//             }
-//         }
-
-//         // Await both operations (they run in parallel when possible)
-//         const [finalUserCategories, categories] = await Promise.all([
-//             userCategoriesPromise || Promise.resolve(userCategories),
-//             merchantCategoriesPromise
-//         ]);
-
-//         assert(finalUserCategories.length > 0, 'No user categories found');
-
-//         const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
-//         const totalSpend = transactions.reduce((sum, transaction) => sum + Number(transaction.Amount), 0).toFixed(2);
-//         const insights = getInsights(transactions, summary);
+        const summary: CategorySummary[] = summarizeSpendByCategory(transactions, categories);
+        const totalSpend = transactions.reduce((sum, transaction) => sum + Number(transaction.Amount), 0).toFixed(2);
+        const insights = getInsights(transactions, summary);
         
-//         const netTotal = transactions.reduce((sum, transaction) => 
-//             sum + (transaction.NetSpend ?? (Number(transaction.Amount) - (transaction.AccRec || 0))), 0
-//         );
+        const netTotal = transactions.reduce((sum, transaction) => 
+            sum + (transaction.NetSpend ?? (Number(transaction.Amount) - (transaction.AccRec || 0))), 0
+        );
 
-//         const response = {
-//             summary,
-//             categories,
-//             transactions,
-//             fileName,
-//             totalSpend: Number(totalSpend),
-//             netTotal: Number(netTotal.toFixed(2)),
-//             insights
-//         };
+        const response = {
+            summary,
+            categories,
+            transactions,
+            fileName,
+            totalSpend: Number(totalSpend),
+            netTotal: Number(netTotal.toFixed(2)),
+            insights
+        };
 
-//         return response;
-// }
+        return response;
+}
 
 
 export async function reprocessStatement(statementId: string): Promise<boolean> {

@@ -1,8 +1,9 @@
 import OpenAI from "openai";
 import { CategorySummary, DbStatement, Transaction } from "../types/types";
 import pool from "@/lib/db";
+import logger from "@/lib/logger";
 
-const model = "gpt-5-mini";
+const model = "gpt-5.2-2025-12-11";
 const MAX_SAMPLE_TRANSACTIONS = 50;
 const MAX_SAMPLE_SUMMARY_ROWS = 12;
 
@@ -65,55 +66,127 @@ export async function Test(query: string) {
   return {response: response.choices[0]?.message?.content, usage: response.usage, model: response.model};
 }
 
-export async function openAICategories(merchants: string[], userCategories: string[]) {
+export async function openAICategories(merchants: string[], userCategories: string[]): Promise<Record<string, string>> {
+    const startTime = Date.now();
     if (!merchants.length || !userCategories.length) {
-        console.warn('openAICategories called without merchants or categories');
+        logger.error('testAIMerchantCategories called without merchants or categories');
         return {};
     }
-
-    const sampleMapping = buildSampleMapping(merchants, userCategories);
-    const prompt = `You map merchant names to spending categories.
-
-Rules:
-- Use ONLY these categories verbatim: ${userCategories.join(', ')}
-- Every merchant must map to exactly one category from the list above
-- Output must be a JSON object where each key is a merchant and each value is the chosen category
-
-Example format (for illustration only, adapt to the actual merchants):
-${JSON.stringify(sampleMapping, null, 2)}
-
-Merchants to categorize:
-${merchants.join(', ')}
-
-Return only the JSON object. No narration or markdown.`;
-
-    console.log('Calling OpenAI with', merchants.length, 'merchants and', userCategories.length, 'categories');
-    console.log('Merchants to categorize:', merchants);
-    console.log('Available categories:', userCategories);
+    const prompt = buildPrompt(merchants, userCategories);
 
     const response = await openai.chat.completions.create({
         model: model,
-        messages: [
-            {
-                role: "system",
-                content: "You are a precise transaction categorization system. You always return valid JSON objects mapping merchants to predefined categories."
-            },
-            { role: "user", content: prompt }
-        ],
+        messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }
     });
     const content = response.choices[0]?.message?.content;
     const parsed = normalizeJSONString(content);
+    if (!parsed) {
+        logger.error(`Error parsing OpenAI response for categories: ${content}`);
+        return {};
+    }
+    const endTime = Date.now();
+    logger.info(`OpenAI categorization completed in ${endTime - startTime}ms`);
+    return parsed;
+  }
 
+  export async function parseJSON(response: any) {
+    const content = response.choices[0]?.message?.content;
+    const parsed = JSON.parse(content);
     if (!parsed) {
         console.error('Error parsing OpenAI response for categories:', content);
         return {};
     }
-
-    console.log('Parsed AI Categories:', parsed);
-    console.log('Categories count:', Object.keys(parsed).length);
     return parsed;
-}
+  }
+export function buildPrompt(
+    merchants: string[],
+    userCategories: string[]
+  ): string {
+    return `
+  You are an AI assistant tasked with categorizing bank transaction merchants.
+  
+  Given:
+  - A list of valid transaction categories
+  - A list of merchant names from bank statements
+  
+  Your job:
+  - Assign exactly ONE category to EACH merchant
+  - Choose the best possible match based on common real world usage
+  - Use ONLY the provided categories
+  - Do NOT invent new categories
+  - Do NOT explain your reasoning
+  - Do NOT include any text outside the final output
+  
+  Output requirements:
+  - Return STRICTLY a valid JSON object
+  - Keys must be the merchant names exactly as provided
+  - Values must be one of the provided categories
+  - No comments, no markdown, no extra text
+  
+  Categories:
+  ${JSON.stringify(userCategories, null, 2)}
+  
+  Merchants:
+  ${JSON.stringify(merchants, null, 2)}
+  
+  Return ONLY a valid JSON object in this format:
+  {
+    "MERCHANT_NAME": "Category",
+    ...
+  }
+  `;
+  }
+
+// export async function openAICategories(merchants: string[], userCategories: string[]) {
+//     if (!merchants.length || !userCategories.length) {
+//         console.warn('openAICategories called without merchants or categories');
+//         return {};
+//     }
+
+//     const sampleMapping = buildSampleMapping(merchants, userCategories);
+//     const prompt = `You map merchant names to spending categories.
+
+// Rules:
+// - Use ONLY these categories verbatim: ${userCategories.join(', ')}
+// - Every merchant must map to exactly one category from the list above
+// - Output must be a JSON object where each key is a merchant and each value is the chosen category
+
+// Example format (for illustration only, adapt to the actual merchants):
+// ${JSON.stringify(sampleMapping, null, 2)}
+
+// Merchants to categorize:
+// ${merchants.join(', ')}
+
+// Return only the JSON object. No narration or markdown.`;
+
+//     console.log('Calling OpenAI with', merchants.length, 'merchants and', userCategories.length, 'categories');
+//     console.log('Merchants to categorize:', merchants);
+//     console.log('Available categories:', userCategories);
+
+//     const response = await openai.chat.completions.create({
+//         model: model,
+//         messages: [
+//             {
+//                 role: "system",
+//                 content: "You are a precise transaction categorization system. You always return valid JSON objects mapping merchants to predefined categories."
+//             },
+//             { role: "user", content: prompt }
+//         ],
+//         response_format: { type: "json_object" }
+//     });
+//     const content = response.choices[0]?.message?.content;
+//     const parsed = normalizeJSONString(content);
+
+//     if (!parsed) {
+//         console.error('Error parsing OpenAI response for categories:', content);
+//         return {};
+//     }
+
+//     console.log('Parsed AI Categories:', parsed);
+//     console.log('Categories count:', Object.keys(parsed).length);
+//     return parsed;
+// }
 
 export async function openAISummary(statement: DbStatement, message: boolean) {
     const rawSummary = Array.isArray(statement.data?.summary) ? statement.data.summary : [];

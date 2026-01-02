@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { getMerchantsForDataTable } from './actions'
 import { OverrideClient } from "@/components/override/override-client"
 import { redirect } from "next/navigation"
-import { getUserCategories } from "../actions"
+import { getUserCategories } from "@/app/actions"
 
 export const metadata = {
   title: "Overrides | Spendy.af",

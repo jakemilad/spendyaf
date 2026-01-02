@@ -106,7 +106,8 @@ export async function updateStatementOverride(userId: string, statement: DbState
         }
         const transactions = Array.isArray(statement?.data?.transactions) ? statement.data.transactions : [];
         const uniqueMerchants = [... new Set(transactions.map((t: any) => t.Merchant))];
-        const response = await processStatement(userId, transactions, uniqueMerchants, statement.data?.fileName || 'Unknown');
+        const userCategories = statement.data?.categories || [];
+        const response = await processStatement(userId, userCategories, transactions, uniqueMerchants, statement.data?.fileName || 'Unknown');
         const statementId = statement.id;
         await pool.query(
             `UPDATE transaction_records SET data = $1 WHERE id = $2`,
