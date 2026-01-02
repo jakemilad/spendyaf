@@ -48,7 +48,7 @@ const merchants = [
   ];  
   
   
-export async function testAIMerchantCategories(merchants: string[], userCategories: string[]) {
+async function testAIMerchantCategories(merchants: string[], userCategories: string[]) {
     if (!merchants.length || !userCategories.length) {
         logger.error('testAIMerchantCategories called without merchants or categories');
         return {};
@@ -64,7 +64,7 @@ export async function testAIMerchantCategories(merchants: string[], userCategori
     return content;
   }
 
-  export async function parseJSON(response: any) {
+async function parseJSON(response: any) {
     const content = response.choices[0]?.message?.content;
     const parsed = JSON.parse(content);
     if (!parsed) {
@@ -75,7 +75,7 @@ export async function testAIMerchantCategories(merchants: string[], userCategori
   }
   
   
-  export function buildPrompt(
+function buildPrompt(
     merchants: string[],
     userCategories: string[]
   ): string {
