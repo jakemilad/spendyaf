@@ -123,10 +123,7 @@ export async function processStatement(userEmail: string, userCategories: string
 
     const uncachedMerchants = uniqueMerchants.filter(merchant => !cachedMerchantCategories[merchant]);
 
-    logger.info(`uncached merchants that will call AI: ${JSON.stringify(uncachedMerchants, null, 2)}`);
-    if(uncachedMerchants.length > 0) {
-        logger.info(`uncached merchants that will call AI: ${JSON.stringify(uncachedMerchants, null, 2)}`);
-    }
+    logger.info(`merchants that will call AI: ${JSON.stringify(uncachedMerchants, null, 2)}`);
 
     let merchantCategoryMap: Record<string, string> = { ...cachedMerchantCategories };
 

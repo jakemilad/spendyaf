@@ -1,6 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { uploadAndProcessStatement } from "@/app/actions";
+import logger from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -14,14 +15,13 @@ export async function POST(req: Request) {
             );
         }
 
-        console.log('/amex route - Processing completed successfully!');
-        console.log('Final Results Summary:');
-        console.log(` File: ${result.fileName}`);
-        console.log(` Total Spend: $${result.totalSpend}`);
-        console.log(` Unique Merchants: ${Object.keys(result.categories).length}`);
-        console.log(` Categories Used: ${Object.values(result.categories).filter((v, i, a) => a.indexOf(v) === i).length}`);
-        console.log(` Transactions: ${result.transactions.length}`);
-        console.log(` Insights Generated: ${Object.keys(result.insights).length} types`);
+        logger.info('/amex route - Processing completed successfully!');
+        logger.info(` File: ${result.fileName}`);
+        logger.info(` Total Spend: $${result.totalSpend}`);
+        logger.info(` Unique Merchants: ${Object.keys(result.categories).length}`);
+        logger.info(` Categories Used: ${Object.values(result.categories).filter((v, i, a) => a.indexOf(v) === i).length}`);
+        logger.info(` Transactions: ${result.transactions.length}`);
+        logger.info(` Insights Generated: ${Object.keys(result.insights).length} types`);
         
         return NextResponse.json(
             result,
