@@ -368,6 +368,72 @@ export async function updateTransasctionAccRec(statementId: number, transactionI
     }
 }
 
+export async function deleteTransaction(statementId: number, transactionIndex: number, transactionInput: Transaction) {
+    try {
+        if (!statementId || !Number.isInteger(transactionIndex) || !transactionInput) {
+            return {
+                success: false,
+                message: 'Invalid statement ID or transaction'
+            };
+        }
+
+        const session = await getSession();
+        if (!session) {
+            return {
+                success: false,
+                message: 'Unauthorized'
+            };
+        }
+
+        const statementResult = await getStatementById(Number(statementId));
+        if (!statementResult) {
+            return {
+                success: false,
+                message: 'Statement not found'
+            };
+        }
+
+        const statement = statementResult.data;
+        const transactions = Array.isArray(statement.transactions) ? statement.transactions : [];
+        const transaction = transactions[transactionIndex];
+
+        if (
+            !transaction ||
+            transaction.Date !== transactionInput.Date ||
+            transaction.Amount !== transactionInput.Amount ||
+            transaction.Merchant !== transactionInput.Merchant
+        ) {
+            logger.warn(`Transaction delete mismatch for statement ${statementId} at index ${transactionIndex}`);
+            return {
+                success: false,
+                message: 'Transaction not found - it may have been modified or deleted'
+            };
+        }
+
+        transactions.splice(transactionIndex, 1);
+        const updatedStatementData = recalculateStatementTotals(statement);
+
+        await pool.query(
+            'UPDATE transaction_records SET data = $1 WHERE id = $2 AND user_id = $3',
+            [JSON.stringify(updatedStatementData), statementId, session?.user?.email]
+        );
+
+        logger.info(`Deleted transaction ${transaction.Merchant} (${transaction.Amount}) from statement ${statementId}`);
+        return {
+            success: true,
+            message: 'Transaction deleted successfully',
+            deletedTransaction: transaction,
+            updatedStatement: updatedStatementData
+        };
+    } catch (error) {
+        logger.error(`Error deleting transaction: ${error instanceof Error ? error.message : String(error)}`);
+        if (error instanceof Error && error.stack) {
+            logger.error(error.stack);
+        }
+        return { success: false, message: 'Failed to delete transaction' };
+    }
+}
+
 function recalculateStatementTotals(statementData: Statement): Statement {
     if (!statementData) {
         logger.error(`Statement data is missing or invalid`);

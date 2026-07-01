@@ -13,9 +13,20 @@ import {
   } from "@/components/ui/table"
 import { CategoryBudgetMap, DbStatement, CategorySummary, Transaction } from "@/app/types/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, AlertCircle, Maximize2, ExternalLink, DollarSign, Save, X, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, Maximize2, ExternalLink, DollarSign, Save, Loader2, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -25,7 +36,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { updateTransasctionAccRec } from "@/app/overrides/actions";
+import { deleteTransaction, updateTransasctionAccRec } from "@/app/overrides/actions";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,6 +60,7 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
     const [pendingChanges, setPendingChanges] = useState<Record<string, number>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [showAccRecInputs, setShowAccRecInputs] = useState(false);
+    const [deletingTransactionKey, setDeletingTransactionKey] = useState<string | null>(null);
     
     useEffect(() => {
         setCurrentStatement(initialStatement);
@@ -125,6 +137,55 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
     const handleCancelChanges = () => {
         setPendingChanges({});
         setShowAccRecInputs(false);
+    };
+
+    const handleDeleteTransaction = async (
+        transaction: Transaction,
+        transactionIndex: number,
+        transactionKey: string
+    ) => {
+        if (transactionIndex < 0) {
+            toast.error("Transaction not found");
+            return;
+        }
+
+        setDeletingTransactionKey(transactionKey);
+
+        try {
+            const result = await deleteTransaction(
+                Number(currentStatement.id),
+                transactionIndex,
+                {
+                    Date: transaction.Date,
+                    Amount: transaction.Amount,
+                    Merchant: transaction.Merchant
+                }
+            );
+
+            if (!result.success) {
+                toast.error(result.message || "Failed to delete transaction");
+                return;
+            }
+
+            if (!result.updatedStatement) {
+                toast.error("Transaction was deleted, but the updated statement was not returned");
+                router.refresh();
+                return;
+            }
+
+            toast.success("Transaction deleted");
+            setPendingChanges({});
+            setCurrentStatement(prev => ({
+                ...prev,
+                data: result.updatedStatement
+            }));
+            router.refresh();
+        } catch (error) {
+            toast.error("Error deleting transaction");
+            console.error(error);
+        } finally {
+            setDeletingTransactionKey(null);
+        }
     };
 
     const renderBudgetProgress = (row: CategorySummary, isCompact: boolean = false) => {
@@ -363,12 +424,14 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
                     <div className="space-y-2 pb-2">
 
                     {transactionsArray.map((tx, index) => {
-                        const inputKey = `${tx.Merchant}|${tx.Date}|${tx.Amount}|${index}`;
+                        const statementTransactionIndex = currentStatement.data.transactions.findIndex(candidate => candidate === tx);
+                        const inputKey = `${tx.Merchant}|${tx.Date}|${tx.Amount}|${statementTransactionIndex}`;
                         const pendingVal = pendingChanges[inputKey];
                         const currentAccRec = pendingVal !== undefined ? pendingVal : (tx.AccRec ?? 0);
                         const netSpend = tx.Amount - currentAccRec;
                         const hasAdjustment = currentAccRec > 0;
                         const isModified = pendingVal !== undefined && pendingVal !== (tx.AccRec ?? 0);
+                        const isDeleting = deletingTransactionKey === inputKey;
                         
                         return (
                             <div
@@ -395,72 +458,111 @@ export function SummaryTable({ statement: initialStatement, categoryBudgets }: S
                                         </div>
                                     </div>
                                     
-                                    {showAccRecInputs ? (
-                                        <div className={cn(
-                                            "flex items-center gap-3 flex-shrink-0 p-1.5 rounded-md border",
-                                            isModified ? "bg-white dark:bg-black border-emerald-500/30" : "bg-background/50 border-border/40"
-                                        )}>
-                                            <div className="flex items-center gap-2">
-                                                <label htmlFor={inputKey} className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                                    Money In
-                                                </label>
-                                                <div className="relative">
-                                                    <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                                                    <Input
-                                                        id={inputKey}
-                                                        type="number"
-                                                        step="0.01"
-                                                        min={tx.Amount < 0 ? tx.Amount : 0}
-                                                        max={tx.Amount < 0 ? 0 : tx.Amount}
-                                                        placeholder="0.00"
-                                                        value={currentAccRec === 0 ? "" : currentAccRec}
-                                                        onChange={(e) => {
-                                                            const val = parseFloat(e.target.value);
-                                                            setPendingChanges(prev => ({
-                                                                ...prev,
-                                                                [inputKey]: isNaN(val) ? 0 : val
-                                                            }));
-                                                        }}
-                                                        onFocus={(e) => e.target.select()}
-                                                        disabled={isSaving}
-                                                        className="w-24 h-8 pl-5 text-xs font-medium bg-background"
-                                                    />
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {showAccRecInputs ? (
+                                            <div className={cn(
+                                                "flex items-center gap-3 flex-shrink-0 p-1.5 rounded-md border",
+                                                isModified ? "bg-white dark:bg-black border-emerald-500/30" : "bg-background/50 border-border/40"
+                                            )}>
+                                                <div className="flex items-center gap-2">
+                                                    <label htmlFor={inputKey} className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                        Money In
+                                                    </label>
+                                                    <div className="relative">
+                                                        <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                                        <Input
+                                                            id={inputKey}
+                                                            type="number"
+                                                            step="0.01"
+                                                            min={tx.Amount < 0 ? tx.Amount : 0}
+                                                            max={tx.Amount < 0 ? 0 : tx.Amount}
+                                                            placeholder="0.00"
+                                                            value={currentAccRec === 0 ? "" : currentAccRec}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value);
+                                                                setPendingChanges(prev => ({
+                                                                    ...prev,
+                                                                    [inputKey]: isNaN(val) ? 0 : val
+                                                                }));
+                                                            }}
+                                                            onFocus={(e) => e.target.select()}
+                                                            disabled={isSaving || isDeleting}
+                                                            className="w-24 h-8 pl-5 text-xs font-medium bg-background"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <Separator orientation="vertical" className="h-6" />
+                                                <div className="flex flex-col items-end min-w-[80px] px-1">
+                                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                                        Net
+                                                    </span>
+                                                    <span className={cn(
+                                                        "text-sm font-bold tabular-nums leading-none",
+                                                        netSpend !== tx.Amount ? "text-emerald-600" : ""
+                                                    )}>
+                                                        {formatCurrency(netSpend)}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <Separator orientation="vertical" className="h-6" />
-                                            <div className="flex flex-col items-end min-w-[80px] px-1">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                                    Net
-                                                </span>
+                                        ) : (
+                                            <div className="flex items-center justify-end gap-3 text-right">
+                                                {hasAdjustment && (
+                                                    <>
+                                                        <span className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">
+                                                            {formatCurrency(tx.Amount)}
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
+                                                            <DollarSign className="h-3 w-3" />
+                                                            {formatCurrency(currentAccRec).replace('$', '')} in
+                                                        </span>
+                                                    </>
+                                                )}
                                                 <span className={cn(
-                                                    "text-sm font-bold tabular-nums leading-none",
-                                                    netSpend !== tx.Amount ? "text-emerald-600" : ""
+                                                    "text-base font-bold tabular-nums min-w-[80px]",
+                                                    hasAdjustment ? "text-emerald-600" : ""
                                                 )}>
                                                     {formatCurrency(netSpend)}
                                                 </span>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center justify-end gap-3 text-right">
-                                            {hasAdjustment && (
-                                                <>
-                                                    <span className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">
-                                                        {formatCurrency(tx.Amount)}
-                                                    </span>
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
-                                                        <DollarSign className="h-3 w-3" />
-                                                        {formatCurrency(currentAccRec).replace('$', '')} in
-                                                    </span>
-                                                </>
-                                            )}
-                                            <span className={cn(
-                                                "text-base font-bold tabular-nums min-w-[80px]",
-                                                hasAdjustment ? "text-emerald-600" : ""
-                                            )}>
-                                                {formatCurrency(netSpend)}
-                                            </span>
-                                        </div>
-                                    )}
+                                        )}
+
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                    disabled={isSaving || deletingTransactionKey !== null}
+                                                >
+                                                    {isDeleting ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                    <span className="sr-only">Delete transaction</span>
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently remove {tx.Merchant} for {formatCurrency(tx.Amount)} on {new Date(tx.Date).toLocaleDateString()} from this statement and recalculate your totals.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleDeleteTransaction(tx, statementTransactionIndex, inputKey)}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                        disabled={isDeleting}
+                                                    >
+                                                        Delete Transaction
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </div>
                             </div>
                         );
